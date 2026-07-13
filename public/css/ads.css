@@ -1,0 +1,391 @@
+/* E'lonlar bo'limi uchun maxsus stillar */
+.ads-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+.custom-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.custom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.upload-section {
+    background: #fdfdfd;
+    border: 2px dashed #e0e0e0;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.upload-section:hover {
+    border-color: #4e73df;
+}
+
+.btn-soft {
+    background: #4e73df;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 25px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(78, 115, 223, 0.2);
+}
+
+.ad-image-preview {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid #eee;
+}
+
+.btn-create-ad {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    /* Ikona va matn orasidagi masofa */
+    background: #4e73df;
+    /* Sizning asosiy ko'k rangingiz */
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(78, 115, 223, 0.25);
+}
+
+.btn-create-ad i {
+    font-size: 1.2rem;
+}
+
+.btn-create-ad:hover {
+    background: #3e5fbd;
+    color: white;
+    transform: translateY(-2px);
+    /* Tepaga biroz ko'tarilish */
+    box-shadow: 0 8px 20px rgba(78, 115, 223, 0.35);
+}
+
+.btn-create-ad:active {
+    transform: translateY(0);
+    /* Bosilganda joyiga qaytish */
+}
+
+/* Asosiy konteyner */
+.show-container {
+    padding: 40px 15px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Oq card dizayni */
+.show-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+    max-width: 950px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+/* Rasm konteyneri */
+.show-image-container {
+    width: 100%;
+    height: 100%;
+    background-color: #f1f3f9;
+    overflow: hidden;
+}
+
+.show-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+/* Kontent qismi */
+.show-body {
+    padding: 50px;
+}
+
+.meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.show-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1a202c;
+    margin-bottom: 25px;
+    line-height: 1.2;
+}
+
+.show-content {
+    font-size: 1.2rem;
+    color: #4a5568;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.full_content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #4a5568;
+    padding-top: 30px;
+    border-top: 1px solid #edf2f7;
+    white-space: pre-line;
+    /* Yangi qatorlarni saqlash uchun */
+}
+
+/* Mobil moslashuvchanlik (@media) */
+@media (max-width: 768px) {
+    .show-container {
+        padding: 20px 10px;
+    }
+
+    .show-image-container {
+        height: 280px;
+    }
+
+    .show-body {
+        padding: 25px 20px;
+    }
+
+    .show-title {
+        font-size: 1.8rem;
+    }
+
+    .meta-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .full_content {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+}
+
+/* Asosiy konteyner va fon */
+.container-fluid {
+    background-color: #f8f9fa;
+    /* Juda och kulrang fon */
+    min-height: 100vh;
+}
+
+/* White Card dizayni */
+.card.rounded-4 {
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    /* Glassmorphism effekti */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Soft Shadow - yumshoq soya */
+.shadow-sm {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Input va Select elementlari */
+.form-control,
+.form-select {
+    border: 1.5px solid #edf2f7 !important;
+    background-color: #fcfdfe !important;
+    padding: 12px 16px !important;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: all 0.2s ease-in-out;
+    border-radius: 12px !important;
+}
+
+/* Fokus holati (ko'k chiziq o'rniga yumshoq nur) */
+.form-control:focus,
+.form-select:focus {
+    background-color: #ffffff !important;
+    border-color: #4299e1 !important;
+    box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1) !important;
+    outline: none;
+}
+
+/* Label (maydon nomlari) */
+.form-label {
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.025em;
+    color: #718096 !important;
+    font-weight: 600;
+}
+
+/* Saqlash tugmasi (Soft UI Style) */
+.btn-primary.rounded-pill {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary.rounded-pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(118, 75, 162, 0.3);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Orqaga qaytish tugmasi */
+.btn-light.rounded-pill {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.btn-light.rounded-pill:hover {
+    background-color: #f7fafc;
+    color: #2d3748;
+}
+
+/* Scrollbar dizayni (agar 37 ta maydon uzun bo'lib ketsa) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Responsive moslashuv */
+@media (max-width: 768px) {
+    .card.p-4 {
+        padding: 1.5rem !important;
+    }
+}
+
+
+
+/* Konteyner - chekkalarda bo'shliq bo'lmasligi uchun */
+.ad-image-container {
+    overflow: hidden;
+    background-color: #f8f9fa;
+    display: block;
+    /* Ichidagi hamma narsani to'liq egallashi uchun */
+    border-radius: 12px 12px 0 0;
+    /* Card tepasini yumshatish */
+}
+
+/* Rasm - yarim bo'lib qolmasligi uchun */
+.ad-image-preview {
+    object-fit: cover;
+    /* RASMNI TO'LIQ VA CHIROYLI QOPLAYDI */
+    object-position: center;
+    /* Rasmni markazini ko'rsatadi */
+    display: block;
+}
+
+
+/* Jadval uchun maxsus CSS */
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9ff !important;
+    transform: translateY(-1px);
+}
+
+.btn-group .btn:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-radius: 8px;
+}
+
+.btn-group .btn-outline-danger:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.form-container {
+    max-width: 600px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.btn-submit {
+    background-color: #0d6efd;
+    border: none;
+    padding: 10px;
+    font-size: 18px;
+}
+
+.btn-submit:hover {
+    background-color: #0b5ed7;
+}
+
+.logout-btn {
+    background: none;
+    /* Fon rangini o'chirish */
+    border: none;
+    /* Ramkani o'chirish */
+    padding: 0;
+    /* Ichki bo'shliqni nol qilish */
+    cursor: pointer;
+    /* Sitchoncha borganda qo'lcha chiqishi */
+    color: white;
+    /* Ikonka rangi (rasmdagi matnga mos bo'lishi uchun) */
+    font-size: 24px;
+    /* Ikonka kattaligi */
+    display: flex;
+    align-items: center;
+    transition: 0.3s;
+    /* Effekt yumshoq chiqishi uchun */
+}
+
+/* Tugma ustiga borganda effekt (ixtiyoriy) */
+.logout-btn:hover {
+    color: #ff4d4d;
+    /* Sichqoncha borganda qizil rangga o'tadi */
+    transform: scale(1.1);
+    /* Bir oz kattalashadi */
+}

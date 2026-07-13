@@ -1,0 +1,65 @@
+/* Table Soft UI Styling */
+.table-responsive {
+    border-radius: 20px;
+    scrollbar-width: thin;
+}
+
+/* Skrollbarni chiroyli qilish */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #e1e7ff;
+    border-radius: 10px;
+}
+
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: #5e72e4;
+    border-bottom: 2px solid #f8f9fa;
+    padding: 15px 10px;
+    white-space: nowrap;
+}
+
+.ar-btn-info {
+    border-color: #185FA5;
+    color: #0C447C;
+    background: #E6F1FB;
+}
+
+.ar-btn-info:hover {
+    background: #B5D4F4;
+}
+
+.table tbody td {
+    font-size: 0.9rem;
+    padding: 15px 10px;
+    color: #32325d;
+    border-bottom: 1px solid #f1f3f9;
+    white-space: nowrap;
+}
+
+/* Badge uslubi */
+.bg-soft-primary {
+    background-color: #e8ebff;
+}
+
+/* Hover effekti */
+.table-hover tbody tr:hover {
+    background-color: rgba(246, 249, 252, 0.5);
+    transition: all 0.2s ease;
+}
+
+/* Button yumaloqligi */
+.btn-light {
+    background: #fff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

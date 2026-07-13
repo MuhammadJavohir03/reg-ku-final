@@ -1,0 +1,434 @@
+/* ----------------------------------------------------
+   GLOABAL WRAPPER & CORE STYLE
+---------------------------------------------------- */
+.modern-ariza-container {
+    width: 100%;
+    max-width: 750px;
+    /* Optimal o'qish kengligi */
+    margin: 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* PREMIUM MINIMALIST BANNER */
+.modern-banner {
+    background: #0f172a;
+    /* To'q ko'k-kulrang */
+    border-radius: 20px;
+    padding: 28px;
+    color: #ffffff;
+}
+
+.ar-alert {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+}
+
+.ar-alert-error {
+    background: #FCEBEB;
+    color: #791F1F;
+    border: 1px solid #F7C1C1;
+}
+
+.ar-alert-success {
+    background: #EAF3DE;
+    color: #27500A;
+    border: 1px solid #C0DD97;
+}
+
+.banner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fbbf24;
+    /* Oltin rang */
+    margin-bottom: 12px;
+}
+
+.modern-banner h1 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
+}
+
+.modern-banner p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* ----------------------------------------------------
+   TIMELINE CARDS (STEP-BY-STEP FLOW)
+---------------------------------------------------- */
+.timeline-flow-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.flow-step-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 24px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Bosqich sarlavhasi */
+.step-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.step-number {
+    font-size: 20px;
+    font-weight: 900;
+    color: #1e293b;
+    background: #f1f5f9;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-title h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 3px 0;
+}
+
+.step-title p {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* ----------------------------------------------------
+   INPUTS & SCROLL BOXES
+---------------------------------------------------- */
+.step-body-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.modern-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.modern-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* Silliq xira to'ldirilgan bloklar */
+.static-value-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Kompyuterda guruh va yo'nalish yonma-yon turishi uchun xavfsiz grid */
+.modern-input-grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Qidiruv qutisi */
+.modern-search-box {
+    position: relative;
+    width: 100%;
+}
+
+.modern-search-box i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.modern-search-box input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+/* Fanlar ro'yxati */
+.modern-scroll-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.subject-neo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+}
+
+.subject-neo-item:last-child {
+    border-bottom: none;
+}
+
+.subject-neo-item:hover {
+    background: #f8fafc;
+}
+
+.sub-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+}
+
+/* Kichik chiroyli badgelar */
+.sub-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.tag-primary {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.tag-success {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.tag-warning {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.tag-purple {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.hint-caption {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* Bo'sh katak ogohlantirishi */
+.empty-state-card-box {
+    background: #fafafa;
+    border: 1px dashed #d4d4d8;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 24px;
+    color: #a1a1aa;
+    margin-bottom: 6px;
+}
+
+.empty-state-card-box p {
+    font-size: 13px;
+    color: #71717a;
+    margin: 0;
+}
+
+/* ----------------------------------------------------
+   FOOTER BUTTONS (YAKUNIY ACTION)
+---------------------------------------------------- */
+.modern-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 100%;
+}
+
+.btn-primary-gold {
+    background: #1e293b;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary-dark {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ----------------------------------------------------
+   🚨 MAXSUS RESPONSIVE (MUTLOQ SINMASLIK KAFOLATI)
+---------------------------------------------------- */
+@media (max-width: 600px) {
+    .modern-ariza-container {
+        padding: 8px;
+        gap: 16px;
+    }
+
+    .modern-banner {
+        padding: 20px;
+    }
+
+    .modern-banner h1 {
+        font-size: 20px;
+    }
+
+    .flow-step-card {
+        padding: 16px;
+    }
+
+    /* TELEFONDA: Guruh va Yo'nalish ham bittadan alohida qatorga o'tadi */
+    .modern-input-grid-two {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .modern-form-actions {
+        flex-direction: column-reverse;
+        /* Tugmalar telefonda ustma-ust tushadi */
+    }
+
+    .btn-primary-gold,
+    .btn-secondary-dark {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Faqat telefonlar uchun (ekran o'lchami 768px dan kichik bo'lganda) */
+@media screen and (max-width: 768px) {
+
+    /* Jadvalning tepa sarlavhasini berkitamiz */
+    .arizalar-table thead {
+        display: none !important;
+    }
+
+    /* Jadval elementlarini blok holatiga o'tkazamiz */
+    .arizalar-table,
+    .arizalar-table tbody,
+    .arizalar-table tr,
+    .arizalar-table td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* Har bir qatorni alohida oq kartochka ko'rinishiga keltiramiz */
+    .arizalar-table tr {
+        margin-bottom: 20px !important;
+        border: 1px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        background: #ffffff !important;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* Kataklarni ichidagi yozuvlarni yonga suramiz va joy ajratamiz */
+    .arizalar-table td {
+        text-align: right !important;
+        padding: 8px 0 !important;
+        border: none !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    /* Savol qismini alohida ajratib, matnini chapdan boshlaymiz */
+    .arizalar-table td:nth-child(2) {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        text-align: left !important;
+        border-bottom: 1px dashed #eee !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* HTML ga tegmagan holda, CSS orqali har bir satr boshiga nom beramiz */
+    .arizalar-table td:nth-child(1)::before {
+        content: "№:";
+        font-weight: bold;
+        color: #555;
+    }
+
+    .arizalar-table td:nth-child(2)::before {
+        content: "Savol:";
+        font-weight: bold;
+        color: #555;
+        margin-bottom: 6px;
+    }
+
+    .arizalar-table td:nth-child(3)::before {
+        content: "Sizning javobingiz:";
+        font-weight: bold;
+        color: #555;
+    }
+
+    .arizalar-table td:nth-child(4)::before {
+        content: "Natija(ball):";
+        font-weight: bold;
+        color: #555;
+    }
+
+    .arizalar-table td:nth-child(5)::before {
+        content: "Holat:";
+        font-weight: bold;
+        color: #555;
+    }
+}

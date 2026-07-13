@@ -1,0 +1,279 @@
+.oz-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.oz-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.oz-filters select,
+.oz-filters input {
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    outline: none;
+    width: 100%;
+}
+
+.oz-filters select:focus,
+.oz-filters input:focus {
+    border-color: #7F77DD;
+}
+
+.oz-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.oz-card {
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.oz-card-success {
+    background: #EAF3DE;
+}
+
+.oz-card-danger {
+    background: #FCEBEB;
+}
+
+.oz-card-info {
+    background: #E6F1FB;
+}
+
+.oz-card-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+    color: #888;
+}
+
+.oz-card-val {
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.oz-card-success .oz-card-val {
+    color: #27500A;
+}
+
+.oz-card-danger .oz-card-val {
+    color: #791F1F;
+}
+
+.oz-card-info .oz-card-val {
+    color: #0C447C;
+}
+
+.oz-card-sub {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.oz-card-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: #e0e0e0;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.oz-card-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+}
+
+.oz-bar-green {
+    background: #639922;
+}
+
+.oz-bar-red {
+    background: #E24B4A;
+}
+
+.oz-bar-blue {
+    background: #378ADD;
+}
+
+.oz-sub-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.oz-sub-card {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid #f0f0f0;
+}
+
+.oz-sub-label {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.oz-sub-val {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.oz-sub-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.oz-green {
+    color: #27500A;
+}
+
+.oz-red {
+    color: #791F1F;
+}
+
+.oz-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.oz-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+}
+
+.oz-export-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.oz-export-btn:hover {
+    background: #f5f5f5;
+}
+
+.oz-table-wrap {
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    overflow: auto;
+}
+
+.oz-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.oz-table td,
+.oz-table th {
+    border: 1px solid #efefef;
+    padding: 7px 10px;
+    text-align: center;
+    color: #333;
+}
+
+.oz-th-name {
+    background: #f9f9f9;
+    color: #888;
+    font-size: 11px;
+    padding: 8px 12px;
+    text-align: left;
+    min-width: 180px;
+}
+
+.oz-fan-header {
+    background: #3d348952;
+    color: #CECBF6;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.oz-fan-teal {
+    background: #085041;
+    color: #9FE1CB;
+}
+.oz-row-success td {
+    background: #EAF3DE;
+}
+
+.oz-row-success:hover td {
+    background: #C0DD97;
+}
+.oz-fan-coral {
+    background: #712B13;
+    color: #F5C4B3;
+}
+
+.oz-fan-amber {
+    background: #633806;
+    color: #FAC775;
+}
+
+.oz-col-header {
+    background: #EEEDFE;
+    color: #3C3489;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.oz-col-teal {
+    background: #E1F5EE;
+    color: #085041;
+}
+
+.oz-col-coral {
+    background: #FAECE7;
+    color: #712B13;
+}
+
+.oz-col-amber {
+    background: #FAEEDA;
+    color: #633806;
+}
+
+.oz-row-header {
+    background: #f9f9f9;
+    padding: 8px 12px;
+    color: #333;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.oz-table tbody tr:hover td {
+    background: #fafafa;
+}
+
+.oz-val-ok {
+    color: #27500A;
+}
+
+.oz-val-bad {
+    color: #791F1F;
+    background: #FCEBEB;
+    font-weight: 500;
+}

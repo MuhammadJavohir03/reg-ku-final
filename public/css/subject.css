@@ -1,0 +1,241 @@
+:root {
+    --app-bg: #f5f7fb;
+    --card-white: #ffffff;
+    --text-dark: #1d1d1f;
+    --text-gray: #86868b;
+    --accent-blue: #0071e3;
+}
+
+.search-container {
+    position: relative;
+    width: 500px;
+    margin-bottom: 25px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 20px 12px 45px;
+    font-size: 14px;
+    color: #333;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    /* Sahifadagi kartalarga mos burchak */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.app-container {
+    background: var(--app-bg);
+    min-height: 100vh;
+    padding: 50px 10%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 40px;
+}
+
+.app-badge {
+    color: var(--accent-blue);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: -0.02em;
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 5px 0 0 0;
+    color: var(--text-dark);
+}
+
+.add-new-glass {
+    background: var(--text-dark);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.add-new-glass:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.app-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.app-row {
+    background: var(--card-white);
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.status-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    transition: 0.3s;
+}
+
+.row-content {
+    padding: 25px 35px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.col-info {
+    flex: 1.5;
+}
+
+.subject-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 8px;
+}
+
+.subject-main h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.category-pill {
+    font-size: 0.75rem;
+    background: #f2f2f7;
+    padding: 4px 12px;
+    border-radius: 100px;
+    color: #3a3a3c;
+    font-weight: 500;
+}
+
+.subject-sub {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.col-teacher {
+    flex: 1;
+    border-left: 1px solid #f2f2f7;
+    padding-left: 40px;
+}
+
+.teacher-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-small {
+    width: 40px;
+    height: 40px;
+    background: #f2f2f7;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+
+.teacher-details .label {
+    margin: 0;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-gray);
+    letter-spacing: 0.05em;
+}
+
+.teacher-details .name {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* Actions - Faqat hoverda chiqadi */
+.col-actions {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: 0.3s;
+}
+
+.app-row:hover {
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+}
+
+.app-row:hover .col-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.app-row:hover .status-bar {
+    width: 10px;
+}
+
+.icon-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+    cursor: pointer;
+    background: #f2f2f7;
+    color: var(--text-dark);
+    margin-left: 8px;
+    text-decoration: none;
+}
+
+.edit-btn:hover {
+    background: #0071e3;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #ff3b30;
+    color: white;
+}

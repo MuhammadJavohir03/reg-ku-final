@@ -1,0 +1,647 @@
+/* =============================================
+           RESET & BASE
+        ============================================= */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #f4f6f9;
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+}
+
+a,
+button,
+i {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+    text-decoration: none;
+}
+
+/* =============================================
+           PC SIDEBAR
+        ============================================= */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    background: #11101d;
+    z-index: 200;
+    transition: width 0.4s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.close {
+    width: 78px;
+}
+
+/* Logo */
+.sidebar .logo-area {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebar .logo-area i {
+    font-size: 26px;
+    color: #fff;
+    min-width: 46px;
+    text-align: center;
+}
+
+.sidebar .logo-area .logo-img {
+    height: 36px;
+    opacity: 1;
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.sidebar.close .logo-area .logo-img {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Nav links */
+.sidebar .nav-links {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 0;
+}
+
+.sidebar .nav-links::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar .nav-links::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.nav-links li {
+    list-style: none;
+}
+
+.nav-links li>a,
+.nav-links li .iocn-link>a {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    color: #ccc;
+    transition: background 0.2s, color 0.2s;
+}
+
+.nav-links li:hover>a,
+.nav-links li:hover .iocn-link>a {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.nav-links li a i,
+.nav-links li .iocn-link i:first-child {
+    font-size: 20px;
+    min-width: 78px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    color: inherit;
+    flex-shrink: 0;
+}
+
+.nav-links li a .link_name {
+    font-size: 14px;
+    font-weight: 400;
+    white-space: nowrap;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar.close .nav-links li a .link_name {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* iocn-link (dropdown trigger) */
+.nav-links li .iocn-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.nav-links li .iocn-link:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.sidebar.close .nav-links li .iocn-link {
+    display: block;
+}
+
+.nav-links li .iocn-link i.arrow {
+    font-size: 18px;
+    min-width: 40px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    color: #aaa;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.sidebar.close .nav-links li .iocn-link i.arrow {
+    display: none;
+}
+
+.nav-links li.showMenu .iocn-link i.arrow {
+    transform: rotate(-180deg);
+}
+
+/* Sub-menu */
+.nav-links li .sub-menu {
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 0 8px 0;
+}
+
+.nav-links li.showMenu .sub-menu {
+    display: block;
+}
+
+.nav-links li .sub-menu.blank {
+    display: none;
+    pointer-events: none;
+}
+
+.nav-links li .sub-menu a {
+    padding: 7px 12px 7px 78px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+    transition: color 0.2s, background 0.2s;
+}
+
+.nav-links li .sub-menu a:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Sidebar yopiqda hover sub-menu */
+.sidebar.close .nav-links li:hover .sub-menu.blank,
+.sidebar.close .nav-links li:hover .sub-menu {
+    display: block;
+    position: absolute;
+    left: 78px;
+    top: 0;
+    width: 200px;
+    background: #1d1b31;
+    border-radius: 0 8px 8px 0;
+    padding: 8px 0;
+    box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+}
+
+.sidebar.close .nav-links li .sub-menu .link_name {
+    display: none;
+}
+
+.sidebar.close .nav-links li:hover .sub-menu .link_name {
+    display: block;
+    opacity: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 4px;
+}
+
+.sidebar.close .nav-links li .sub-menu a {
+    padding: 7px 16px;
+}
+
+/* =============================================
+           PROFIL (PC)
+        ============================================= */
+.sidebar .profile-area {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.sidebar.close .profile-area {
+    justify-content: center;
+    padding: 12px 0;
+}
+
+.profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3C3489, #7F77DD);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.profile-info {
+    flex: 1;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar.close .profile-info {
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+}
+
+.profile-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-meta {
+    font-size: 11px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.logout-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn i {
+    font-size: 20px;
+    color: #aaa;
+    display: block;
+}
+
+.sidebar.close .logout-btn i {
+    color: #fff;
+}
+
+/* =============================================
+           MAIN CONTENT (PC)
+        ============================================= */
+.home-section {
+    position: relative;
+    min-height: 100vh;
+    left: 260px;
+    width: calc(100% - 260px);
+    transition: left 0.4s ease, width 0.4s ease;
+    padding: 16px;
+}
+
+.sidebar.close~.home-section {
+    left: 78px;
+    width: calc(100% - 78px);
+}
+
+/* Topbar (PC) */
+.topbar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 10px;
+    padding: 0 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    gap: 12px;
+}
+
+.topbar .bx-menu {
+    font-size: 22px;
+    cursor: pointer;
+    color: #333;
+}
+
+.topbar-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    flex: 1;
+}
+
+/* PC topbarda profil ko'rsatish */
+.topbar-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topbar-profile .tp-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3C3489, #7F77DD);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.topbar-profile .tp-info {
+    line-height: 1.2;
+}
+
+.topbar-profile .tp-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.topbar-profile .tp-role {
+    font-size: 11px;
+    color: #aaa;
+}
+
+/* =============================================
+           MOBILE STYLES
+        ============================================= */
+.mobile-navbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #11101d;
+    z-index: 300;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-navbar .mn-logo img {
+    height: 30px;
+}
+
+.mobile-navbar .mn-spacer {
+    flex: 1;
+}
+
+.mobile-navbar .mn-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-navbar .mn-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3C3489, #7F77DD);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.mobile-navbar .mn-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-navbar .mn-hamburger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.mobile-navbar .mn-hamburger i {
+    font-size: 24px;
+    color: #fff;
+    display: block;
+}
+
+/* Mobile drawer */
+.mobile-drawer {
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 260px;
+    height: calc(100% - 56px);
+    background: #11101d;
+    z-index: 250;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.35s ease;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-drawer.open {
+    transform: translateX(0);
+}
+
+.mobile-drawer .drawer-nav {
+    padding: 8px 0 80px;
+}
+
+.mobile-drawer .drawer-nav li {
+    list-style: none;
+}
+
+.mobile-drawer .drawer-nav li a,
+.mobile-drawer .drawer-nav li .d-iocn-link>a {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    color: #ccc;
+    transition: background 0.2s, color 0.2s;
+}
+
+.mobile-drawer .drawer-nav li:hover>a,
+.mobile-drawer .drawer-nav li:hover .d-iocn-link>a {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.mobile-drawer .drawer-nav li a i,
+.mobile-drawer .drawer-nav li .d-iocn-link i:first-child {
+    font-size: 20px;
+    min-width: 60px;
+    height: 48px;
+    line-height: 48px;
+    text-align: center;
+    color: inherit;
+}
+
+.mobile-drawer .drawer-nav li a .link_name {
+    font-size: 14px;
+}
+
+.mobile-drawer .d-iocn-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.mobile-drawer .d-iocn-link:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.mobile-drawer .d-iocn-link i.arrow {
+    font-size: 18px;
+    min-width: 40px;
+    height: 48px;
+    line-height: 48px;
+    text-align: center;
+    color: #aaa;
+    transition: transform 0.3s;
+}
+
+.mobile-drawer li.showMenu .d-iocn-link i.arrow {
+    transform: rotate(-180deg);
+}
+
+.mobile-drawer .d-sub-menu {
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.mobile-drawer li.showMenu .d-sub-menu {
+    display: block;
+}
+
+.mobile-drawer .d-sub-menu a {
+    padding: 7px 12px 7px 60px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.mobile-drawer .d-sub-menu a:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Overlay */
+.drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 240;
+}
+
+.drawer-overlay.show {
+    display: block;
+}
+
+/* Bottom navigation */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #11101d;
+    z-index: 300;
+    align-items: center;
+    justify-content: space-around;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    gap: 2px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: color 0.2s;
+    text-decoration: none;
+}
+
+.bottom-nav a:hover,
+.bottom-nav a.active {
+    color: #fff;
+}
+
+.bottom-nav a i {
+    font-size: 22px;
+}
+
+.bottom-nav a span {
+    font-size: 10px;
+}
+
+/* Mobile main content */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+
+    .topbar {
+        display: none;
+    }
+
+    .mobile-navbar {
+        display: flex;
+    }
+
+    .mobile-drawer {
+        display: block;
+    }
+
+    .bottom-nav {
+        display: flex;
+    }
+
+    .home-section {
+        left: 0 !important;
+        width: 100% !important;
+        padding: 12px 12px 76px;
+        margin-top: 56px;
+    }
+}

@@ -1,0 +1,302 @@
+/* Google font - Inter va Plus Jakarta Sans aralashmasi */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.1px;
+}
+
+body {
+    background-color: #ffffff;
+    /* Mutloq oppoq zamin */
+    color: #000000;
+    min-height: 100vh;
+}
+
+.premium-layout {
+    max-width: 16500px;
+    margin: 0 auto;
+}
+
+/* ----------------------------------------------------
+   HEADER PANEL (Minimalist Oliy Estetika)
+---------------------------------------------------- */
+.table-header-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.badge-status-live {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: #000000;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.panel-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111111;
+    margin-top: 8px;
+    letter-spacing: -0.8px;
+}
+
+.btn-minimal-back {
+    text-decoration: none;
+    color: #000000;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-minimal-back:hover {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+}
+
+/* ----------------------------------------------------
+   JADVALNING ULTRA-ZAMONAVIY TUZILISHI (COLOS STYLE)
+---------------------------------------------------- */
+.table-frame {
+    width: 100%;
+    border: 1px solid #e5e5e5;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
+    overflow: hidden;
+}
+
+.colos-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+/* Sarlavhalar - To'q kulrang va juda toza */
+.colos-table th {
+    background: #fafafa;
+    color: #666666;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+/* Qatorlar (Rows) */
+.colos-table td {
+    padding: 20px 24px;
+    font-size: 14px;
+    color: #444444;
+    border-bottom: 1px solid #f5f5f5;
+    background: #ffffff;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.colos-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- HOVER EFFEKTI: Qator silliq va qora zamonaviy chiziq bilan ajraladi --- */
+.colos-table tbody tr:hover td {
+    background: #fafafa;
+    color: #000000;
+    border-bottom-color: #d1d1d1;
+    border-top-color: #d1d1d1;
+}
+
+/* ----------------------------------------------------
+   KICHIK ELEMENTLAR DETALLARI
+---------------------------------------------------- */
+
+/* Tartib raqami qutisi */
+.row-index {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    color: #999999;
+}
+
+/* Talaba xonasi */
+.student-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-dot {
+    width: 8px;
+    height: 8px;
+    background: #000000;
+    border-radius: 50%;
+}
+
+.student-fullname {
+    font-weight: 700;
+    color: #111111;
+}
+
+/* Guruh xonasi - nozik oq kapsula */
+/* Guruh xonasi - kengroq va chiroyli variant */
+.group-capsule {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    color: #111111;
+
+    /* --- MANA SHU QATORLARNI O'ZGARTIRING --- */
+    display: inline-block;
+    min-width: 90px;
+    /* Kamida 90px kenglik beradi (yoki o'zingizga moslab 100px qiling) */
+    text-align: center;
+    /* Matnni o'rtaga tekislaydi */
+    padding: 6px 16px;
+    /* Ichki masofani (tepa-past, chap-o'ng) kengaytiradi */
+    /* ---------------------------------------- */
+
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Umumiy baholar uchun Premium Indikatorlar */
+.score-indicator {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+}
+
+/* Neon effekt emas, toza grafik tuslar */
+/* Toza premium ranglar (oq fonga moslangan yumshoq turlar) */
+.status-perfect {
+    background: #e6f4ea;
+    color: #10b981;
+}
+
+/* Yashil ( > 70 ) */
+
+.status-passed {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+/* Sariq/To'q olovrang ( >= 60 ) */
+
+.status-failed {
+    background: #fce8e6;
+    color: #d93025;
+}
+
+/* Qizil ( < 60 ) */
+
+/* Davomat chizig'i */
+.attendance-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.percent-text {
+    font-size: 13px;
+    font-weight: 700;
+    width: 45px;
+}
+
+.mini-progress-bg {
+    flex: 1;
+    height: 4px;
+    background: #eeeeee;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.mini-progress-bar {
+    height: 100%;
+    border-radius: 2px;
+}
+
+/* Minimalist Danger Button - Colos Style */
+.btn-minimal-danger {
+    background: #ffffff;
+    color: #d93025;
+    /* Premium qizil rang */
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: 1px solid #fce8e6;
+    /* Yumshoq qizil hoshiya */
+    border-radius: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-minimal-danger:hover {
+    background: #d93025;
+    /* Hover bo'lganda butunlay qizil bo'ladi */
+    color: #ffffff;
+    border-color: #d93025;
+    box-shadow: 0 4px 12px rgba(217, 48, 37, 0.15);
+    /* Nozik qizil soya */
+}
+
+/* Yordamchi klaslar */
+.text-center {
+    text-align: center !important;
+}
+
+.text-muted {
+    color: #888888;
+    font-weight: 500;
+}
+
+.text-dark {
+    color: #111111;
+}
+
+.font-mono {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+}
+
+/* Bo'sh holat */
+.table-empty {
+    text-align: center;
+    padding: 60px !important;
+}
+
+.empty-box {
+    color: #999999;
+}
+
+.empty-box i {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+/* Pagination paneli */
+.pagination-footer {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
