@@ -36,7 +36,6 @@
     /* ---------------- Xabar yuborish (forma reload bo'lmasdan) ---------------- */
     const sendForm = document.getElementById('send-form');
     const messagesBox = document.getElementById('chat-messages');
-    const myId = window.CurrentUserId ?? null;
 
     if (sendForm && messagesBox) {
         sendForm.addEventListener('submit', async function (e) {
@@ -81,7 +80,9 @@
     if (messagesBox && messagesBox.dataset.pollUrl) {
         messagesBox.scrollTop = messagesBox.scrollHeight;
 
-        setInterval(async function () {
+        let conversationTimer = null;
+
+        async function pollConversation() {
             try {
                 const url = new URL(messagesBox.dataset.pollUrl, window.location.origin);
                 url.searchParams.set('after', messagesBox.dataset.lastId || 0);
@@ -92,6 +93,9 @@
                 if (data.messages && data.messages.length) {
                     let hasIncoming = false;
                     data.messages.forEach(function (message) {
+                        // Sahifadan takror qo'shib yubormaslik uchun tekshiramiz
+                        if (messagesBox.querySelector('[data-message-id="' + message.id + '"]')) return;
+
                         const bubble = renderBubble(message, message.receiver_id === null ? message.sender_id : (window.CurrentUserId));
                         messagesBox.appendChild(bubble);
                         messagesBox.dataset.lastId = message.id;
@@ -111,7 +115,43 @@
                     }
                 }
             } catch (e) { /* internet vaqtincha yo'q bo'lishi mumkin */ }
-        }, 3000);
+        }
+
+        function startConversationPolling() {
+            if (conversationTimer) return;
+            pollConversation(); // darhol bir marta tekshiramiz
+            conversationTimer = setInterval(pollConversation, 1000);
+        }
+
+        function stopConversationPolling() {
+            if (conversationTimer) {
+                clearInterval(conversationTimer);
+                conversationTimer = null;
+            }
+        }
+
+        startConversationPolling();
+
+        // Mobilda ekran o'chib-yonganda yoki tab background'ga o'tganda
+        // brauzer setInterval'ni to'xtatib qo'yishi mumkin. Sahifa qaytib
+        // ko'rinishga chiqqanda darhol qayta so'rov yuboramiz.
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                pollConversation();
+                startConversationPolling();
+            } else {
+                stopConversationPolling();
+            }
+        });
+
+        window.addEventListener('pageshow', function () {
+            pollConversation();
+            startConversationPolling();
+        });
+
+        window.addEventListener('focus', function () {
+            pollConversation();
+        });
     }
 
     /* ---------------- Rozilik berish tugmasi ---------------- */
@@ -166,8 +206,9 @@
     const sidebarList = document.getElementById('sidebar-list');
     if (sidebarList && window.ChatOverviewUrl) {
         let lastSeenMessageId = null;
+        let sidebarTimer = null;
 
-        setInterval(async function () {
+        async function pollSidebar() {
             try {
                 const res = await fetch(window.ChatOverviewUrl, { headers: { 'Accept': 'application/json' } });
                 const data = await res.json();
@@ -183,6 +224,34 @@
                     if (!document.hidden) location.reload();
                 }
             } catch (e) { /* jim */ }
-        }, 5000);
+        }
+
+        function startSidebarPolling() {
+            if (sidebarTimer) return;
+            sidebarTimer = setInterval(pollSidebar, 5000);
+        }
+
+        function stopSidebarPolling() {
+            if (sidebarTimer) {
+                clearInterval(sidebarTimer);
+                sidebarTimer = null;
+            }
+        }
+
+        startSidebarPolling();
+
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                pollSidebar();
+                startSidebarPolling();
+            } else {
+                stopSidebarPolling();
+            }
+        });
+
+        window.addEventListener('pageshow', function () {
+            pollSidebar();
+            startSidebarPolling();
+        });
     }
 })();

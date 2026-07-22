@@ -1,0 +1,9 @@
+{
+  "appId": "com.muhammadjavohir.regkufinal",
+  "appName": "reg-ku-final",
+  "webDir": "public",
+  "server": {
+    "url": "http://10.179.128.37:8000",
+    "cleartext": true
+  }
+}

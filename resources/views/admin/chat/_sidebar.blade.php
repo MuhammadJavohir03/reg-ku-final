@@ -12,6 +12,9 @@
 </script>
 
 <div class="chat-sidebar__header">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <a href="{{ route('index') }}" style="text-decoration:none; color:#374151; font-size:13px;">&#8592; Dashboard</a>
+    </div>
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
         <a href="{{ route('admin_chat') }}" style="text-decoration:none; color:#374151;">&#8592;</a>
         <strong>{{ $section->name }}</strong>

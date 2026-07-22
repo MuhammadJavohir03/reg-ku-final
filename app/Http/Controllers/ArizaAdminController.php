@@ -245,9 +245,12 @@ class ArizaAdminController extends Controller
     /**
      * Arizani o'chirish
      */
-    public function destroy(mini_semestr $ariza_admin)
+    public function destroy(string $type, int $ariza_admin)
     {
-        $ariza_admin->delete();
+        $model = $type === 'free' ? free_semestr::class : mini_semestr::class;
+
+        $ariza = $model::findOrFail($ariza_admin);
+        $ariza->delete();
 
         return redirect()
             ->route('ariza_admin.index')

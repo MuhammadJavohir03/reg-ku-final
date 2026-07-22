@@ -2,7 +2,12 @@
 @section('title', 'Admin Chat')
 
 @section('sidebar')
-    <div class="chat-sidebar__header"><strong>Mening bo'limlarim</strong></div>
+    <div class="chat-sidebar__header">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <a href="{{ route('index') }}" style="text-decoration:none; color:#374151; font-size:13px;">&#8592; Dashboard</a>
+        </div>
+        <strong>Mening bo'limlarim</strong>
+    </div>
     <div class="chat-sidebar__list">
         @forelse ($sections as $section)
             <a href="{{ route('admin_chat.section', $section) }}" class="chat-item">

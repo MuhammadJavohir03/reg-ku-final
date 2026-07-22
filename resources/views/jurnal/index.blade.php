@@ -57,6 +57,9 @@
                 <div class="jr-topbar">
                     <h2 id="subjectTitle">Fan tanlanmagan</h2>
                     <div class="jr-top-actions">
+                        <button id="exportBtn" class="jr-export-btn" disabled title="Avval bo'lim, maktab turi va fanni tanlang">
+                            <i class="fas fa-file-excel"></i> Excel'ga yuklash
+                        </button>
                         <div class="jr-page-select">
                             Ko'rsatish:
                             <select id="pageSize">
@@ -313,6 +316,32 @@
             border: none;
             border-top: 1px solid #eee;
         }
+
+        .jr-export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 1px solid #1f9d55;
+            background: #1f9d55;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s ease;
+        }
+
+        .jr-export-btn:hover:not(:disabled) {
+            background: #17803f;
+        }
+
+        .jr-export-btn:disabled {
+            background: #f0f0f0;
+            border-color: #d7dbe0;
+            color: #999;
+            cursor: not-allowed;
+        }
     </style>
 
     <script>
@@ -326,6 +355,7 @@
                 gradeUpdate: "{{ route('jurnal.grade.update') }}",
                 topicGradeUpdate: "{{ route('jurnal.topic.grade.update') }}",
                 gradeHistory: "{{ route('jurnal.grade.history') }}",
+                export: "{{ route('jurnal.export') }}",
             };
 
             const TUR_STYLE = {
@@ -373,6 +403,18 @@
             const rangeInfo = document.getElementById('rangeInfo');
             const pager = document.getElementById('pager');
             const pageSizeSelect = document.getElementById('pageSize');
+            const exportBtn = document.getElementById('exportBtn');
+
+            function updateExportBtnState() {
+                exportBtn.disabled = !(state.bolimId && state.type && state.subjectId);
+            }
+
+            exportBtn.addEventListener('click', function() {
+                if (exportBtn.disabled) return;
+                const url =
+                    `${ROUTES.export}?bolim_id=${state.bolimId}&type=${state.type}&subject_id=${state.subjectId}`;
+                window.location.href = url;
+            });
 
             // ================= 1) BO'LIM TANLASH =================
             bolimSelect.addEventListener('change', function() {
@@ -442,10 +484,12 @@
                     subjectTitle.textContent = 'Fan tanlanmagan';
                     renderTableHead();
                     renderStudents();
+                    updateExportBtnState();
                     return;
                 }
 
                 subjectTitle.textContent = this.options[this.selectedIndex].text;
+                updateExportBtnState();
                 tbody.innerHTML =
                     '<tr><td colspan="10" style="text-align:center;color:#999;padding:24px;">Yuklanmoqda...</td></tr>';
 
@@ -485,6 +529,7 @@
                 resetGroupFilter();
                 renderTableHead();
                 renderStudents();
+                updateExportBtnState();
             }
 
             function resetAfterType() {
@@ -495,6 +540,7 @@
                 resetGroupFilter();
                 renderTableHead();
                 renderStudents();
+                updateExportBtnState();
             }
 
             // ================= GURUH FILTRI =================

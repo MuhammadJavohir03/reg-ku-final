@@ -216,7 +216,9 @@
                     <ul class="sub-menu">
                         <li><a href="{{ route('free_semestr.index') }}">Bepul imkoniyatlar</a></li>
                         <li><a href="{{ route('mini_semestr_admin.index') }}">Mini Semestr</a></li>
-                        <li><a href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                        @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
+                            <li><a href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                        @endif
                     </ul>
                 </li>
                 <li>
@@ -300,15 +302,17 @@
                         <li><a class="link_name" href="{{ route('admin_chat') }}">Chat</a></li>
                     </ul>
                 </li>
-                <li>
-                    <a href="{{ route('admin.sections.index') }}">
-                        <i class="bx bx-collection"></i>
-                        <span class="link_name">Sections</span>
-                    </a>
-                    <ul class="sub-menu blank">
-                        <li><a class="link_name" href="{{ route('admin.sections.index') }}">Sections</a></li>
-                    </ul>
-                </li>
+                @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
+                    <li>
+                        <a href="{{ route('admin.sections.index') }}">
+                            <i class="bx bx-collection"></i>
+                            <span class="link_name">Sections</span>
+                        </a>
+                        <ul class="sub-menu blank">
+                            <li><a class="link_name" href="{{ route('admin.sections.index') }}">Sections</a></li>
+                        </ul>
+                    </li>
+                @endif
             @endif
 
             @if (auth()->user()?->role === 'talaba')
@@ -485,6 +489,9 @@
                     <ul class="d-sub-menu">
                         <li class="my-2"><a href="{{ route('free_semestr.index') }}">Bepul imkoniyatlar</a></li>
                         <li class="my-2"><a href="{{ route('mini_semestr_admin.index') }}">Mini Semestr</a></li>
+                        @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
+                            <li class="my-2"><a href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                        @endif
                     </ul>
                 </li>
                 <li><a href="{{ route('bepul_semestr.index') }}"><i class="bx bx-award"></i><span
@@ -501,11 +508,10 @@
                             class="link_name">Savol banki</span></a></li>
                 <li><a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span
                             class="link_name">Chat</span></a></li>
-                <li><a href="{{ route('ariza_admin.index') }}"><i class="bx bx-file"></i><span>Arizalar
-                            (admin)</span></a>
-                </li>
-                <li><a href="{{ route('admin.sections.index') }}"><i class="bx bx-collection"></i><span
-                            class="link_name">Sections</span></a></li>
+                @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
+                    <li><a href="{{ route('admin.sections.index') }}"><i class="bx bx-collection"></i><span
+                                class="link_name">Sections</span></a></li>
+                @endif
             @endif
 
             @if (auth()->user()?->role === 'talaba')
@@ -520,7 +526,8 @@
                     </div>
                     <ul class="d-sub-menu">
                         @if ($showFree)
-                            <li class='my-2'><a href="{{ route('free_semestr_user.index') }}">Bepul imkoniyatlar</a></li>
+                            <li class='my-2'><a href="{{ route('free_semestr_user.index') }}">Bepul
+                                    imkoniyatlar</a></li>
                         @endif
                         @if ($showMini)
                             <li class='my-2'><a href="{{ route('mini_semestr_user.index') }}">Mini Semestr</a></li>
@@ -578,16 +585,20 @@
             @if (auth()->user()->role === 'admin')
                 <a href="{{ route('index') }}"><i class="bx bx-grid-alt"></i><span>Bosh</span></a>
                 <a href="{{ route('users.index') }}"><i class="bx bx-group"></i><span>Users</span></a>
-                <a href="{{ route('bepul_maktab.index') }}"><i class="fas fa-chalkboard-user"></i><span>Bepul Maktab</span></a>
+                <a href="{{ route('bepul_maktab.index') }}"><i class="fas fa-chalkboard-user"></i><span>Bepul
+                        Maktab</span></a>
                 <a href="{{ route('subject.index') }}"><i class="bx bx-book"></i><span>Fanlar</span></a>
                 <a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span>Chat</span></a>
-                <a href="{{ route('ariza_admin.index') }}"><i class="bx bx-file"></i><span>Arizalar (admin)</span></a>
+                @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
+                    <a href="{{ route('ariza_admin.index') }}"><i class="bx bx-file"></i><span>Arizalar
+                            (admin)</span></a>
+                @endif
             @else
                 <a href="{{ route('index') }}"><i class="bx bx-grid-alt"></i><span>Bosh</span></a>
                 <a href="{{ route('free_semestr_user.index') }}"><i
                         class="bx bx-collection"></i><span>Arizalar</span></a>
-                <a href="{{ route('talaba.bepul_maktab.index') }}"><i
-                        class="bx bx-book-open"></i><span>Bepul Maktab</span></a>
+                <a href="{{ route('talaba.bepul_maktab.index') }}"><i class="bx bx-book-open"></i><span>Bepul
+                        Maktab</span></a>
                 <a href="{{ route('talaba.mini_maktab.index') }}"><i class="bx bx-book-reader"></i><span>Mini
                         Semestr</span></a>
                 <a href="{{ route('chat') }}"><i class="bx bx-chat"></i><span>Chat</span></a>

@@ -148,7 +148,7 @@
         }
     </style>
 </head>
-<body class="{{ request()->routeIs('*.section') || request()->routeIs('*.user') || request()->routeIs('*.conversation') ? 'chat-open' : '' }}">
+<body class="@hasSection('chat') chat-open @endif">
     <div class="chat-app">
         <aside class="chat-sidebar">
             @yield('sidebar')

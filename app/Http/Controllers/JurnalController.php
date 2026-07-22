@@ -10,6 +10,11 @@ use App\Models\MsMavzu;
 use App\Models\MsJoriyBaho;
 use App\Models\GradeEditLog;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class JurnalController extends Controller
 {
@@ -215,6 +220,182 @@ class JurnalController extends Controller
             ->values();
 
         return response()->json($data);
+    }
+
+    /**
+     * Bo'lim + maktab turi + fan bo'yicha talabalar baholarini Excel (.xlsx) formatida eksport qiladi.
+     * Har qanday holatda (free yoki mini) 5 ta ustun chiqadi:
+     * Joriy baho, Oraliq baho, Joriy+Oraliq, Yakuniy baho, Umumiy baho.
+     * Fayl nomi: {bolim_nomi}_{fan_nomi}_{maktab_turi}.xlsx
+     * (GET /jurnal/export?bolim_id=..&type=free|mini&subject_id=..)
+     */
+    public function export(Request $request)
+    {
+        $request->validate([
+            'bolim_id'   => 'required|integer',
+            'type'       => 'required|in:free,mini',
+            'subject_id' => 'required|integer',
+        ]);
+
+        $bolimModel   = bolim::findOrFail($request->bolim_id);
+        $subjectModel = subject::findOrFail($request->subject_id);
+
+        $rows = $this->collectExportRows((int) $request->bolim_id, $request->type, (int) $request->subject_id);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Baholar');
+
+        // ---------- Sarlavhalar ----------
+        // 1-qator: F.I.O (A1:A2 birlashtiriladi) | Fan nomi (B1:F1 birlashtiriladi)
+        $sheet->mergeCells('A1:A2');
+        $sheet->setCellValue('A1', 'Talaba F.I.O.');
+
+        $sheet->mergeCells('B1:F1');
+        $sheet->setCellValue('B1', $subjectModel->nomi);
+
+        $sheet->setCellValue('B2', 'Joriy baho');
+        $sheet->setCellValue('C2', 'Oraliq baho');
+        $sheet->setCellValue('D2', 'Joriy+Oraliq');
+        $sheet->setCellValue('E2', 'Yakuniy baho');
+        $sheet->setCellValue('F2', 'Umumiy baho');
+
+        // ---------- Sarlavha stili ----------
+        $headerRange = 'A1:F2';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true);
+        $sheet->getStyle($headerRange)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+            ->setVertical(Alignment::VERTICAL_CENTER)
+            ->setWrapText(true);
+        $sheet->getStyle($headerRange)->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('EEEDFE');
+        $sheet->getStyle($headerRange)->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN);
+
+        // ---------- Ma'lumotlar ----------
+        $rowNum = 3;
+        foreach ($rows as $row) {
+            $sheet->setCellValue("A{$rowNum}", $row['name']);
+            $sheet->setCellValue("B{$rowNum}", $row['joriy_baho']);
+            $sheet->setCellValue("C{$rowNum}", $row['oraliq_baho']);
+            $sheet->setCellValue("D{$rowNum}", $row['joriy_oraliq']);
+            $sheet->setCellValue("E{$rowNum}", $row['yakuniy_baho']);
+            $sheet->setCellValue("F{$rowNum}", $row['umumiy']);
+            $rowNum++;
+        }
+
+        $lastRow = $rowNum - 1;
+        if ($lastRow >= 3) {
+            $sheet->getStyle("A3:F{$lastRow}")->getBorders()->getAllBorders()
+                ->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("B3:F{$lastRow}")->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        }
+
+        // ---------- Ustun kengliklari ----------
+        $sheet->getColumnDimension('A')->setWidth(32);
+        foreach (['B', 'C', 'D', 'E', 'F'] as $col) {
+            $sheet->getColumnDimension($col)->setWidth(14);
+        }
+
+        // ---------- Fayl nomi ----------
+        $typeLabel = $request->type === 'free' ? 'Bepul_maktab' : 'Mini_semestr';
+        $fileName = $this->sanitizeFileName($bolimModel->nomi) . '_'
+            . $this->sanitizeFileName($subjectModel->nomi) . '_'
+            . $typeLabel . '.xlsx';
+
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Eksport uchun bo'lim+fan+maktab turiga tegishli har bir talabaning
+     * FIO va 5 ta baho ustuni (joriy, oraliq, joriy_oraliq, yakuniy, umumiy) ni tayyorlaydi.
+     * Mantiq students() metodidagi bilan bir xil: bazadagi qiymat bo'lsa o'shani,
+     * bo'lmasa avtomatik hisoblangan qiymatni oladi.
+     */
+    private function collectExportRows(int $bolimId, string $type, int $subjectId): array
+    {
+        if ($type === 'free') {
+            return free_semestr::with('user')
+                ->where('bolim_id', $bolimId)
+                ->where('subject_id', $subjectId)
+                ->get()
+                ->filter(fn($r) => $r->user !== null)
+                ->map(function ($r) {
+                    $joriyBaho   = $r->joriy_baho;
+                    $oraliqBaho  = $r->oraliq_baho;
+                    $yakuniyBaho = $r->yakuniy_baho;
+
+                    $joriyOraliq = $r->joriy_oraliq !== null
+                        ? $r->joriy_oraliq
+                        : (($joriyBaho !== null && $oraliqBaho !== null) ? $joriyBaho + $oraliqBaho : null);
+
+                    $umumiy = $r->umumiy !== null
+                        ? $r->umumiy
+                        : (($joriyOraliq !== null && $yakuniyBaho !== null) ? $joriyOraliq + $yakuniyBaho : null);
+
+                    return [
+                        'name'         => $r->user->{'To‘liq_ismi'} ?? '—',
+                        'joriy_baho'   => $joriyBaho,
+                        'oraliq_baho'  => $oraliqBaho,
+                        'joriy_oraliq' => $joriyOraliq,
+                        'yakuniy_baho' => $yakuniyBaho,
+                        'umumiy'       => $umumiy,
+                    ];
+                })
+                ->values()
+                ->all();
+        }
+
+        // ---------- MINI ----------
+        return mini_semestr::with('user')
+            ->where('bolim_id', $bolimId)
+            ->where('subject_id', $subjectId)
+            ->get()
+            ->filter(fn($r) => $r->user !== null)
+            ->map(function ($r) {
+                $joriyBaho   = $r->joriy_baho;
+                $oraliqBaho  = $r->oraliq_baho;
+                $yakuniyBaho = $r->yakuniy_baho;
+
+                $joriyOraliq = $r->joriy_oraliq !== null
+                    ? $r->joriy_oraliq
+                    : (($joriyBaho !== null && $oraliqBaho !== null) ? $joriyBaho + $oraliqBaho : null);
+
+                $umumiy = $r->umumiy !== null
+                    ? $r->umumiy
+                    : (($joriyOraliq !== null && $yakuniyBaho !== null) ? $joriyOraliq + $yakuniyBaho : null);
+
+                return [
+                    'name'         => $r->user->{'To‘liq_ismi'} ?? '—',
+                    'joriy_baho'   => $joriyBaho,
+                    'oraliq_baho'  => $oraliqBaho,
+                    'joriy_oraliq' => $joriyOraliq,
+                    'yakuniy_baho' => $yakuniyBaho,
+                    'umumiy'       => $umumiy,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Fayl nomi uchun xavfsiz matn: bo'sh joy -> "_", ruxsat etilmagan belgilar olib tashlanadi.
+     */
+    private function sanitizeFileName(?string $value): string
+    {
+        $value = $value ?? 'nomsiz';
+        $value = trim($value);
+        $value = preg_replace('/\s+/u', '_', $value);
+        $value = preg_replace('/[\/\\\\:*?"<>|]/u', '', $value);
+        return $value === '' ? 'nomsiz' : $value;
     }
 
     /**

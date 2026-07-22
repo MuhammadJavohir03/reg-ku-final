@@ -152,9 +152,10 @@ Route::prefix('ariza_admin')->name('ariza_admin.')->group(function () {
     Route::post('/', [ArizaAdminController::class, 'store'])->name('store');
     Route::get('/{ariza_admin}/edit', [ArizaAdminController::class, 'edit'])->name('edit');
     Route::put('/{ariza_admin}', [ArizaAdminController::class, 'update'])->name('update');
-    Route::delete('/{ariza_admin}', [ArizaAdminController::class, 'destroy'])->name('destroy');
+    Route::delete('/{type}/{ariza_admin}', [ArizaAdminController::class, 'destroy'])
+        ->where('type', 'mini|free')
+        ->name('destroy');
 });
-
 
 
 Route::prefix('mini_maktab')->name('mini_maktab.')->group(function () {
@@ -268,6 +269,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/jurnal/topic-grade', [JurnalController::class, 'updateTopicGrade'])->name('jurnal.topic.grade.update');
     Route::get('/jurnal/grade-history', [JurnalController::class, 'gradeHistory'])
         ->name('jurnal.grade.history');
+    Route::get('/jurnal/export', [JurnalController::class, 'export'])->name('jurnal.export');
 });
 
 Route::middleware('auth')->group(function () {
