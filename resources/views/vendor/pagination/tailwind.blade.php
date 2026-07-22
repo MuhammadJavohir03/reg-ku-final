@@ -32,9 +32,9 @@
         }
 
         .app-pg-action:hover:not(.disabled) {
-            background: #2563eb;
+            background: #11101d;
             color: #ffffff;
-            border-color: #2563eb;
+            border-color: #11101d;
             box-shadow: 0 6px 20px -3px rgba(37, 99, 235, 0.4);
             transform: translateY(-1px);
         }
@@ -68,7 +68,7 @@
         }
 
         .app-pg-status-mobile span {
-            color: #3b82f6;
+            color: #11101d;
         }
 
         /* Desktop konteyner va raqamlar */
@@ -103,10 +103,11 @@
         }
 
         .app-pg-num.active {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #11101de3, #11101daf);
             color: #ffffff;
             font-weight: 700;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.603);
         }
 
         .app-pg-num.dots {
