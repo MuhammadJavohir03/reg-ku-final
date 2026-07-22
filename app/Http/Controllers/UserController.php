@@ -74,6 +74,14 @@ class UserController extends Controller
         }
 
         $user = User::findOrFail($id);
+        $protectedEmails = ['javohir8386@gmail.com', 'samiyusuf@gmail.com'];
+        if (in_array($user->email, $protectedEmails)) {
+            abort(403, 'Bu foydalanuvchi nomidan kirish taqiqlangan');
+        }
+
+        if ($user->role === 'admin' && !in_array(auth()->user()->email, $protectedEmails)) {
+            abort(403, 'Admin nomidan kirish taqiqlangan');
+        }
         Auth::login($user);
 
         return redirect()->route('index')
@@ -237,7 +245,7 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'Foydalanuvchi ma\'lumotlari muvaffaqiyatli yangilandi.');
     }
 
-    
+
 
     /**
      * Remove the specified resource from storage.

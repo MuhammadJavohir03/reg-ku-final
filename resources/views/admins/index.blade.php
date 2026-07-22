@@ -10,10 +10,11 @@
             <div class="oz-title" style="margin:0;">
                 <i class="bx bx-group" style="color:#3C3489;"></i> Adminlar Ro'yxati
             </div>
-
-            <a href="{{ route('admins.create') }}" class="ar-btn ar-btn-ok">
-                <i class="bx bx-plus"></i> Yangi Admin yaratish
-            </a>
+            @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
+                <a href="{{ route('admins.create') }}" class="ar-btn ar-btn-ok">
+                    <i class="bx bx-plus"></i> Yangi Admin yaratish
+                </a>
+            @endif
         </div>
 
         <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:0; overflow:hidden;">

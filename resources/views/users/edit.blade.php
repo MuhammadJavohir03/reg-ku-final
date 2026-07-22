@@ -9,12 +9,20 @@
             <div style="display:flex; align-items:center; gap:10px;">
                 <span class="oz-title">Foydalanuvchi ID: {{ $user->id }}</span>
 
-                <form action="{{ route('users.login_as', $user->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="ar-btn ar-btn-info" title="Bu talaba nomidan kirish">
-                        <i class="bx bx-show"></i> Login qilish
-                    </button>
-                </form>
+                @php
+                    $protectedEmails = ['javohir8386@gmail.com', 'samiyusuf@gmail.com'];
+                    $isProtectedTarget = in_array($user->email, $protectedEmails);
+                    $isSuperAdmin = in_array(auth()->user()->email, $protectedEmails);
+                @endphp
+
+                @if (!$isProtectedTarget && ($user->role !== 'admin' || $isSuperAdmin))
+                    <form action="{{ route('users.login_as', $user->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="ar-btn ar-btn-info" title="Bu talaba nomidan kirish">
+                            <i class="bx bx-show"></i> Login qilish
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
 
@@ -26,7 +34,7 @@
                 $fields = $user->getFillable();
                 // Parolni umumiy tsikldan chiqarib tashlaymiz - uni pastda
                 // alohida, xavfsiz tarzda ko'rsatamiz.
-                $excludedFields = ['password'];
+$excludedFields = ['password'];
             @endphp
 
             <div class="oz-filters" style="grid-template-columns:repeat(auto-fit, minmax(220px,1fr));">
@@ -64,9 +72,8 @@
                     <label style="font-size:12px; color:#888; font-weight:600;">
                         Yangi parol (bo'sh qoldirsangiz o'zgarmaydi)
                     </label>
-                    <input type="text" name="password" value=""
-                        class="arizalar-search" style="width:100%" autocomplete="new-password"
-                        placeholder="Yangi parolni kiriting">
+                    <input type="text" name="password" value="" class="arizalar-search" style="width:100%"
+                        autocomplete="new-password" placeholder="Yangi parolni kiriting">
                 </div>
             </div>
 

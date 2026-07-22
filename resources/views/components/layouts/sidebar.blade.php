@@ -506,6 +506,7 @@
                             class="link_name">Natijalar</span></a></li>
                 <li><a href="{{ route('savol_bank.index') }}"><i class="bx bx-question-mark"></i><span
                             class="link_name">Savol banki</span></a></li>
+                <li><a class="link_name" href="{{ route('jurnal.index') }}"><i class="bx bx-book-open"></i>Jurnal</a></li>
                 <li><a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span
                             class="link_name">Chat</span></a></li>
                 @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
