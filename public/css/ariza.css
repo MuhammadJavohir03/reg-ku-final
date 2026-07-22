@@ -201,7 +201,7 @@
     background: #FCEBEB;
 }
 
-.ar-pagination {
+/* .ar-pagination {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -239,7 +239,7 @@
     border-color: #eee;
     cursor: default;
     pointer-events: none;
-}
+} */
 
 /* Badge lar */
 .ar-badge {
@@ -296,7 +296,7 @@
     width: 160px;
 }
 
-.ar-pagination nav {
+/* .ar-pagination nav {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -335,4 +335,4 @@
     color: #bbb;
     border-color: #eee;
     pointer-events: none;
-}
+} */

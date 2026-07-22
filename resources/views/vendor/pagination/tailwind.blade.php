@@ -1,111 +1,181 @@
 @if ($paginator->hasPages())
-    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}">
+    <style>
+        .app-pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 16px 8px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            box-sizing: border-box;
+        }
 
-        <div class="flex gap-2 items-center justify-between sm:hidden">
+        /* Asosiy harakat tugmalari */
+        .app-pg-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 44px;
+            padding: 0 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 99px; /* Pill style */
+            text-decoration: none;
+            box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(8px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
 
-            @if ($paginator->onFirstPage())
-                <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 cursor-not-allowed leading-5 rounded-md dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600">
-                    {!! __('pagination.previous') !!}
-                </span>
-            @else
-                <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-700 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-800 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 dark:hover:text-gray-200">
-                    {!! __('pagination.previous') !!}
-                </a>
-            @endif
+        .app-pg-action:hover:not(.disabled) {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 6px 20px -3px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
 
-            @if ($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-700 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-800 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:focus:border-blue-700 dark:active:bg-gray-700 dark:active:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 dark:hover:text-gray-200">
-                    {!! __('pagination.next') !!}
-                </a>
-            @else
-                <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 cursor-not-allowed leading-5 rounded-md dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600">
-                    {!! __('pagination.next') !!}
-                </span>
-            @endif
+        .app-pg-action:active:not(.disabled) {
+            transform: scale(0.96);
+        }
 
+        .app-pg-action.disabled {
+            opacity: 0.4;
+            background: #f1f5f9;
+            color: #94a3b8;
+            border-color: transparent;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Mobil uchun Markaziy status badj */
+        .app-pg-status-mobile {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 99px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .app-pg-status-mobile span {
+            color: #3b82f6;
+        }
+
+        /* Desktop konteyner va raqamlar */
+        .app-pg-desktop {
+            display: none;
+            align-items: center;
+            background: #f8fafc;
+            padding: 4px;
+            border-radius: 99px;
+            border: 1px solid #e2e8f0;
+            gap: 2px;
+        }
+
+        .app-pg-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            border-radius: 99px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .app-pg-num:hover:not(.active):not(.dots) {
+            color: #0f172a;
+            background: rgba(226, 232, 240, 0.6);
+        }
+
+        .app-pg-num.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        }
+
+        .app-pg-num.dots {
+            color: #94a3b8;
+            cursor: default;
+        }
+
+        /* MEDIA RESPONSIVE */
+        @media (min-width: 640px) {
+            .app-pg-status-mobile {
+                display: none;
+            }
+            .app-pg-desktop {
+                display: flex;
+            }
+        }
+    </style>
+
+    <div class="app-pagination-container">
+        
+        <!-- Orqaga tugmasi -->
+        @if ($paginator->onFirstPage())
+            <span class="app-pg-action disabled">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                <span>Orqaga</span>
+            </span>
+        @else
+            <a href="{{ $paginator->previousPageUrl() }}" class="app-pg-action">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                <span>Orqaga</span>
+            </a>
+        @endif
+
+        <!-- MOBIL: App-style Status Indicator -->
+        <div class="app-pg-status-mobile">
+            <span>{{ $paginator->currentPage() }}</span> / {{ $paginator->lastPage() }}
         </div>
 
-        <div class="hidden sm:flex-1 sm:flex sm:gap-2 sm:items-center sm:justify-between">
+        <!-- PC: Floating Capsule Numbers -->
+        <div class="app-pg-desktop">
+            @foreach ($elements as $element)
+                @if (is_string($element))
+                    <span class="app-pg-num dots">{{ $element }}</span>
+                @endif
 
-            <div>
-                <p class="text-sm text-gray-700 leading-5 dark:text-gray-600">
-                    {!! __('Showing') !!}
-                    @if ($paginator->firstItem())
-                        <span class="font-medium">{{ $paginator->firstItem() }}</span>
-                        {!! __('to') !!}
-                        <span class="font-medium">{{ $paginator->lastItem() }}</span>
-                    @else
-                        {{ $paginator->count() }}
-                    @endif
-                    {!! __('of') !!}
-                    <span class="font-medium">{{ $paginator->total() }}</span>
-                    {!! __('results') !!}
-                </p>
-            </div>
-
-            <div>
-                <span class="inline-flex rtl:flex-row-reverse shadow-sm rounded-md">
-
-                    {{-- Previous Page Link --}}
-                    @if ($paginator->onFirstPage())
-                        <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
-                            <span class="inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-not-allowed rounded-l-md leading-5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400" aria-hidden="true">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                        </span>
-                    @else
-                        <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md leading-5 hover:text-gray-400 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-500 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:active:bg-gray-700 dark:focus:border-blue-800 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-gray-300" aria-label="{{ __('pagination.previous') }}">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    @endif
-
-                    {{-- Pagination Elements --}}
-                    @foreach ($elements as $element)
-                        {{-- "Three Dots" Separator --}}
-                        @if (is_string($element))
-                            <span aria-disabled="true">
-                                <span class="inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 cursor-default leading-5 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300">{{ $element }}</span>
-                            </span>
-                        @endif
-
-                        {{-- Array Of Links --}}
-                        @if (is_array($element))
-                            @foreach ($element as $page => $url)
-                                @if ($page == $paginator->currentPage())
-                                    <span aria-current="page">
-                                        <span class="inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 cursor-default leading-5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">{{ $page }}</span>
-                                    </span>
-                                @else
-                                    <a href="{{ $url }}" class="inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-700 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:text-gray-300 dark:active:bg-gray-700 dark:focus:border-blue-800 hover:bg-gray-100 dark:hover:bg-gray-900" aria-label="{{ __('Go to page :page', ['page' => $page]) }}">
-                                        {{ $page }}
-                                    </a>
-                                @endif
-                            @endforeach
+                @if (is_array($element))
+                    @foreach ($element as $page => $url)
+                        @if ($page == $paginator->currentPage())
+                            <span class="app-pg-num active">{{ $page }}</span>
+                        @else
+                            <a href="{{ $url }}" class="app-pg-num">{{ $page }}</a>
                         @endif
                     @endforeach
-
-                    {{-- Next Page Link --}}
-                    @if ($paginator->hasMorePages())
-                        <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="inline-flex items-center px-2 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md leading-5 hover:text-gray-400 focus:outline-none focus:ring ring-gray-300 focus:border-blue-300 active:bg-gray-100 active:text-gray-500 transition ease-in-out duration-150 dark:bg-gray-800 dark:border-gray-600 dark:active:bg-gray-700 dark:focus:border-blue-800 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-gray-300" aria-label="{{ __('pagination.next') }}">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </a>
-                    @else
-                        <span aria-disabled="true" aria-label="{{ __('pagination.next') }}">
-                            <span class="inline-flex items-center px-2 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-not-allowed rounded-r-md leading-5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400" aria-hidden="true">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                        </span>
-                    @endif
-                </span>
-            </div>
+                @endif
+            @endforeach
         </div>
-    </nav>
+
+        <!-- Keyingi tugmasi -->
+        @if ($paginator->hasMorePages())
+            <a href="{{ $paginator->nextPageUrl() }}" class="app-pg-action">
+                <span>Oldinga</span>
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        @else
+            <span class="app-pg-action disabled">
+                <span>Oldinga</span>
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </span>
+        @endif
+
+    </div>
 @endif
