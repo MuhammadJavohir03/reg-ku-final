@@ -217,7 +217,7 @@
                         <li><a href="{{ route('free_semestr.index') }}">Bepul imkoniyatlar</a></li>
                         <li><a href="{{ route('mini_semestr_admin.index') }}">Mini Semestr</a></li>
                         @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                            <li><a href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                            <li><a class="text-danger" href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
                         @endif
                     </ul>
                 </li>
@@ -490,7 +490,7 @@
                         <li class="my-2"><a href="{{ route('free_semestr.index') }}">Bepul imkoniyatlar</a></li>
                         <li class="my-2"><a href="{{ route('mini_semestr_admin.index') }}">Mini Semestr</a></li>
                         @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                            <li class="my-2"><a href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                            <li class="my-2"><a class="text-danger" href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
                         @endif
                     </ul>
                 </li>
@@ -510,8 +510,8 @@
                 <li><a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span
                             class="link_name">Chat</span></a></li>
                 @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                    <li><a href="{{ route('admin.sections.index') }}"><i class="bx bx-collection"></i><span
-                                class="link_name">Sections</span></a></li>
+                    <li><a href="{{ route('admin.sections.index') }}"><i class="bx bx-collection text-danger"></i><span
+                                class="text-danger link_name">Sections</span></a></li>
                 @endif
             @endif
 
@@ -591,7 +591,7 @@
                 <a href="{{ route('subject.index') }}"><i class="bx bx-book"></i><span>Fanlar</span></a>
                 <a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span>Chat</span></a>
                 @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                    <a href="{{ route('ariza_admin.index') }}"><i class="bx bx-file"></i><span>Arizalar
+                    <a class="text-danger" href="{{ route('ariza_admin.index') }}"><i class="text-danger bx bx-file"></i><span>Arizalar
                             (admin)</span></a>
                 @endif
             @else

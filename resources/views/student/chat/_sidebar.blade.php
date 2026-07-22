@@ -10,6 +10,9 @@
     window.ChatUserUrlTemplate = @json(route('chat.user', ['user' => '__ID__']));
     window.ChatOverviewUrl = @json(route('chat.poll.overview'));
 </script>
+<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <a href="{{ route('index') }}" style="text-decoration:none; color:#374151; font-size:13px;">&#8592; Dashboard</a>
+    </div>
 <div class="chat-sidebar__header">
     <input type="text" class="chat-sidebar__search" id="student-search"
            placeholder="Talaba qidirish (yozishish uchun)...">
