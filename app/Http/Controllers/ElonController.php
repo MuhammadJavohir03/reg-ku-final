@@ -26,19 +26,33 @@ class ElonController extends Controller
             // Faqat admin bo'lmaganlar uchun filtrni qo'llaymiz
             if ($user->role !== 'admin') {
                 $query->where(function ($q) use ($user) {
-                    $q->where(function ($sub) use ($user) {
+                    // 1. Hammaga mo'ljallangan (category ham, kurs ham bo'sh)
+                    $q->orWhere(function ($sub) {
+                        $sub->whereNull('category_id')
+                            ->whereNull('kurs');
+                    });
+
+                    // 2. Faqat category tanlangan (kurs bo'sh) -> shu categoriyadagi HAR QANDAY kursga
+                    $q->orWhere(function ($sub) use ($user) {
                         $sub->where('category_id', $user->category_id)
-                            ->where('kurs', $user->kurs); // Kurs -> kurs (ustun nomi bilan mos)
-                    })
-                        ->orWhere(function ($sub) {
-                            $sub->whereNull('category_id')
-                                ->whereNull('kurs');
-                        });
+                            ->whereNull('kurs');
+                    });
+
+                    // 3. Faqat kurs tanlangan (category bo'sh) -> shu kursdagi HAR QANDAY yo'nalishga
+                    $q->orWhere(function ($sub) use ($user) {
+                        $sub->whereNull('category_id')
+                            ->where('kurs', $user->Kurs);
+                    });
+
+                    // 4. Ikkalasi ham tanlangan -> aniq mos kelishi kerak
+                    $q->orWhere(function ($sub) use ($user) {
+                        $sub->where('category_id', $user->category_id)
+                            ->where('kurs', $user->Kurs);
+                    });
                 });
             }
         } else {
-            // 2. Agar foydalanuvchi tizimga kirmagan bo'lsa (Mehmon bo'lsa)
-            // Faqat hamma uchun chiqarilgan umumiy e'lonlarni ko'rsatamiz
+            // Mehmon (login qilmagan) -> faqat hammaga mo'ljallangan e'lonlar
             $query->whereNull('category_id')
                 ->whereNull('kurs');
         }
@@ -75,9 +89,9 @@ class ElonController extends Controller
             'title' => $request->input('title'),
             'short_content' => $request->input('short_content'),
             'full_content' => $request->input('full_content'),
-            'category_id' => $request->input('category_id'),
+            'category_id' => $request->input('category_id') ?: null,
             'photo' => $path,
-            'kurs' => $request->input('kurs'),
+            'kurs' => $request->input('kurs') ?: null,
         ]);
 
         return redirect()->route('elons.index')
@@ -122,8 +136,8 @@ class ElonController extends Controller
             'title' => $request->input('title'),
             'short_content' => $request->input('short_content'),
             'full_content' => $request->input('full_content'),
-            'category_id' => $request->input('category_id'),
-            'kurs' => $request->input('kurs'),
+            'category_id' => $request->input('category_id') ?: null,
+            'kurs' => $request->input('kurs') ?: null,
             'photo' => $path,
         ]);
 

@@ -19,12 +19,12 @@ class GradeImport implements ToModel
     public function model(array $row)
     {
         // Sarlavha qatorini tashlab ketish
-        if ($row[1] === 'Talaba' || $row[1] === 'talaba') {
+        if ($row[0] === 'Talaba' || $row[0] === 'talaba') {
             return null;
         }
 
-        $talabaIsmi = isset($row[1]) ? trim($row[1]) : null;
-        $talabaGuruh = isset($row[2]) ? trim($row[2]) : null;
+        $talabaIsmi = isset($row[0]) ? trim($row[0]) : null;
+        $talabaGuruh = isset($row[1]) ? trim($row[1]) : null;
 
         if (!$talabaIsmi || !$talabaGuruh) {
             return null; 
@@ -39,14 +39,20 @@ class GradeImport implements ToModel
             return null; 
         }
 
-        // --- MATNLI BAXOLARNI TOZALASH (MUAMMONING YECHIMI) ---
-        // Agar Exceldan raqam emas, matn kelsa (masalan 'Baho qo‘yilmagan'), uni 0 ga aylantiramiz
-        $joriy = is_numeric($row[3]) ? $row[3] : 0;
-        $oraliq = is_numeric($row[4]) ? $row[4] : 0;
-        $reyting = is_numeric($row[5]) ? $row[5] : 0;
-        $yakuniy = is_numeric($row[6]) ? $row[6] : 0;
-        $umumiy = is_numeric($row[8]) ? $row[8] : 0;
-        $davomat = is_numeric($row[9]) ? $row[9] : 0;
+        // --- MATNLI BAXOLARNI TOZALASH ---
+        $joriy   = is_numeric($row[2]) ? $row[2] : 0; // Joriy nazorat
+        $oraliq  = is_numeric($row[3]) ? $row[3] : 0; // Oraliq nazorat
+        $reyting = is_numeric($row[4]) ? $row[4] : 0; // Reyting
+        $yakuniy = is_numeric($row[5]) ? $row[5] : 0; // Yakuniy nazorat
+        $umumiy  = is_numeric($row[7]) ? $row[7] : 0; // Umumiy
+        $davomat = is_numeric($row[8]) ? $row[8] : 0; // Davomat %
+
+        // --- QO'SHIMCHA: agar umumiy 0 bo'lib qolgan bo'lsa ---
+        // (tizim 50/60 dan past bahoni 0 qilib yuborgani uchun),
+        // joriy + oraliq + yakuniy yig'indisini umumiy sifatida olamiz
+        if ((float) $umumiy == 0) {
+            $umumiy = $joriy + $oraliq + $yakuniy;
+        }
 
         return new grade([
             'user_id'       => $user->id,
@@ -54,8 +60,8 @@ class GradeImport implements ToModel
             'joriy_baho'    => $joriy,
             'oraliq_baho'   => $oraliq,
             'joriy_oraliq'  => $reyting,
-            'yakuniy_baho'  => $yakuniy, // Endi bu yerga 'Baho qo‘yilmagan' emas, 0 boradi
-            'umumiy'        => $umumiy,  // Bu yerga ham 0 boradi
+            'yakuniy_baho'  => $yakuniy,
+            'umumiy'        => $umumiy,
             'davomat'       => $davomat, 
         ]);
     }

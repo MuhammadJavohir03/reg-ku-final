@@ -19,61 +19,64 @@ class OzlashtirishController extends Controller
         // grades dagi user_id lar orqali faqat shu talabalarni olish
         $gradeUserIds = grade::distinct()->pluck('user_id');
 
-        $userQuery = User::whereIn('id', $gradeUserIds);
-
-        if ($request->category_id) {
-            $userQuery->where('category_id', $request->category_id);
-        }
-
-        if ($request->guruh) {
-            $userQuery->where('Guruh', $request->guruh);
-        }
-
-        if ($request->search) {
-            $userQuery->where("To‘liq_ismi", 'like', '%' . $request->search . '%');
-        }
-        if ($request->semster) {
-            $userQuery->whereHas('grades.subject', function ($q) use ($request) {
-                $q->where('semster', $request->semster);
-            });
-        }
-
-        $talabalar = User::whereIn('id', $gradeUserIds)
-            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
-            ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
-            ->when($request->search, fn($q) => $q->where("To‘liq_ismi", 'like', '%' . $request->search . '%'))
-            ->with([
-                'grades',
-                'free_semestrs',
-                'mini_semstrs'
-            ])
-            ->paginate(100);
-
-        // faqat grades da mavjud user larga tegishli guruhlar
+        // Filtr dropdownlari uchun ro'yxatlar
+        // Guruhlar - tanlangan yo'nalishga tegishli guruhlar (agar yo'nalish tanlangan bo'lsa)
         $guruhlar = User::whereIn('id', $gradeUserIds)
+            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
             ->distinct()
             ->pluck('Guruh')
             ->filter();
 
-        // semestrlar subjects dan
-        $semestrlar = subject::distinct()->pluck('semster')->filter()->sort();
+        // Semestrlar - tanlangan yo'nalishga tegishli fanlarning semestrlari (agar yo'nalish tanlangan bo'lsa)
+        $semestrlar = subject::when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
+            ->distinct()
+            ->pluck('semster')
+            ->filter()
+            ->sort();
 
-        // faqat grades da mavjud user larga tegishli kategoriyalar
         $yonalishlar = category::whereIn(
             'id',
             User::whereIn('id', $gradeUserIds)->distinct()->pluck('category_id')
         )->get();
 
-        // grades da mavjud subject_id lar orqali fanlar
-        $fanlar = Subject::whereIn('id', Grade::distinct()->pluck('subject_id'))
+        // --- 1) YO'NALISH TANLANMAGUNCHA HECH NARSA KO'RSATMAYMIZ ---
+        if (!$request->category_id) {
+            $talabalar = User::whereIn('id', [])->paginate(100); // bo'sh paginator (view uchun)
+
+            return view('ozlashtirish.index', compact(
+                'talabalar',
+                'guruhlar',
+                'yonalishlar',
+                'semestrlar'
+            ) + [
+                'fanlar'              => collect(),
+                'jami'                => 0,
+                'qarzdorlar'          => 0,
+                'muvaffaqiyatli'      => 0,
+                'umumiyQizil'         => 0,
+                'davomatQizil'        => 0,
+                'joriyQizil'          => 0,
+                'yonalishTanlanmagan' => true,
+            ]);
+        }
+
+        // --- 2) FANLAR ENDI FAQAT TANLANGAN YO'NALISHGA TEGISHLI BO'LADI ---
+        $fanlar = subject::where('category_id', $request->category_id)
             ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
             ->get();
 
-        $hammasi = $userQuery->with([
-            'grades',
-            'free_semestrs',
-            'mini_semstrs'
-        ])->get();
+        $talabalarQuery = User::whereIn('id', $gradeUserIds)
+            ->where('category_id', $request->category_id)
+            ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
+            ->when($request->search, fn($q) => $q->where("To‘liq_ismi", 'like', '%' . $request->search . '%'));
+
+        $talabalar = (clone $talabalarQuery)
+            ->with(['grades', 'free_semestrs', 'mini_semstrs'])
+            ->paginate(100);
+
+        $hammasi = (clone $talabalarQuery)
+            ->with(['grades', 'free_semestrs', 'mini_semstrs'])
+            ->get();
 
         // statistika
         $jami = $hammasi->count();
@@ -129,7 +132,6 @@ class OzlashtirishController extends Controller
 
         $muvaffaqiyatli = $jami - $qarzdorlar;
 
-
         return view('ozlashtirish.index', compact(
             'talabalar',
             'fanlar',
@@ -142,15 +144,20 @@ class OzlashtirishController extends Controller
             'davomatQizil',
             'semestrlar',
             'joriyQizil'
-        ));
+        ) + ['yonalishTanlanmagan' => false]);
     }
 
     public function export(Request $request)
     {
+        // Export ham yo'nalish tanlanmasa ishlamasin
+        if (!$request->category_id) {
+            return back()->with('error', "Eksport qilish uchun avval yo'nalishni tanlang.");
+        }
+
         $gradeUserIds = grade::distinct()->pluck('user_id');
 
         $talabalar = User::whereIn('id', $gradeUserIds)
-            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
+            ->where('category_id', $request->category_id)
             ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
             ->when($request->search, fn($q) => $q->where("To‘liq_ismi", 'like', '%' . $request->search . '%'))
             ->with([
@@ -160,7 +167,8 @@ class OzlashtirishController extends Controller
             ])
             ->get();
 
-        $fanlar = subject::whereIn('id', grade::distinct()->pluck('subject_id'))
+        // fanlar endi tanlangan yo'nalishga qarab filtrlanadi
+        $fanlar = subject::where('category_id', $request->category_id)
             ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
             ->get();
 
@@ -171,10 +179,8 @@ class OzlashtirishController extends Controller
             $parts[] = $request->guruh;
         }
 
-        if ($request->category_id) {
-            $category = \App\Models\Category::find($request->category_id);
-            $parts[] = $category?->nomi ?? $request->category_id;
-        }
+        $category = \App\Models\Category::find($request->category_id);
+        $parts[] = $category?->nomi ?? $request->category_id;
 
         if ($request->semster) {
             $parts[] = $request->semster;
