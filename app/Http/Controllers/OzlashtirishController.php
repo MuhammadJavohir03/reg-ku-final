@@ -27,6 +27,13 @@ class OzlashtirishController extends Controller
             ->pluck('Guruh')
             ->filter();
 
+        $kurslar = User::whereIn('id', $gradeUserIds)
+            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
+            ->distinct()
+            ->pluck('Kurs')
+            ->filter();
+
+
         // Semestrlar - tanlangan yo'nalishga tegishli fanlarning semestrlari (agar yo'nalish tanlangan bo'lsa)
         $semestrlar = subject::when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
             ->distinct()
@@ -47,7 +54,8 @@ class OzlashtirishController extends Controller
                 'talabalar',
                 'guruhlar',
                 'yonalishlar',
-                'semestrlar'
+                'semestrlar',
+                'kurslar'
             ) + [
                 'fanlar'              => collect(),
                 'jami'                => 0,
@@ -136,6 +144,7 @@ class OzlashtirishController extends Controller
             'talabalar',
             'fanlar',
             'guruhlar',
+            'kurslar',
             'yonalishlar',
             'jami',
             'qarzdorlar',

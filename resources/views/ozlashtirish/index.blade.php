@@ -22,6 +22,14 @@
                     @endforeach
                 </select>
 
+                <select name="kurs" onchange="this.form.submit()" {{ !request('category_id') ? 'disabled' : '' }}>
+                    <option value="">Barcha kurslar</option>
+                    @foreach ($kurslar as $k)
+                        <option value="{{ $k }}" {{ request('kurs') == $k ? 'selected' : '' }}>
+                            {{ $k }}</option>
+                    @endforeach
+                </select>
+
                 <select name="semster" onchange="this.form.submit()" {{ !request('category_id') ? 'disabled' : '' }}>
                     <option value="">Barcha semestrlar</option>
                     @foreach ($semestrlar as $s)
@@ -117,7 +125,7 @@
                             <th rowspan="2" class="oz-th-name">Talaba ismi</th>
                             <th rowspan="2" class="oz-th-name">Guruh</th>
                             @foreach ($fanlar as $fan)
-                                <th colspan="3" class="oz-fan-header">{{ $fan->nomi }}</th>
+                                <th colspan="3" class="oz-fan-header">{{ $fan->nomi }} - {{ $fan->semster }}-Sem</th>
                             @endforeach
                         </tr>
                         <tr>

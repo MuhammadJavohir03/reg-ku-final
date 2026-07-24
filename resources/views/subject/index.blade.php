@@ -124,7 +124,11 @@
                                         title="Baholarni ko'rish" style="padding:5px 8px;">
                                         <i class="bx bx-show"></i>
                                     </a>
-
+                                    {{-- Vedmostga eksport qilish tugmasi --}}
+                                    <a href="{{ route('grades.vedomost.form', $subject->id) }}" class="ar-btn"
+                                        target="_blank" title="Vedomostga eksport">
+                                        <i class="bx bx-spreadsheet" style="color:#217346;"></i>
+                                    </a>
                                     {{-- IMPORT --}}
                                     <form action="{{ route('grades.import', $subject->id) }}" method="POST"
                                         enctype="multipart/form-data" style="display:inline-flex; align-items:center;"

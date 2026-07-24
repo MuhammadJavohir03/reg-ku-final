@@ -28,7 +28,7 @@ use App\Http\Controllers\TalabaMiniMaktabController;
 use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\SectionController as AdminSectionController;
 use App\Http\Controllers\Student\ChatController as StudentChatController;
-
+use App\Http\Controllers\VedomostController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +36,11 @@ Route::get('/free_semestr', [PageController::class, 'freeSemestr'])->name('free_
 Route::get('/mini_semestr', [PageController::class, 'miniSemestr'])->name('mini_semestr');
 
 Route::resource('subject', SubjectController::class);
+Route::get('subject/{subject}/vedomost', [VedomostController::class, 'form'])
+    ->name('grades.vedomost.form');
+
+Route::post('subject/{subject}/vedomost', [VedomostController::class, 'export'])
+    ->name('grades.vedomost.export');
 
 Route::get('/ozlashtirish', [PageController::class, 'ozlashtirish'])->name('ozlashtirish');
 Route::get('/umumiy_natijalar', [PageController::class, 'umumiyNatijalar'])->name('umumiy_natijalar');
