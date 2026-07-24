@@ -109,7 +109,7 @@ class VedomostController extends Controller
 
         // Sarlavha maydonlari uchun taxminiy standart qiymatlar
         $defaults = [
-            'oquv_yili'      => date('Y') . '-' . (date('Y') + 1) . " o'quv yili",
+            'oquv_yili'      => (date('Y') - 1) . '-' . date('Y') . " o'quv yili",
             'kafedra'        => '',
             'talim_tili'     => "O'zbek",
             'imtihon_sanasi' => '________________',
