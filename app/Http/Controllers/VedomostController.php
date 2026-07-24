@@ -206,14 +206,21 @@ class VedomostController extends Controller
             $row++;
         }
 
-        // "Talabalar soni:" yozuvini qidirib, haqiqiy songa yangilaymiz
-        // (qator raqamini hisoblash o'rniga qidirish - insertNewRowBefore/removeRow
-        // dan keyin footer qaysi qatorda ekanini aniq bilish uchun eng ishonchli yo'l)
+        // "Talabalar soni:", "Topshirgan:", "Topshirmagan:" yozuvlarini qidirib, avtomatik to'ldiramiz.
+        // Topshirgan = umumiy bahosi 0 dan katta bo'lgan talabalar soni
+        // Topshirmagan = umumiy bahosi 0 bo'lgan talabalar soni
+        $topshirganCount = $students->filter(fn ($s) => (float) $s['umumiy'] > 0)->count();
+        $topshirmaganCount = $students->filter(fn ($s) => (float) $s['umumiy'] <= 0)->count();
+
         foreach ($sheet->getRowIterator() as $r) {
-            $cell = $sheet->getCell('B' . $r->getRowIndex());
-            if ($cell->getValue() === 'Talabalar soni:') {
+            $label = trim((string) $sheet->getCell('B' . $r->getRowIndex())->getValue());
+
+            if ($label === 'Talabalar soni:') {
                 $sheet->setCellValue('C' . $r->getRowIndex(), $actualCount);
-                break;
+            } elseif ($label === 'Topshirgan:') {
+                $sheet->setCellValue('C' . $r->getRowIndex(), $topshirganCount);
+            } elseif ($label === 'Topshirmagan:') {
+                $sheet->setCellValue('C' . $r->getRowIndex(), $topshirmaganCount);
             }
         }
 
