@@ -39,7 +39,7 @@ Route::resource('subject', SubjectController::class);
 Route::get('subject/{subject}/vedomost', [VedomostController::class, 'form'])
     ->name('grades.vedomost.form');
 
-Route::post('subject/{subject}/vedomost', [VedomostController::class, 'export'])
+Route::post('subject/{subject}/vedomost', [VedomostController::class, 'exportAll'])
     ->name('grades.vedomost.export');
 
 Route::get('/ozlashtirish', [PageController::class, 'ozlashtirish'])->name('ozlashtirish');
