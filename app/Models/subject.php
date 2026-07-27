@@ -10,6 +10,9 @@ class subject extends Model
         'nomi',
         'teacher_id',
         'category_id',
+        'kafedra_id',
+        'fakultet_id',
+        'kredit',
         'lesson_type_id',
         'semster',
     ];
@@ -17,6 +20,11 @@ class subject extends Model
     public function category()
     {
         return $this->belongsTo(category::class);
+    }
+
+    public function kafedra()
+    {
+        return $this->belongsTo(kafedra::class);
     }
 
     public function questionBanks()

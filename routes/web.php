@@ -27,6 +27,9 @@ use App\Http\Controllers\TalabaBepulMaktabController as TalabaBepulMaktabControl
 use App\Http\Controllers\TalabaMiniMaktabController;
 use App\Http\Controllers\Admin\ChatController as AdminChatController;
 use App\Http\Controllers\Admin\SectionController as AdminSectionController;
+use App\Http\Controllers\FakultetController;
+use App\Http\Controllers\KafedraController;
+use App\Http\Controllers\KafedraFakultetController;
 use App\Http\Controllers\Student\ChatController as StudentChatController;
 use App\Http\Controllers\VedomostController;
 use App\Models\User;
@@ -93,17 +96,30 @@ Route::get('/ozlashtirish', [OzlashtirishController::class, 'index'])->name('ozl
 Route::get('/ozlashtirish/export', [OzlashtirishController::class, 'export'])->name('ozlashtirish.export');
 // Route::resource('ozlashtirish', OzlashtirishController::class);
 
-// Route::middleware(['auth', 'role:admin'])->group(function () {
-//     Route::resource('admins', AdminController::class);
-//     Route::resource('/users', UserController::class);
-//     Route::resource('bepul_semestr.fanlar', BepulFanlarController::class)->names([
-//         'index' => 'bepul_semestr.fanlar.index',
-//         'create' => 'bepul_semestr.fanlar.create',
-//         'show' => 'bepul_semestr.fanlar.show',
-//     ]);
-//     Route::resource('bepul_semestr', BepulSemestrController::class);
-//     Route::resource('mini_semestr_admin', MiniSemestrAdminController::class);
-// });
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::resource('admins', AdminController::class);
+    Route::resource('/users', UserController::class);
+    Route::resource('bepul_semestr.fanlar', BepulFanlarController::class)->names([
+        'index' => 'bepul_semestr.fanlar.index',
+        'create' => 'bepul_semestr.fanlar.create',
+        'show' => 'bepul_semestr.fanlar.show',
+    ]);
+    Route::resource('bepul_semestr', BepulSemestrController::class);
+    Route::resource('mini_semestr_admin', MiniSemestrAdminController::class);
+});
+
+Route::get('/kafedra-fakultet', [KafedraFakultetController::class, 'index'])
+    ->name('kafedra-fakultet.index');
+ 
+// Kafedra uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
+Route::post('/kafedra', [KafedraController::class, 'store'])->name('kafedra.store');
+Route::put('/kafedra/{kafedra}', [KafedraController::class, 'update'])->name('kafedra.update');
+Route::delete('/kafedra/{kafedra}', [KafedraController::class, 'destroy'])->name('kafedra.destroy');
+ 
+// Fakultet uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
+Route::post('/fakultet', [FakultetController::class, 'store'])->name('fakultet.store');
+Route::put('/fakultet/{fakultet}', [FakultetController::class, 'update'])->name('fakultet.update');
+Route::delete('/fakultet/{fakultet}', [FakultetController::class, 'destroy'])->name('fakultet.destroy');
 
 Route::resource('mini_semestr_user', MiniSemestrController::class);
 // Route::get('/bepul_maktab', [BepulMaktabController::class, 'index'])->name('bepul_maktab.index');

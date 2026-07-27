@@ -16,6 +16,8 @@ return new class extends Migration
 
             $table->unsignedBigInteger('category_id'); // Kategoriya ID
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade'); // Kategoriya bilan bog'lanish
+            $table->foreignId('kafedra_id')->constrained('kafedra')->onDelete('cascade'); // Kafedra bilan bog'lanish
+            $table->integer('kredit')->nullable(); // Kredit miqdori
 
             $table->unsignedBigInteger('teacher_id')->nullable(); // O'qituvchi (User) ID
             $table->foreign('teacher_id')

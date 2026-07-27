@@ -25,6 +25,9 @@ class StoreSubjectRequest extends FormRequest
         return [
             'nomi' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'kafedra_id' => 'nullable|exists:kafedras,id',
+            'fakultet_id' => 'nullable|exists:fakultets,id',
+            'kredit' => 'nullable|integer|min:0',
             'teacher_id' => 'nullable|exists:users,id',
             'lesson_type_id' => 'nullable|exists:lesson_types,id',
             'semster' => 'required|integer|min:1|max:8',

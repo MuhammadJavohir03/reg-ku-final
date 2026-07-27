@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\category;
 use App\Models\lesson_type;
 use App\Models\grade;
+use App\Models\kafedra;
+use App\Models\fakultet;
 
 class SubjectController extends Controller
 {
@@ -20,7 +22,7 @@ class SubjectController extends Controller
         $search = request('search');
         $pageSize = request('page_size', 10);
 
-        $subjects = subject::with(['category', 'teacher', 'lesson_type'])
+        $subjects = subject::with(['category', 'teacher', 'kafedra', 'lesson_type'])
             ->withExists('grades')
             ->when($search, function ($query, $search) {
                 // Faqat va faqat fanning nomi ustunidan qidiradi
@@ -38,10 +40,13 @@ class SubjectController extends Controller
      */
     public function create()
     {
-        $teachers = User::all();
+        // Faqat 'teacher' rolidagi foydalanuvchilarni olamiz (edit() bilan bir xil mantiq)
+        $teachers = User::where('role', 'teacher')->get();
         $categories = category::all();
+        $kafedralar = kafedra::all();
+        $fakultetlar = fakultet::all();
         $lesson_types = lesson_type::all();
-        return view('subject.create', compact('teachers', 'categories', 'lesson_types'));
+        return view('subject.create', compact('teachers', 'categories', 'kafedralar', 'fakultetlar', 'lesson_types'));
     }
 
     /**
@@ -49,14 +54,15 @@ class SubjectController extends Controller
      */
     public function store(StoreSubjectRequest $request)
     {
-
-        // dd($request->all());
         $subject = subject::create([
             'nomi' => $request->input('nomi'),
             'category_id' => $request->input('category_id'),
+            'kafedra_id' => $request->input('kafedra_id'),
+            'fakultet_id' => $request->input('fakultet_id'),
             'teacher_id' => $request->input('teacher_id'),
             'lesson_type_id' => $request->input('lesson_type_id'),
             'semster' => $request->input('semster'),
+            'kredit' => $request->input('kredit'),
         ]);
 
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli yaratildi.');
@@ -77,8 +83,10 @@ class SubjectController extends Controller
     {
         $teachers = User::where('role', 'teacher')->get();
         $categories = category::all();
+        $kafedralar = kafedra::all();
+        $fakultetlar = fakultet::all();
         $lesson_types = lesson_type::all();
-        return view('subject.edit', compact('subject', 'teachers', 'categories', 'lesson_types'));
+        return view('subject.edit', compact('subject', 'teachers', 'categories', 'kafedralar', 'fakultetlar', 'lesson_types'));
     }
 
     /**
@@ -86,20 +94,28 @@ class SubjectController extends Controller
      */
     public function update(StoreSubjectRequest $request, subject $subject)
     {
+        // Eslatma: teacher_id 'users' jadvaliga ishora qiladi (User modeli), 'teachers' emas
         $request->validate([
             'nomi' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'teacher_id' => 'nullable|exists:teachers,id',
+            'kafedra_id' => 'nullable|exists:kafedras,id',
+            'fakultet_id' => 'nullable|exists:fakultets,id',
+            'kredit' => 'nullable|integer|min:0',
+            'teacher_id' => 'nullable|exists:users,id',
             'lesson_type_id' => 'required|exists:lesson_types,id',
             'semster' => 'required|integer|min:1|max:8',
+            'kredit' => 'required|integer|min:1|max:10',
         ]);
 
         $subject->update([
             'nomi' => $request->input('nomi'),
             'category_id' => $request->input('category_id'),
+            'kafedra_id' => $request->input('kafedra_id'),
+            'fakultet_id' => $request->input('fakultet_id'),
             'teacher_id' => $request->input('teacher_id'),
             'lesson_type_id' => $request->input('lesson_type_id'),
             'semster' => $request->input('semster'),
+            'kredit' => $request->input('kredit'),
         ]);
 
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli yangilandi.');

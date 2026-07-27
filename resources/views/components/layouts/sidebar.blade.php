@@ -217,7 +217,8 @@
                         <li><a href="{{ route('free_semestr.index') }}">Bepul imkoniyatlar</a></li>
                         <li><a href="{{ route('mini_semestr_admin.index') }}">Mini Semestr</a></li>
                         @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                            <li><a class="text-danger" href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                            <li><a class="text-danger" href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a>
+                            </li>
                         @endif
                     </ul>
                 </li>
@@ -264,6 +265,16 @@
                     </a>
                     <ul class="sub-menu blank">
                         <li><a class="link_name" href="{{ route('subject.index') }}">Fanlar</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="{{ route('kafedra-fakultet.index') }}">
+                        <i class="bx bx-buildings"></i>
+                        <span class="link_name">Kafedra va Fakultetlar</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('kafedra-fakultet.index') }}">Kafedra va
+                                Fakultetlar</a></li>
                     </ul>
                 </li>
                 <li>
@@ -490,7 +501,8 @@
                         <li class="my-2"><a href="{{ route('free_semestr.index') }}">Bepul imkoniyatlar</a></li>
                         <li class="my-2"><a href="{{ route('mini_semestr_admin.index') }}">Mini Semestr</a></li>
                         @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                            <li class="my-2"><a class="text-danger" href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
+                            <li class="my-2"><a class="text-danger"
+                                    href="{{ route('ariza_admin.index') }}">Arizalar (admin)</a></li>
                         @endif
                     </ul>
                 </li>
@@ -506,11 +518,13 @@
                             class="link_name">Natijalar</span></a></li>
                 <li><a href="{{ route('savol_bank.index') }}"><i class="bx bx-question-mark"></i><span
                             class="link_name">Savol banki</span></a></li>
-                <li><a class="link_name" href="{{ route('jurnal.index') }}"><i class="bx bx-book-open"></i>Jurnal</a></li>
+                <li><a class="link_name" href="{{ route('jurnal.index') }}"><i
+                            class="bx bx-book-open"></i>Jurnal</a></li>
                 <li><a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span
                             class="link_name">Chat</span></a></li>
                 @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                    <li><a href="{{ route('admin.sections.index') }}"><i class="bx bx-collection text-danger"></i><span
+                    <li><a href="{{ route('admin.sections.index') }}"><i
+                                class="bx bx-collection text-danger"></i><span
                                 class="text-danger link_name">Sections</span></a></li>
                 @endif
             @endif
@@ -591,7 +605,8 @@
                 <a href="{{ route('subject.index') }}"><i class="bx bx-book"></i><span>Fanlar</span></a>
                 <a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span>Chat</span></a>
                 @if (auth()->check() && in_array(auth()->user()->email, ['javohir8386@gmail.com', 'samiyusuf@gmail.com']))
-                    <a class="text-danger" href="{{ route('ariza_admin.index') }}"><i class="text-danger bx bx-file"></i><span>Arizalar
+                    <a class="text-danger" href="{{ route('ariza_admin.index') }}"><i
+                            class="text-danger bx bx-file"></i><span>Arizalar
                             (admin)</span></a>
                 @endif
             @else
