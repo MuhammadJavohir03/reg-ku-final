@@ -37,14 +37,14 @@
                                     <label class="custom-label">O'qituvchi</label>
                                     <input type="text" id="teacher_search" class="form-control custom-input"
                                         placeholder="ID yoki ismni yozing..." autocomplete="off"
-                                        value="{{ $subject->teacher->Toliq_ismi ?? '' }}">
+                                        value="{{ $subject->teacher['To‘liq_ismi'] ?? '' }}">
 
                                     <div id="teacher_results" class="search-dropdown">
                                         @foreach ($teachers as $teacher)
                                             <div class="search-item" data-id="{{ $teacher->id }}"
-                                                data-name="{{ $teacher->Toliq_ismi }}">
+                                                data-name="{{ $teacher['To‘liq_ismi'] }}">
                                                 <span class="search-item-badge">#{{ $teacher->id }}</span>
-                                                <span>{{ $teacher->Toliq_ismi }}</span>
+                                                <span>{{ $teacher['To‘liq_ismi'] }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -93,16 +93,31 @@
                                         value="{{ $subject->fakultet_id }}">
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="custom-label">Dars turi</label>
-                                    <select name="lesson_type_id" class="form-select custom-input">
-                                        <option value="" disabled>Turini tanlang</option>
-                                        @foreach ($lesson_types as $lesson_type)
-                                            <option value="{{ $lesson_type->id }}" {{ $subject->lesson_type_id == $lesson_type->id ? 'selected' : '' }}>
-                                                {{ $lesson_type->nomi }}
-                                            </option>
+                                {{-- O'quv yili: qidiruvli dropdown, joriy qiymat bilan to'ldirilgan --}}
+                                <div class="col-md-6 position-relative">
+                                    <label class="custom-label">O'quv yili</label>
+                                    <input type="text" id="oquv_yili_search" class="form-control custom-input"
+                                        placeholder="Qidirish..." autocomplete="off"
+                                        value="{{ $subject->oquv_yili->nomi ?? '' }}">
+
+                                    <div id="oquv_yili_results" class="search-dropdown">
+                                        @foreach ($oquv_yillari as $oquv_yili)
+                                            <div class="search-item" data-id="{{ $oquv_yili->id }}"
+                                                data-name="{{ $oquv_yili->nomi }}">
+                                                {{ $oquv_yili->nomi }}
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
+
+                                    <input type="hidden" name="oquv_yili_id" id="hidden_oquv_yili_id"
+                                        value="{{ $subject->oquv_yili_id }}">
+                                </div>
+
+                                {{-- Ta'lim tili: qidiruvli dropdown, joriy qiymat bilan to'ldirilgan --}}
+                                <div class="col-md-6">
+                                    <label class="custom-label">Ta'lim tili</label>
+                                    <input type="text" name="talim_tili" class="form-control custom-input"
+                                        placeholder="Ta'lim tilini kiriting..." required value="{{ $subject->talim_tili }}">
                                 </div>
 
                                 <div class="col-md-6">
@@ -279,5 +294,8 @@
         initSearchSelect('teacher_search', 'teacher_results', 'hidden_teacher_id');
         initSearchSelect('kafedra_search', 'kafedra_results', 'hidden_kafedra_id');
         initSearchSelect('fakultet_search', 'fakultet_results', 'hidden_fakultet_id');
+        initSearchSelect('oquv_yili_search', 'oquv_yili_results', 'hidden_oquv_yili_id');
+        initSearchSelect('category_search', 'category_results', 'hidden_category_id');
+        initSearchSelect('lesson_type_search', 'lesson_type_results', 'hidden_lesson_type_id');
     </script>
 </x-layouts.sidebar>

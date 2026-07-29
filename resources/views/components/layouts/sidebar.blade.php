@@ -278,6 +278,15 @@
                     </ul>
                 </li>
                 <li>
+                    <a href="{{ route('oquv_yili.index') }}">
+                        <i class="bx bx-buildings"></i>
+                        <span class="link_name">O'quv yili</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('oquv_yili.index') }}">O'quv yili</a></li>
+                    </ul>
+                </li>
+                <li>
                     <a href="{{ route('jurnal.index') }}">
                         <i class="bx bx-book-open"></i>
                         <span class="link_name">Jurnal</span>

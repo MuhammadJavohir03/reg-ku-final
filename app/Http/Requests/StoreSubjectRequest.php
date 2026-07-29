@@ -25,8 +25,10 @@ class StoreSubjectRequest extends FormRequest
         return [
             'nomi' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'kafedra_id' => 'nullable|exists:kafedras,id',
-            'fakultet_id' => 'nullable|exists:fakultets,id',
+            'kafedra_id' => 'nullable|exists:kafedra,id',
+            'fakultet_id' => 'nullable|exists:fakultet,id',
+            'oquv_yili_id' => 'nullable|string|max:255',
+            'talim_tili' => 'nullable|string|max:255',
             'kredit' => 'nullable|integer|min:0',
             'teacher_id' => 'nullable|exists:users,id',
             'lesson_type_id' => 'nullable|exists:lesson_types,id',

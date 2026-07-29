@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\SectionController as AdminSectionController;
 use App\Http\Controllers\FakultetController;
 use App\Http\Controllers\KafedraController;
 use App\Http\Controllers\KafedraFakultetController;
+use App\Http\Controllers\OquvYiliController;
 use App\Http\Controllers\Student\ChatController as StudentChatController;
 use App\Http\Controllers\VedomostController;
 use App\Models\User;
@@ -54,6 +55,9 @@ Route::get('/', [ElonController::class, 'index'])->name('index');
 Route::resource('elons', ElonController::class)->middleware('auth');;
 
 Route::resource('teacher', TeacherController::class);
+Route::get('teachers/import', [TeacherController::class, 'import'])->name('teacher.import');
+Route::post('teachers/import', [TeacherController::class, 'importStore'])->name('teacher.import.store');
+Route::resource('teachers', TeacherController::class)->names('teacher');
 Route::resource('admins', AdminController::class);
 
 Route::post('/users/import', [UserController::class, 'store'])->name('students.import');
@@ -110,16 +114,21 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 Route::get('/kafedra-fakultet', [KafedraFakultetController::class, 'index'])
     ->name('kafedra-fakultet.index');
- 
+
 // Kafedra uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
 Route::post('/kafedra', [KafedraController::class, 'store'])->name('kafedra.store');
 Route::put('/kafedra/{kafedra}', [KafedraController::class, 'update'])->name('kafedra.update');
 Route::delete('/kafedra/{kafedra}', [KafedraController::class, 'destroy'])->name('kafedra.destroy');
- 
+
 // Fakultet uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
 Route::post('/fakultet', [FakultetController::class, 'store'])->name('fakultet.store');
 Route::put('/fakultet/{fakultet}', [FakultetController::class, 'update'])->name('fakultet.update');
 Route::delete('/fakultet/{fakultet}', [FakultetController::class, 'destroy'])->name('fakultet.destroy');
+
+Route::get('/oquv_yili', [OquvYiliController::class, 'index'])->name('oquv_yili.index');
+Route::post('/oquv_yili', [OquvYiliController::class, 'store'])->name('oquv_yili.store');
+Route::put('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'update'])->name('oquv_yili.update');
+Route::delete('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'destroy'])->name('oquv_yili.destroy');
 
 Route::resource('mini_semestr_user', MiniSemestrController::class);
 // Route::get('/bepul_maktab', [BepulMaktabController::class, 'index'])->name('bepul_maktab.index');

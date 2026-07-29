@@ -11,6 +11,8 @@ class subject extends Model
         'teacher_id',
         'category_id',
         'kafedra_id',
+        'oquv_yili_id',
+        'talim_tili',
         'fakultet_id',
         'kredit',
         'lesson_type_id',
@@ -25,6 +27,16 @@ class subject extends Model
     public function kafedra()
     {
         return $this->belongsTo(kafedra::class);
+    }
+
+    public function fakultet()
+    {
+        return $this->belongsTo(fakultet::class);
+    }
+
+    public function oquv_yili()
+    {
+        return $this->belongsTo(OquvYili::class, 'oquv_yili_id');
     }
 
     public function questionBanks()

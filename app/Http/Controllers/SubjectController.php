@@ -11,6 +11,7 @@ use App\Models\lesson_type;
 use App\Models\grade;
 use App\Models\kafedra;
 use App\Models\fakultet;
+use App\Models\OquvYili;
 
 class SubjectController extends Controller
 {
@@ -25,8 +26,13 @@ class SubjectController extends Controller
         $subjects = subject::with(['category', 'teacher', 'kafedra', 'lesson_type'])
             ->withExists('grades')
             ->when($search, function ($query, $search) {
-                // Faqat va faqat fanning nomi ustunidan qidiradi
-                return $query->where('nomi', 'like', "%{$search}%");
+                // Fan nomi yoki fan biriktirilgan o'qituvchining to'liq ismi bo'yicha qidiradi
+                return $query->where(function ($q) use ($search) {
+                    $q->where('nomi', 'like', "%{$search}%")
+                        ->orWhereHas('teacher', function ($q2) use ($search) {
+                            $q2->where('To‘liq_ismi', 'like', "%{$search}%");
+                        });
+                });
             })
             ->latest()
             ->paginate($pageSize)
@@ -46,7 +52,8 @@ class SubjectController extends Controller
         $kafedralar = kafedra::all();
         $fakultetlar = fakultet::all();
         $lesson_types = lesson_type::all();
-        return view('subject.create', compact('teachers', 'categories', 'kafedralar', 'fakultetlar', 'lesson_types'));
+        $oquv_yillari = OquvYili::all(); // O'quv yillari ro'yxatini olish
+        return view('subject.create', compact('teachers', 'categories', 'kafedralar', 'fakultetlar', 'lesson_types', 'oquv_yillari'));
     }
 
     /**
@@ -59,6 +66,8 @@ class SubjectController extends Controller
             'category_id' => $request->input('category_id'),
             'kafedra_id' => $request->input('kafedra_id'),
             'fakultet_id' => $request->input('fakultet_id'),
+            'oquv_yili_id' => $request->input('oquv_yili_id'),
+            'talim_tili' => $request->input('talim_tili'),
             'teacher_id' => $request->input('teacher_id'),
             'lesson_type_id' => $request->input('lesson_type_id'),
             'semster' => $request->input('semster'),
@@ -86,7 +95,8 @@ class SubjectController extends Controller
         $kafedralar = kafedra::all();
         $fakultetlar = fakultet::all();
         $lesson_types = lesson_type::all();
-        return view('subject.edit', compact('subject', 'teachers', 'categories', 'kafedralar', 'fakultetlar', 'lesson_types'));
+        $oquv_yillari = OquvYili::all();
+        return view('subject.edit', compact('subject', 'teachers', 'categories', 'kafedralar', 'fakultetlar', 'lesson_types', 'oquv_yillari'));
     }
 
     /**
@@ -98,11 +108,13 @@ class SubjectController extends Controller
         $request->validate([
             'nomi' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'kafedra_id' => 'nullable|exists:kafedras,id',
-            'fakultet_id' => 'nullable|exists:fakultets,id',
+            'kafedra_id' => 'nullable|exists:kafedra,id',
+            'fakultet_id' => 'nullable|exists:fakultet,id',
+            'oquv_yili_id' => 'nullable|exists:oquv_yili,id',
+            'talim_tili' => 'nullable|string|max:255',
             'kredit' => 'nullable|integer|min:0',
             'teacher_id' => 'nullable|exists:users,id',
-            'lesson_type_id' => 'required|exists:lesson_types,id',
+            'lesson_type_id' => 'nullable|exists:lesson_types,id',
             'semster' => 'required|integer|min:1|max:8',
             'kredit' => 'required|integer|min:1|max:10',
         ]);
@@ -112,6 +124,8 @@ class SubjectController extends Controller
             'category_id' => $request->input('category_id'),
             'kafedra_id' => $request->input('kafedra_id'),
             'fakultet_id' => $request->input('fakultet_id'),
+            'oquv_yili_id' => $request->input('oquv_yili_id'),
+            'talim_tili' => $request->input('talim_tili'),
             'teacher_id' => $request->input('teacher_id'),
             'lesson_type_id' => $request->input('lesson_type_id'),
             'semster' => $request->input('semster'),

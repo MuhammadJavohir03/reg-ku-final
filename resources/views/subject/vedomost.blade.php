@@ -30,15 +30,14 @@
 
                     <div>
                         <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Fakultet</label>
-                        <input type="text" name="fakultet" class="arizalar-search" style="width:100%;"
-                            placeholder="Masalan: Turizm va iqtisodiyot fakulteti"
-                            value="{{ $defaults['fakultet'] }}">
+                        <input type="text" class="arizalar-search" style="width:100%;"
+                            value="{{ $defaults['fakultet'] ?: '—' }}" disabled>
                     </div>
 
                     <div>
                         <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Kafedra</label>
-                        <input type="text" name="kafedra" class="arizalar-search" style="width:100%;"
-                            value="{{ $defaults['kafedra'] }}">
+                        <input type="text" class="arizalar-search" style="width:100%;"
+                            value="{{ $defaults['kafedra'] ?: '—' }}" disabled>
                     </div>
 
                     <div>
@@ -48,8 +47,8 @@
 
                     <div>
                         <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Fan krediti</label>
-                        <input type="text" name="fan_krediti" class="arizalar-search" style="width:100%;"
-                            placeholder="Masalan: 5.0" value="{{ $defaults['fan_krediti'] }}">
+                        <input type="text" class="arizalar-search" style="width:100%;"
+                            value="{{ $defaults['fan_krediti'] ?: '—' }}" disabled>
                     </div>
 
                     <div>
@@ -66,8 +65,8 @@
 
                     <div>
                         <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Semestr</label>
-                        <input type="text" name="semestr" class="arizalar-search" style="width:100%;"
-                            value="{{ $defaults['semestr'] }}">
+                        <input type="text" name="oquv_yili" class="arizalar-search" style="width:100%;"
+                            value="{{ $defaults['oquv_yili'] }}">
                     </div>
 
                 </div>
@@ -162,7 +161,21 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
                 .then(function (response) {
-                    if (!response.ok) throw new Error('Server xatosi');
+                    if (!response.ok) {
+                        // MUHIM: backend qaytargan aniq xato xabarini o'qib olamiz,
+                        // shunda foydalanuvchiga umumiy "Server xatosi" o'rniga
+                        // haqiqiy sabab ko'rsatiladi (masalan: "Export vaqtida xatolik: ...").
+                        return response.json()
+                            .then(function (err) {
+                                throw new Error(err.message || ('Server xatosi (kod: ' + response.status + ')'));
+                            })
+                            .catch(function (parseErr) {
+                                if (parseErr instanceof Error && parseErr.message && !parseErr.message.startsWith('Unexpected')) {
+                                    throw parseErr;
+                                }
+                                throw new Error('Server xatosi (kod: ' + response.status + ')');
+                            });
+                    }
                     return response.blob();
                 })
                 .then(function (blob) {

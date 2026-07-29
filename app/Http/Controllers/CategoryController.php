@@ -23,7 +23,8 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        return view('category.create');
+        $categories = category::paginate(10);
+        return view('category.create')->with('categories', $categories);
     }
 
     /**

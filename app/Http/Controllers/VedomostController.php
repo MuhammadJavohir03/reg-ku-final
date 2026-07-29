@@ -62,32 +62,6 @@ class VedomostController extends Controller
     }
 
     /**
-     * Talabaning klassik "5/4/3/2/Kelmadi" bahosini aniqlaydi.
-     *
-     * Qoida:
-     * - Barcha ballari (joriy, oraliq, reyting, yakuniy, umumiy) 0 bo'lsa -> "Kelmadi"
-     *   (bu holat odatda talaba imtihonga umuman qatnashmaganini bildiradi)
-     * - Aks holda Raqamli ekvivalentga qarab: 4.5 -> "5"; 4.0 -> "4"; 3.5/3.0 -> "3";
-     *   2.5/2.0 -> "2"; 0 (lekin qatnashgan) -> "2"
-     */
-    private function calcClassic(array $s): string
-    {
-        $allZero = $s['joriy'] == 0 && $s['oraliq'] == 0 && $s['reyting'] == 0
-            && $s['yakuniy'] == 0 && $s['umumiy'] == 0;
-
-        if ($allZero) {
-            return 'Kelmadi';
-        }
-
-        $scale = $this->calcScale($s['umumiy']);
-
-        if ($scale >= 4.5) return '5';
-        if ($scale <= 0) return '2';
-
-        return (string) (int) floor($scale);
-    }
-
-    /**
      * Umumiy baho (foiz) asosida "Harfiy ekvivalent"ni hisoblaydi.
      */
     private function calcLetter($umumiy)
@@ -103,17 +77,6 @@ class VedomostController extends Controller
     }
 
     /**
-     * Umumiy baho (foiz) asosida "An'anaviy baho"ni hisoblaydi.
-     */
-    private function calcAnan($umumiy)
-    {
-        $u = (float) $umumiy;
-        if ($u >= 70) return 'Yaxshi';
-        if ($u >= 60) return 'Qoniqarli';
-        return 'Qoniqarsiz';
-    }
-
-    /**
      * PREVIEW / TAHRIRLASH SAHIFASI.
      */
     public function form(subject $subject)
@@ -122,15 +85,17 @@ class VedomostController extends Controller
         $groups  = array_keys($grouped);
 
         $defaults = [
-            'fakultet'      => '',
-            'kafedra'       => '',
-            'fan_krediti'   => '',
+            'fakultet'      => optional($subject->fakultet)->nomi ?? '',
+            'kafedra'       => optional($subject->kafedra)->nomi ?? '',
+            'oquv_yili'     => optional($subject->oquv_yili)->nomi ?? '',
+            'fan_krediti'   => $subject->kredit ?? '',
             'fan_oqituvchi' => optional($subject->teacher)->{"To‘liq_ismi"}
-                ?? optional($subject->teacher)->Toliq_ismi
-                ?? optional($subject->teacher)->toliq_ismi
+                ?? optional($subject->teacher)['To‘liq_ismi']
+                ?? optional($subject->teacher)['To‘liq_ismi']
                 ?? '',
-            'talim_tili'    => "O'zbek",
+            'talim_tili'    => $subject->talim_tili,
             'semestr'       => $subject->semster ? $subject->semster . '-semestr' : '',
+
         ];
 
         return view('subject.vedomost', [
@@ -147,7 +112,7 @@ class VedomostController extends Controller
     private function buildSheetForGroup(subject $subject, string $guruh, array $students, array $data): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
-        $spreadsheet->getDefaultStyle()->getFont()->setName('Times New Roman')->setSize(12);
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Times New Roman')->setSize(17);
         $sheet = $spreadsheet->getActiveSheet();
 
         $safeTitle = mb_substr(preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh), 0, 31);
@@ -181,33 +146,40 @@ class VedomostController extends Controller
         // --- SARLAVHA ---
         $sheet->mergeCells('A1:K1');
         $sheet->setCellValue('A1', "QO'QON UNIVERSITETI");
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(20);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         $sheet->mergeCells('A2:K2');
         $sheet->setCellValue('A2', 'BAHOLASH QAYDNOMASI' . ($subject->semster ? " ({$subject->semster}-semestr)" : ''));
-        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(17);
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // 1-qator: Fakultet, Kafedra, Guruh
+        $fakultetNomi = optional($subject->fakultet)->nomi ?? ($data['fakultet'] ?? '');
+        $kafedraNomi  = optional($subject->kafedra)->nomi ?? ($data['kafedra'] ?? '');
+        $fanKrediti   = $subject->kredit ?? ($data['fan_krediti'] ?? '');
+        $oquv_yili    = optional($subject->oquv_yili)->nomi ?? ($data['oquv_yili'] ?? '');
+        $fanOqituvchi = $data['fan_oqituvchi'] ?? '';
+        $talimTili    = $data['talim_tili'] ?? '';
+
         $sheet->mergeCells('A4:K4');
-        $sheet->setCellValue('A4', "Fakultet: {$data['fakultet']}, Kafedra: {$data['kafedra']}, Guruh: {$guruh}");
+        $sheet->setCellValue('A4', "Fakultet: {$fakultetNomi}, Kafedra: {$kafedraNomi}, Guruh: {$guruh}");
 
         // 2-qator: Fan, Fan krediti
         $sheet->mergeCells('A5:K5');
-        $sheet->setCellValue('A5', "Fan: {$subject->nomi}, Fan krediti: {$data['fan_krediti']}");
+        $sheet->setCellValue('A5', "Fan: {$subject->nomi}, Fan krediti: {$fanKrediti}");
 
         // 3-qator: Fan o'qituvchisi
         $sheet->mergeCells('A6:K6');
-        $sheet->setCellValue('A6', "Fan o'qituvchisi: {$data['fan_oqituvchi']}");
+        $sheet->setCellValue('A6', "Fan o'qituvchisi: {$fanOqituvchi}");
 
         // 4-qator: Ta'lim tili
         $sheet->mergeCells('A7:K7');
-        $sheet->setCellValue('A7', "Ta'lim tili: {$data['talim_tili']}");
+        $sheet->setCellValue('A7', "Ta'lim tili: {$talimTili}");
 
         // 5-qator: Semestr
         $sheet->mergeCells('A8:K8');
-        $sheet->setCellValue('A8', "Semestr: {$data['semestr']}");
+        $sheet->setCellValue('A8', "O'quv yili: {$oquv_yili}");
 
         // --- JADVAL SARLAVHASI (asl shablondagi kabi 2 qatorli, faqat Guruh o'rniga Talaba ID) ---
         $headerRow  = 10;
@@ -221,7 +193,7 @@ class VedomostController extends Controller
         $sheet->setCellValue("H{$headerRow}", 'Umumiy baho');
         $sheet->setCellValue("I{$headerRow}", 'Raqamli ekvivalent');
         $sheet->setCellValue("J{$headerRow}", 'Harfiy ekvivalent');
-        $sheet->setCellValue("K{$headerRow}", "An'anaviy baho");
+        $sheet->setCellValue("K{$headerRow}", "Imzo");
 
         $sheet->setCellValue("D{$headerRow2}", 'Joriy nazorat');
         $sheet->setCellValue("E{$headerRow2}", 'Oraliq nazorat');
@@ -237,19 +209,22 @@ class VedomostController extends Controller
         $sheet->mergeCells("J{$headerRow}:J{$headerRow2}");
         $sheet->mergeCells("K{$headerRow}:K{$headerRow2}");
 
-        $sheet->getStyle("A{$headerRow}:K{$headerRow2}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$headerRow}:K{$headerRow2}")->getFont()->setBold(true)->setSize(14);
         $sheet->getStyle("A{$headerRow}:K{$headerRow2}")->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
         $sheet->getStyle("A{$headerRow}:K{$headerRow2}")->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getRowDimension($headerRow)->setRowHeight(22);
-        $sheet->getRowDimension($headerRow2)->setRowHeight(22);
+        $sheet->getRowDimension($headerRow)->setRowHeight(34);
+        $sheet->getRowDimension($headerRow2)->setRowHeight(34);
 
         // --- MA'LUMOTLAR QATORLARI ---
         $row = $headerRow2 + 1;
-        $counts = ['5' => 0, '4' => 0, '3' => 0, '2' => 0, 'Kelmadi' => 0];
+
+        // Kalitlar calcLetter() qaytaradigan qiymatlar bilan bir xil bo'lishi SHART:
+        // 'A+', 'A', 'B+', 'B', 'C+', 'C', 'F'
+        $counts = ['A+' => 0, 'A' => 0, 'B+' => 0, 'B' => 0, 'C+' => 0, 'C' => 0, 'F' => 0];
 
         foreach ($students as $i => $s) {
             $sheet->setCellValue("A{$row}", $i + 1);
@@ -271,15 +246,18 @@ class VedomostController extends Controller
             $sheet->setCellValue("H{$row}", $s['umumiy']);
             $sheet->setCellValue("I{$row}", number_format($this->calcScale($s['umumiy']), 1));
             $sheet->setCellValue("J{$row}", $this->calcLetter($s['umumiy']));
-            $sheet->setCellValue("K{$row}", $this->calcAnan($s['umumiy']));
+            $sheet->setCellValue("K{$row}", ''); // Imzo uchun bo'sh joy
 
-            $classic = $this->calcClassic($s);
-            $counts[$classic]++;
+            $key = $this->calcLetter($s['umumiy']);
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
 
             $sheet->getStyle("A{$row}:K{$row}")->getBorders()->getAllBorders()
                 ->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle("A{$row}:K{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("A{$row}:K{$row}")->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                ->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle("B{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getRowDimension($row)->setRowHeight(34);
 
             $row++;
         }
@@ -290,20 +268,34 @@ class VedomostController extends Controller
         $total = count($students);
         $sheet->setCellValue(
             "A{$row}",
-            "Jami talabalar: {$total}, shundan, \"5\": {$counts['5']}, \"4\": {$counts['4']}, " .
-                "\"3\": {$counts['3']}, \"2\": {$counts['2']}, \"Kelmadi\": {$counts['Kelmadi']}"
+            "Jami talabalar: {$total}, shundan, \"A+ 95-100\": {$counts['A+']}, \"A 90-94\": {$counts['A']}, " .
+                "\"B+ 80-89\": {$counts['B+']}, \"B 70-79\": {$counts['B']}, \"C+ 65-69\": {$counts['C+']}, " .
+                "\"C 60-64\": {$counts['C']}, \"F 0-59\": {$counts['F']}"
         );
 
-        // --- IMZO: faqat o'qituvchi uchun, chiziq bilan ---
+        // --- IMZO: Registrator ofisi boshlig'i uchun, chiziq bilan ---
         $row += 3;
-        $sheet->setCellValue("A{$row}", "O'qituvchi:");
-        $sheet->setCellValue("B{$row}", $data['fan_oqituvchi']);
-        $sheet->mergeCells("H{$row}:K{$row}");
-        $sheet->setCellValue("H{$row}", '_________________________');
-        $sheet->getStyle("H{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->mergeCells("A{$row}:C{$row}");
+        $sheet->setCellValue("A{$row}", "Registrator ofisi boshlig'i:");
+        $sheet->getStyle("A{$row}")->getFont()->setBold(true);
 
-        // Chop etishda har sahifada 1-11 qatorlar (sarlavha + jadval sarlavhasi) takrorlansin
-        $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, $headerRow2);
+        // Imzo chizig'i (bo'sh, faqat pastki chegara chiziq bo'lib ko'rinadi)
+        $sheet->mergeCells("D{$row}:H{$row}");
+        $sheet->getStyle("D{$row}:H{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
+
+        // F.I.Sh.
+        $sheet->mergeCells("I{$row}:K{$row}");
+        $sheet->setCellValue("I{$row}", "M.Ikramov");
+        $sheet->getStyle("I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Chiziq ostiga kichik "(imzo)" izohi
+        $row += 1;
+        $sheet->mergeCells("D{$row}:H{$row}");
+        $sheet->setCellValue("D{$row}", "(imzo)");
+        $sheet->getStyle("D{$row}")->getFont()->setSize(9)->setItalic(true);
+        $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd($headerRow, $headerRow2);
         $sheet->getPageSetup()->setPrintArea("A1:K{$row}");
 
         return $spreadsheet;
@@ -315,13 +307,16 @@ class VedomostController extends Controller
     public function exportAll(Request $request, subject $subject)
     {
         $data = $request->validate([
-            'fakultet'      => 'nullable|string|max:255',
-            'kafedra'       => 'nullable|string|max:255',
-            'fan_krediti'   => 'nullable|string|max:255',
             'fan_oqituvchi' => 'nullable|string|max:255',
             'talim_tili'    => 'nullable|string|max:255',
-            'semestr'       => 'nullable|string|max:255',
+            'oquv_yili'     => 'nullable|string|max:255',
         ]);
+
+        // Validate() faqat requestda kelgan kalitlarni qaytaradi -
+        // shuning uchun bo'sh qoldirilgan maydonlar uchun standart qiymatlar beramiz.
+        $data['fan_oqituvchi'] = $data['fan_oqituvchi'] ?? '';
+        $data['talim_tili']    = $data['talim_tili'] ?? '';
+        $data['oquv_yili']     = $data['oquv_yili'] ?? '';
 
         $grouped = $this->getStudentsByGroup($subject);
 
@@ -334,30 +329,50 @@ class VedomostController extends Controller
 
         $files = [];
 
-        foreach ($grouped as $guruh => $students) {
-            $spreadsheet = $this->buildSheetForGroup($subject, $guruh, $students, $data);
-            $writer = new Xlsx($spreadsheet);
+        try {
+            foreach ($grouped as $guruh => $students) {
+                $spreadsheet = $this->buildSheetForGroup($subject, $guruh, $students, $data);
+                $writer = new Xlsx($spreadsheet);
 
-            $safeGuruh = preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh);
-            $filename  = "Baholash_qaydnomasi_{$safeGuruh}.xlsx";
-            $path      = $tmpDir . DIRECTORY_SEPARATOR . $filename;
+                $safeGuruh = preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh);
+                $filename  = "{$safeGuruh}.xlsx";
+                $path      = $tmpDir . DIRECTORY_SEPARATOR . $filename;
 
-            $writer->save($path);
-            $files[] = $path;
+                $writer->save($path);
+                $files[] = $path;
 
-            $spreadsheet->disconnectWorksheets();
-            unset($spreadsheet, $writer);
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet, $writer);
+            }
+
+            $zipName =\Illuminate\Support\Str::slug($subject->nomi) . '.zip';
+            $zipPath = $tmpDir . DIRECTORY_SEPARATOR . $zipName;
+
+            $zip = new ZipArchive();
+            $openResult = $zip->open($zipPath, ZipArchive::CREATE);
+            if ($openResult !== true) {
+                throw new \RuntimeException("ZIP faylni yaratib bo'lmadi (kod: {$openResult})");
+            }
+            foreach ($files as $file) {
+                $zip->addFile($file, basename($file));
+            }
+            $zip->close();
+        } catch (\Throwable $e) {
+            // Xatolik bo'lsa vaqtinchalik fayllarni tozalab, xatoni loglaymiz va foydalanuvchiga aniq xabar qaytaramiz
+            foreach ($files as $file) {
+                @unlink($file);
+            }
+            @rmdir($tmpDir);
+
+            \Illuminate\Support\Facades\Log::error('Vedomost export xatosi: ' . $e->getMessage(), [
+                'subject_id' => $subject->id,
+                'trace'      => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => "Export vaqtida xatolik yuz berdi: " . $e->getMessage(),
+            ], 500);
         }
-
-        $zipName = 'Baholash_qaydnomalari_' . \Illuminate\Support\Str::slug($subject->nomi) . '.zip';
-        $zipPath = $tmpDir . DIRECTORY_SEPARATOR . $zipName;
-
-        $zip = new ZipArchive();
-        $zip->open($zipPath, ZipArchive::CREATE);
-        foreach ($files as $file) {
-            $zip->addFile($file, basename($file));
-        }
-        $zip->close();
 
         // Ichidagi vaqtinchalik xlsx fayllarni tozalaymiz (ZIP ichida saqlanib qoldi)
         foreach ($files as $file) {

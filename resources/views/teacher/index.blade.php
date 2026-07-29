@@ -11,10 +11,22 @@
                 <i class="bx bx-group" style="color:#3C3489;"></i> O'qituvchilar Ro'yxati
             </div>
 
-            <a href="{{ route('teacher.create') }}" class="ar-btn ar-btn-ok">
-                <i class="bx bx-plus"></i> Yangi O'qituvchi yaratish
-            </a>
+            <div style="display:flex; gap:10px;">
+                <a href="{{ route('teacher.import') }}" class="ar-btn" style="background:#EEEDFE; color:#3C3489;">
+                    <i class="bx bx-import"></i> Excel'dan import qilish
+                </a>
+
+                <a href="{{ route('teacher.create') }}" class="ar-btn ar-btn-ok">
+                    <i class="bx bx-plus"></i> Yangi O'qituvchi yaratish
+                </a>
+            </div>
         </div>
+
+        @if (session('success'))
+            <div style="background:#EAFBEA; color:#1a7f37; border:1px solid #c6e9c6; padding:12px 16px; border-radius:10px; margin-bottom:16px;">
+                {{ session('success') }}
+            </div>
+        @endif
 
         <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:0; overflow:hidden;">
             <div class="arizalar-table-wrap">

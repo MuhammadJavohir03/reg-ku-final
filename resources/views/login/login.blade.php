@@ -181,7 +181,7 @@
 
         <div class="login-left">
 
-            <h2>Registrator Office</h2>
+            <h2>Registrator Ofisi</h2>
 
             <p>
                 Talabalar uchun yagona axborot tizimi.

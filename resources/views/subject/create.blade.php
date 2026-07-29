@@ -27,17 +27,10 @@
                             placeholder="Masalan: Matematika..." value="{{ old('nomi') }}" required>
                     </div>
 
-                    <div>
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Yo'nalish</label>
-                        <select name="category_id" class="arizalar-search" style="width:100%;">
-                            <option value="" disabled selected>Tanlang...</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}"
-                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->nomi }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <div style="grid-column:1/-1;">
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Ta'lim tili</label>
+                        <input type="text" name="talim_tili" class="arizalar-search" style="width:100%;"
+                           placeholder="Ta'lim tilini kiriting..." value="{{ old('talim_tili') }}" required>
                     </div>
 
                     {{-- KAFEDRA: qidiruvli dropdown --}}
@@ -48,14 +41,12 @@
                                 style="position:absolute; left:10px; top:50%;
                                 transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
                             <input type="text" id="kafedra_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..."
-                                autocomplete="off">
+                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="kafedra_results" class="search-dropdown">
                             @foreach ($kafedralar as $kafedra)
-                                <div class="search-item" data-id="{{ $kafedra->id }}"
-                                    data-name="{{ $kafedra->nomi }}">
+                                <div class="search-item" data-id="{{ $kafedra->id }}" data-name="{{ $kafedra->nomi }}">
                                     {{ $kafedra->nomi }}
                                 </div>
                             @endforeach
@@ -72,8 +63,7 @@
                                 style="position:absolute; left:10px; top:50%;
                                 transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
                             <input type="text" id="fakultet_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..."
-                                autocomplete="off">
+                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="fakultet_results" class="search-dropdown">
@@ -85,20 +75,80 @@
                             @endforeach
                         </div>
 
-                        <input type="hidden" name="fakultet_id" id="hidden_fakultet_id" value="{{ old('fakultet_id') }}">
+                        <input type="hidden" name="fakultet_id" id="hidden_fakultet_id"
+                            value="{{ old('fakultet_id') }}">
                     </div>
 
-                    <div>
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Dars turi</label>
-                        <select name="lesson_type_id" class="arizalar-search" style="width:100%;">
-                            <option value="" disabled selected>Tanlang...</option>
-                            @foreach ($lesson_types as $lesson_type)
-                                <option value="{{ $lesson_type->id }}"
-                                    {{ old('lesson_type_id') == $lesson_type->id ? 'selected' : '' }}>
-                                    {{ $lesson_type->nomi }}
-                                </option>
+                    {{-- O'quv yili: qidiruvli dropdown --}}
+                    <div style="position:relative;">
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">O'quv yili</label>
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="oquv_yili_search" class="arizalar-search"
+                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                        </div>
+
+                        <div id="oquv_yili_results" class="search-dropdown">
+                            @foreach ($oquv_yillari as $oquv_yili)
+                                <div class="search-item" data-id="{{ $oquv_yili->id }}"
+                                    data-name="{{ $oquv_yili->nomi }}">
+                                    {{ $oquv_yili->nomi }}
+                                </div>
                             @endforeach
-                        </select>
+                        </div>
+
+                        <input type="hidden" name="oquv_yili_id" id="hidden_oquv_yili_id"
+                            value="{{ old('oquv_yili_id') }}">
+                    </div>
+
+                    {{-- category: qidiruvli dropdown --}}
+                    <div style="position:relative;">
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Yo'nalish</label>
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="category_search" class="arizalar-search"
+                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                        </div>
+
+                        <div id="category_results" class="search-dropdown">
+                            @foreach ($categories as $category)
+                                <div class="search-item" data-id="{{ $category->id }}"
+                                    data-name="{{ $category->nomi }}">
+                                    {{ $category->nomi }}
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <input type="hidden" name="category_id" id="hidden_category_id"
+                            value="{{ old('category_id') }}">
+                    </div>
+
+                    {{-- lesson type: qidiruvli dropdown --}}
+                    <div style="position:relative;">
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Dars turi</label>
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="lesson_type_search" class="arizalar-search"
+                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                        </div>
+
+                        <div id="lesson_type_results" class="search-dropdown">
+                            @foreach ($lesson_types as $lesson_type)
+                                <div class="search-item" data-id="{{ $lesson_type->id }}"
+                                    data-name="{{ $lesson_type->nomi }}">
+                                    {{ $lesson_type->nomi }}
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <input type="hidden" name="lesson_type_id" id="hidden_lesson_type_id"
+                            value="{{ old('lesson_type_id') }}">
                     </div>
 
                     <div>
@@ -127,14 +177,14 @@
                         <div id="teacher_results" class="search-dropdown" style="width:280px;">
                             @foreach ($teachers as $teacher)
                                 <div class="search-item" data-id="{{ $teacher->id }}"
-                                    data-name="{{ $teacher['To\'liq_ismi'] }}">
+                                    data-name="{{ $teacher['To‘liq_ismi'] }}">
                                     <span
                                         style="background:#EEEDFE; color:#3C3489; padding:2px 8px;
                                         border-radius:6px; font-size:11px; font-weight:700; flex-shrink:0;">
                                         #{{ $teacher->id }}
                                     </span>
                                     <span style="font-size:13px; color:#333; font-weight:500;">
-                                        {{ $teacher['To\'liq_ismi'] }}
+                                        {{ $teacher['To‘liq_ismi'] }}
                                     </span>
                                 </div>
                             @endforeach
@@ -146,7 +196,8 @@
                 </div>
             </div>
 
-            <button type="submit" class="ar-btn ar-btn-ok" style="width:100%; justify-content:center; padding:10px;">
+            <button type="submit" class="ar-btn ar-btn-ok"
+                style="width:100%; justify-content:center; padding:10px;">
                 <i class="bx bx-save"></i> Saqlash
             </button>
 
@@ -240,6 +291,9 @@
         initSearchSelect('teacher_search', 'teacher_results', 'hidden_teacher_id');
         initSearchSelect('kafedra_search', 'kafedra_results', 'hidden_kafedra_id');
         initSearchSelect('fakultet_search', 'fakultet_results', 'hidden_fakultet_id');
+        initSearchSelect('oquv_yili_search', 'oquv_yili_results', 'hidden_oquv_yili_id');
+        initSearchSelect('category_search', 'category_results', 'hidden_category_id');
+        initSearchSelect('lesson_type_search', 'lesson_type_results', 'hidden_lesson_type_id');
     </script>
 
 </x-layouts.sidebar>
