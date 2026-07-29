@@ -4,15 +4,15 @@
         O'qituvchilar Ro'yxati
     </x-slot:title>
 
+    <link rel="stylesheet" href="{{ asset('css/jadvallar.css') }}">
+
     <div class="oz-wrap">
 
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-            <div class="oz-title" style="margin:0;">
-                <i class="bx bx-group" style="color:#3C3489;"></i> O'qituvchilar Ro'yxati
-            </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+            <div class="oz-title" style="margin:0;">O'qituvchilar Ro'yxati</div>
 
-            <div style="display:flex; gap:10px;">
-                <a href="{{ route('teacher.import') }}" class="ar-btn" style="background:#EEEDFE; color:#3C3489;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a href="{{ route('teacher.import') }}" class="ar-btn">
                     <i class="bx bx-import"></i> Excel'dan import qilish
                 </a>
 
@@ -23,81 +23,76 @@
         </div>
 
         @if (session('success'))
-            <div style="background:#EAFBEA; color:#1a7f37; border:1px solid #c6e9c6; padding:12px 16px; border-radius:10px; margin-bottom:16px;">
+            <div style="background:var(--jd-success-soft); color:var(--jd-success); border:1px solid #a7f3d0; padding:12px 16px; border-radius:10px; margin-bottom:16px; font-size:13px;">
                 {{ session('success') }}
             </div>
         @endif
 
-        <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:0; overflow:hidden;">
-            <div class="arizalar-table-wrap">
-                <table class="arizalar-table">
-                    <thead>
+        <div class="arizalar-table-wrap">
+            <table class="arizalar-table">
+                <thead>
+                    <tr>
+                        <th style="width:70px;">ID</th>
+                        <th>To'liq Ismi</th>
+                        <th>Email</th>
+                        <th style="width:120px;">Roli</th>
+                        <th style="width:120px; text-align:center;">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($teachers as $teacher)
                         <tr>
-                            <th style="width:70px;">ID</th>
-                            <th>To'liq Ismi</th>
-                            <th>Email</th>
-                            <th>Roli</th>
-                            <th style="width:120px;" class="text-center">Amallar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($teachers as $teacher)
-                            <tr>
-                                <td class="text-muted small">
-                                    <i class="bx bx-user"></i> {{ $teacher->id }}
-                                </td>
+                            <td class="ar-id">
+                                #{{ $teacher->id }}
+                            </td>
 
-                                <td>
-                                    <div style="display:flex; align-items:center; gap:10px;">
-                                        <div class="ar-avatar">
-                                            {{ mb_substr($teacher['To‘liq_ismi'] ?? 'N', 0, 2) }}
-                                        </div>
-                                        <div style="font-weight:600;">
-                                            {{ $teacher['To‘liq_ismi'] }}
-                                        </div>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="ar-avatar">
+                                        {{ mb_substr($teacher['To‘liq_ismi'] ?? 'N', 0, 2) }}
                                     </div>
-                                </td>
-
-                                <td>{{ $teacher->email }}</td>
-
-                                <td>
-                                    <span class="ar-badge" style="background:#EEEDFE; color:#3C3489;">
-                                        {{ $teacher->role }}
+                                    <span style="font-weight:500; font-size:13px;">
+                                        {{ $teacher['To‘liq_ismi'] }}
                                     </span>
-                                </td>
+                                </div>
+                            </td>
 
-                                <td class="text-center">
-                                    <div style="display:flex; gap:6px; justify-content:center;">
-                                        <a href="{{ route('teacher.edit', $teacher->id) }}" title="Tahrirlash"
-                                            style="background:#EEEDFE; color:#3C3489; padding:8px 10px; border-radius:8px; text-decoration:none; font-size:13px;">
-                                            <i class="bx bx-edit"></i>
-                                        </a>
+                            <td style="font-size:13px; color:#888;">{{ $teacher->email }}</td>
 
-                                        <form action="{{ route('teacher.destroy', $teacher->id) }}" method="POST"
-                                            style="display:inline;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" onclick="return confirm('O\'chirilsinmi?')"
-                                                style="background:#fde2e2; color:#b91c1c; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px;">
-                                                <i class="bx bx-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" style="padding:30px; text-align:center; color:#888;">
-                                    O'qituvchilar topilmadi.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                            <td>
+                                <span class="ar-badge ar-badge-ok">O'qituvchi</span>
+                            </td>
+
+                            <td style="text-align:center;">
+                                <div style="display:flex; gap:6px; justify-content:center;">
+                                    <a href="{{ route('teacher.edit', $teacher->id) }}" class="ar-btn" title="Tahrirlash" style="padding:6px 9px;">
+                                        <i class="bx bx-edit"></i>
+                                    </a>
+
+                                    <form action="{{ route('teacher.destroy', $teacher->id) }}" method="POST" style="display:inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="ar-btn ar-btn-rej" style="padding:6px 9px;"
+                                            onclick="return confirm('O\'chirilsinmi?')">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="padding:30px; text-align:center; color:#888;">
+                                <i class="bx bx-group" style="font-size:32px; display:block; margin-bottom:8px;"></i>
+                                O'qituvchilar topilmadi.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
-        <div class="ar-pagination" style="margin-top:12px;">
+        <div class="ar-pagination" style="margin-top:16px;">
             {{ $teachers->links() }}
         </div>
 

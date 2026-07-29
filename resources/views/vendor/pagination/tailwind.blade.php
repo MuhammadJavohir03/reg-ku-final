@@ -6,7 +6,7 @@
             justify-content: space-between;
             width: 100%;
             padding: 16px 8px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             box-sizing: border-box;
         }
 
@@ -20,22 +20,22 @@
             padding: 0 18px;
             font-size: 14px;
             font-weight: 600;
-            color: #0f172a;
+            color: #221f3d;
             background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid #edecf5;
             border-radius: 99px; /* Pill style */
             text-decoration: none;
-            box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 14px -2px rgba(34, 31, 61, 0.06);
             backdrop-filter: blur(8px);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
         }
 
         .app-pg-action:hover:not(.disabled) {
-            background: #11101d;
+            background: linear-gradient(135deg, #7C6CF5, #5B4FE0);
             color: #ffffff;
-            border-color: #11101d;
-            box-shadow: 0 6px 20px -3px rgba(37, 99, 235, 0.4);
+            border-color: transparent;
+            box-shadow: 0 6px 20px -3px rgba(124, 108, 245, 0.4);
             transform: translateY(-1px);
         }
 
@@ -44,9 +44,9 @@
         }
 
         .app-pg-action.disabled {
-            opacity: 0.4;
-            background: #f1f5f9;
-            color: #94a3b8;
+            opacity: 0.5;
+            background: #f5f4fa;
+            color: #b0acc9;
             border-color: transparent;
             cursor: not-allowed;
             box-shadow: none;
@@ -60,25 +60,25 @@
             padding: 8px 16px;
             font-size: 13px;
             font-weight: 700;
-            color: #1e293b;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            color: #221f3d;
+            background: #faf9ff;
+            border: 1px solid #edecf5;
             border-radius: 99px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+            box-shadow: inset 0 1px 2px rgba(34, 31, 61, 0.03);
         }
 
         .app-pg-status-mobile span {
-            color: #11101d;
+            color: #5B4FE0;
         }
 
         /* Desktop konteyner va raqamlar */
         .app-pg-desktop {
             display: none;
             align-items: center;
-            background: #f8fafc;
+            background: #faf9ff;
             padding: 4px;
             border-radius: 99px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #edecf5;
             gap: 2px;
         }
 
@@ -91,27 +91,27 @@
             padding: 0 8px;
             font-size: 13px;
             font-weight: 600;
-            color: #64748b;
+            color: #8b87a8;
             border-radius: 99px;
             text-decoration: none;
             transition: all 0.2s ease;
         }
 
         .app-pg-num:hover:not(.active):not(.dots) {
-            color: #0f172a;
-            background: rgba(226, 232, 240, 0.6);
+            color: #5B4FE0;
+            background: rgba(124, 108, 245, 0.1);
         }
 
         .app-pg-num.active {
-            background: linear-gradient(135deg, #11101de3, #11101daf);
+            background: linear-gradient(135deg, #7C6CF5, #5B4FE0);
             color: #ffffff;
             font-weight: 700;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.603);
+            box-shadow: 0 4px 12px rgba(124, 108, 245, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
 
         .app-pg-num.dots {
-            color: #94a3b8;
+            color: #cfcde0;
             cursor: default;
         }
 

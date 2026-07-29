@@ -38,7 +38,11 @@ class SubjectController extends Controller
             ->paginate($pageSize)
             ->withQueryString();
 
-        return view('subject.index', compact('subjects'));
+            $subjectCounts = [
+            'subject' => \App\Models\Subject::count(),
+        ];
+
+        return view('subject.index', compact('subjects', 'subjectCounts'));
     }
 
     /**

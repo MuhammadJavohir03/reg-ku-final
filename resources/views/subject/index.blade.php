@@ -1,12 +1,14 @@
 <x-layouts.sidebar>
     <x-slot:title>Fanlar</x-slot:title>
 
+    <link rel="stylesheet" href="{{ asset('css/jadvallar.css') }}">
+
     <div class="oz-wrap">
 
         {{-- HEADER --}}
         <div
             style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-            <div class="oz-title" style="margin:0;">Fanlar katalogi</div>
+            <div class="oz-title" style="margin:0;">Fanlar katalogida ({{$subjectCounts['subject']}} ta fan mavjud)</div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <a href="{{ route('subject.create') }}" class="ar-btn ar-btn-ok">
                     <i class="bx bx-plus"></i> Yangi fan
@@ -44,183 +46,174 @@
         {{-- FANLAR JADVALI --}}
         <div class="arizalar-table-wrap">
             <table class="arizalar-table">
-    <thead>
-        <tr>
-            <th style="width:50px;">№</th>
-            <th style="width:300px">Fan nomi</th>
-            <th style="width:110px;">O'quv yili</th>
-            <th style="width:40px;">Yo'nalish</th>
-            <th style="width:70px;">Krediti</th>
-            <th style="width:70px;">Semestr</th>
-            <th style="width:60px;">Turi</th>
-            <th style="width:200px;">O'qituvchi</th>
-            <th style="width:60px;">Holat</th>
-            <th style="width:160px;">Amallar</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse ($subjects as $index => $subject)
-            @php
-                $teacher = $subject->teacher['To‘liq_ismi'] ?? 'Tayinlanmagan';
-            @endphp
-            <tr>
-                <td class="ar-id">{{ $subjects->firstItem() + $index }}</td>
+                <thead>
+                    <tr>
+                        <th style="width:1px;">№</th>
+                        <th style="width:300px">Fan nomi</th>
+                        <th style="width:110px;">O'quv yili</th>
+                        <th style="width:60px;">Yo'nalish</th>
+                        <th style="width:40px;">Krediti</th>
+                        <th style="width:70px;">Semestr</th>
+                        <th style="width:60px;">Turi</th>
+                        <th style="width:200px;">O'qituvchi</th>
+                        <th style="width:80px;">Holat</th>
+                        <th style="width:160px;">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($subjects as $index => $subject)
+                        @php
+                            $teacher = $subject->teacher['To‘liq_ismi'] ?? 'Tayinlanmagan';
+                        @endphp
+                        <tr>
+                            <td class="ar-id">{{ $subjects->firstItem() + $index }}</td>
 
-                {{-- Fan nomi --}}
-                <td>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div
-                            style="width:8px; height:8px; border-radius:50%; flex-shrink:0;
-                            background:{{ $subject->grades_exists ? '#10b981' : '#a1a1a1' }};">
-                        </div>
-                        <span style="font-size:14px; font-weight:500;">{{ $subject->nomi }}</span>
-                        @if ($subject->grades_exists)
-                            <span
-                                style="background:#e6f4ea; color:#10b981; padding:2px 7px;
-                                border-radius:6px; font-size:11px; font-weight:700;
-                                border:1px solid #a7f3d0;">
-                                <i class="fas fa-circle-check"></i> Natija bor
-                            </span>
-                        @endif
-                    </div>
-                </td>
-
-                {{-- O'quv yili (Qo'shildi) --}}
-                <td style="font-size:13px; color:#555;">
-                    {{ $subject->oquv_yili->nomi ?? 'Ko\'rsatilmagan' }}
-                </td>
-
-                {{-- Yo'nalish / Kategoriya --}}
-                <td style="font-size:13px; color:#888;">
-                    {{ $subject->category->guruh ?? 'Umumiy' }}
-                </td>
-
-                <td style="font-size:13px; color:#888;">
-                    {{ $subject->kredit ?? 'Umumiy' }}
-                </td>
-
-                {{-- Semestr --}}
-                <td style="font-size:13px; text-align:center;">
-                    <span
-                        style="background:#EEEDFE; color:#3C3489; padding:3px 10px;
-                        border-radius:6px; font-size:12px; font-weight:600;">
-                        {{ $subject->semster }}-sem
-                    </span>
-                </td>
-
-                {{-- Dars turi --}}
-                <td style="font-size:13px; color:#888;">
-                    {{ $subject->lesson_type->nomi ?? 'Dars' }}
-                </td>
-
-                {{-- O'qituvchi --}}
-                <td>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <div class="ar-avatar"
-                            style="width:28px; height:28px; font-size:11px; flex-shrink:0;">
-                            {{ mb_substr($teacher, 0, 2) }}
-                        </div>
-                        <span style="font-size:12px; color:#555;">{{ $teacher }}</span>
-                    </div>
-                </td>
-
-                {{-- Holat --}}
-                <td>
-                    @if ($subject->grades_exists)
-                        <span class="ar-badge ar-badge-ok">Baholangan</span>
-                    @else
-                        <span class="ar-badge" style="background:#f5f5f5; color:#aaa;">Baholanmagan</span>
-                    @endif
-                </td>
-
-                {{-- Amallar --}}
-                <td onclick="event.stopPropagation()">
-                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-
-                        {{-- KO'RISH --}}
-                        <a href="{{ route('grades.index', $subject->id) }}" class="ar-btn"
-                            title="Baholarni ko'rish" style="color:#217346; padding:5px 8px;">
-                            <i class="bx bx-show"></i>
-                        </a>
-
-                        {{-- Vedmostga eksport qilish --}}
-                        <a href="{{ route('grades.vedomost.form', $subject->id) }}" class="ar-btn"
-                            target="_blank" title="Vedomostga eksport">
-                            <i class="bx bx-spreadsheet" style="color:#217346;"></i>
-                        </a>
-
-                        {{-- IMPORT --}}
-                        <form action="{{ route('grades.import', $subject->id) }}" method="POST"
-                            enctype="multipart/form-data" style="display:inline-flex; align-items:center;"
-                            class="grade-import-form">
-                            @csrf
-                            <label class="ar-btn" title="Excel import"
-                                style="cursor:pointer; margin:0; padding:5px 8px;">
-                                <i class="bx bx-import import-icon" style="color:#217346;"></i>
-                                <div class="row-progress"
-                                    style="display:none; align-items:center; gap:4px;">
-                                    <div style="position:relative; width:28px; height:28px; flex-shrink:0;">
-                                        <svg width="28" height="28" style="transform:rotate(-90deg);">
-                                            <circle cx="14" cy="14" r="11" fill="none"
-                                                stroke="#e5e7eb" stroke-width="2.5" />
-                                            <circle class="circle-bar" cx="14" cy="14" r="11"
-                                                fill="none" stroke="#217346" stroke-width="2.5"
-                                                stroke-dasharray="69.1" stroke-dashoffset="69.1"
-                                                style="transition:stroke-dashoffset 0.3s;" />
-                                        </svg>
-                                        <span class="circle-pct"
-                                            style="position:absolute;top:50%;left:50%;
-                                            transform:translate(-50%,-50%);
-                                            font-size:7px;font-weight:700;color:#217346;">0%</span>
-                                    </div>
+                            {{-- Fan nomi --}}
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span class="ar-dot"
+                                        style="background:{{ $subject->grades_exists ? '#10b981' : '#c9c7db' }};"></span>
+                                    <span style="font-size:14px; font-weight:500;">{{ $subject->nomi }}</span>
+                                    @if ($subject->grades_exists)
+                                        <span class="ar-badge ar-badge-ok">
+                                            <i class="fas fa-circle-check"></i> Natija bor
+                                        </span>
+                                    @endif
                                 </div>
-                                <input type="file" name="excel_file" accept=".xlsx,.xls,.csv"
-                                    style="display:none;">
-                            </label>
-                        </form>
+                            </td>
 
-                        {{-- TOZALASH --}}
-                        @if ($subject->grades_exists)
-                            <form action="{{ route('grades.clear', $subject->id) }}" method="POST"
-                                style="display:inline;">
-                                @csrf @method('DELETE')
-                                <button class="ar-btn ar-btn-rej" style="padding:5px 8px;"
-                                    title="Baholarni tozalash"
-                                    onclick="return confirm('Barcha baholar ochirisinmi?')">
-                                    <i class="bx bx-eraser"></i>
-                                </button>
-                            </form>
-                        @endif
+                            {{-- O'quv yili --}}
+                            <td style="font-size:13px; color:#555;">
+                                {{ $subject->oquv_yili->nomi ?? 'Ko\'rsatilmagan' }}
+                            </td>
 
-                        {{-- TAHRIRLASH --}}
-                        <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
-                            style="padding:5px 8px;" title="Tahrirlash">
-                            <i class="bx bx-edit"></i>
-                        </a>
+                            {{-- Yo'nalish / Kategoriya --}}
+                            <td style="font-size:13px; color:#888;">
+                                {{ $subject->category->guruh ?? 'Umumiy' }}
+                            </td>
 
-                        {{-- O'CHIRISH --}}
-                        <form action="{{ route('subject.destroy', $subject->id) }}" method="POST"
-                            style="display:inline;">
-                            @csrf @method('DELETE')
-                            <button class="ar-btn ar-btn-rej" style="padding:5px 8px;" title="O'chirish"
-                                onclick="return confirm('Ochirilsinmi?')">
-                                <i class="bx bx-trash"></i>
-                            </button>
-                        </form>
+                            <td style="font-size:13px; color:#888;">
+                                {{ $subject->kredit ?? 'Umumiy' }}
+                            </td>
 
-                    </div>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="9" style="text-align:center; padding:2rem; color:#888;">
-                    <i class="bx bx-book" style="font-size:32px; display:block; margin-bottom:8px;"></i>
-                    Fanlar topilmadi
-                </td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
+                            {{-- Semestr --}}
+                            <td style="text-align:center;">
+                                <span class="ar-badge ar-badge-accent">
+                                    {{ $subject->semster }}-sem
+                                </span>
+                            </td>
+
+                            {{-- Dars turi --}}
+                            <td style="font-size:13px; color:#888;">
+                                {{ $subject->lesson_type->nomi ?? 'Dars' }}
+                            </td>
+
+                            {{-- O'qituvchi --}}
+                            <td>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <div class="ar-avatar" style="width:28px; height:28px; font-size:11px;">
+                                        {{ mb_substr($teacher, 0, 2) }}
+                                    </div>
+                                    <span style="font-size:12px; color:#555;">{{ $teacher }}</span>
+                                </div>
+                            </td>
+
+                            {{-- Holat --}}
+                            <td>
+                                @if ($subject->grades_exists)
+                                    <span class="ar-badge ar-badge-ok">Baholangan</span>
+                                @else
+                                    <span class="ar-badge ar-badge-muted">Baholanmagan</span>
+                                @endif
+                            </td>
+
+                            {{-- Amallar --}}
+                            <td onclick="event.stopPropagation()">
+                                <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+
+                                    {{-- KO'RISH --}}
+                                    <a href="{{ route('grades.index', $subject->id) }}" class="ar-btn"
+                                        title="Baholarni ko'rish" style="color:#217346; padding:5px 8px;">
+                                        <i class="bx bx-show"></i>
+                                    </a>
+
+                                    {{-- Vedmostga eksport qilish --}}
+                                    <a href="{{ route('grades.vedomost.form', $subject->id) }}" class="ar-btn"
+                                        target="_blank" title="Vedomostga eksport" style="padding:5px 8px;">
+                                        <i class="bx bx-spreadsheet" style="color:#217346;"></i>
+                                    </a>
+
+                                    {{-- IMPORT --}}
+                                    <form action="{{ route('grades.import', $subject->id) }}" method="POST"
+                                        enctype="multipart/form-data" style="display:inline-flex; align-items:center;"
+                                        class="grade-import-form">
+                                        @csrf
+                                        <label class="ar-btn" title="Excel import"
+                                            style="cursor:pointer; margin:0; padding:5px 8px;">
+                                            <i class="bx bx-import import-icon" style="color:#217346;"></i>
+                                            <div class="row-progress" style="display:none; align-items:center; gap:4px;">
+                                                <div style="position:relative; width:28px; height:28px; flex-shrink:0;">
+                                                    <svg width="28" height="28" style="transform:rotate(-90deg);">
+                                                        <circle cx="14" cy="14" r="11" fill="none" stroke="#e5e7eb"
+                                                            stroke-width="2.5" />
+                                                        <circle class="circle-bar" cx="14" cy="14" r="11" fill="none"
+                                                            stroke="#217346" stroke-width="2.5" stroke-dasharray="69.1"
+                                                            stroke-dashoffset="69.1"
+                                                            style="transition:stroke-dashoffset 0.3s;" />
+                                                    </svg>
+                                                    <span class="circle-pct"
+                                                        style="position:absolute;top:50%;left:50%;
+                                                        transform:translate(-50%,-50%);
+                                                        font-size:7px;font-weight:700;color:#217346;">0%</span>
+                                                </div>
+                                            </div>
+                                            <input type="file" name="excel_file" accept=".xlsx,.xls,.csv"
+                                                style="display:none;">
+                                        </label>
+                                    </form>
+
+                                    {{-- TOZALASH --}}
+                                    @if ($subject->grades_exists)
+                                        <form action="{{ route('grades.clear', $subject->id) }}" method="POST"
+                                            style="display:inline;">
+                                            @csrf @method('DELETE')
+                                            <button class="ar-btn ar-btn-rej" style="padding:5px 8px;"
+                                                title="Baholarni tozalash"
+                                                onclick="return confirm('Barcha baholar ochirisinmi?')">
+                                                <i class="bx bx-eraser"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    {{-- TAHRIRLASH --}}
+                                    <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
+                                        style="padding:5px 8px;" title="Tahrirlash">
+                                        <i class="bx bx-edit"></i>
+                                    </a>
+
+                                    {{-- O'CHIRISH --}}
+                                    <form action="{{ route('subject.destroy', $subject->id) }}" method="POST"
+                                        style="display:inline;">
+                                        @csrf @method('DELETE')
+                                        <button class="ar-btn ar-btn-rej" style="padding:5px 8px;" title="O'chirish"
+                                            onclick="return confirm('Ochirilsinmi?')">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="10" style="text-align:center; padding:2rem; color:#888;">
+                                <i class="bx bx-book" style="font-size:32px; display:block; margin-bottom:8px;"></i>
+                                Fanlar topilmadi
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
         <div class="ar-pagination" style="margin-top:16px;">

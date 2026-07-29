@@ -1,0 +1,377 @@
+/* =============================================================
+   JADVALLAR.CSS
+   Umumiy jadval / ro'yxat sahifalari uchun dizayn tizimi.
+   Sidebar (sidebar.css) bilan bir xil accent-uslubda ishlangan,
+   shuning uchun barcha "index" turidagi sahifalarga ulash mumkin.
+   Ishlatiladigan asosiy classlar:
+     .oz-wrap, .oz-title                -> sahifa konteyneri va sarlavha
+     .ar-btn, .ar-btn-ok, .ar-btn-rej    -> tugmalar
+     .arizalar-search                   -> qidiruv/select inputlar
+     .arizalar-table-wrap/.arizalar-table -> jadval kartasi
+     .ar-badge, .ar-badge-ok            -> holat belgilari
+     .ar-avatar                         -> foydalanuvchi avatar doirasi
+     .ar-id                             -> jadval tartib raqami ustuni
+     .ar-pagination                     -> Laravel paginator
+     .search-dropdown, .search-item     -> qidiruvli tanlov (create/edit forma)
+   ============================================================= */
+
+:root {
+    --jd-accent: #7C6CF5;
+    --jd-accent-2: #5B4FE0;
+    --jd-accent-soft: rgba(124, 108, 245, 0.10);
+    --jd-accent-soft-2: rgba(124, 108, 245, 0.18);
+    --jd-ink: #221f3d;
+    --jd-muted: #8b87a8;
+    --jd-border: #edecf5;
+    --jd-danger: #ff6b6b;
+    --jd-danger-soft: rgba(255, 107, 107, 0.10);
+    --jd-success: #10b981;
+    --jd-success-soft: #e6f4ea;
+    --jd-radius-lg: 16px;
+    --jd-radius-md: 12px;
+    --jd-radius-sm: 8px;
+}
+
+/* =============================================
+   SAHIFA KONTEYNERI
+   ============================================= */
+.oz-wrap {
+    font-family: 'Poppins', sans-serif;
+    color: var(--jd-ink);
+}
+
+.oz-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--jd-ink);
+    position: relative;
+    padding-left: 14px;
+}
+
+.oz-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 4px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--jd-accent), var(--jd-accent-2));
+}
+
+/* =============================================
+   TUGMALAR
+   ============================================= */
+.ar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--jd-ink);
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-sm);
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.1s ease;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.ar-btn i {
+    font-size: 15px;
+}
+
+.ar-btn:hover {
+    background: var(--jd-accent-soft);
+    border-color: var(--jd-accent);
+    color: var(--jd-accent-2);
+}
+
+.ar-btn:active {
+    transform: scale(0.97);
+}
+
+.ar-btn-ok {
+    background: linear-gradient(135deg, var(--jd-accent), var(--jd-accent-2));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(124, 108, 245, 0.28);
+}
+
+.ar-btn-ok:hover {
+    filter: brightness(1.05);
+    color: #fff;
+    border-color: transparent;
+}
+
+.ar-btn-rej {
+    background: var(--jd-danger-soft);
+    border-color: transparent;
+    color: var(--jd-danger);
+}
+
+.ar-btn-rej:hover {
+    background: var(--jd-danger);
+    color: #fff;
+    border-color: transparent;
+}
+
+/* =============================================
+   QIDIRUV / FILTR INPUTLARI
+   ============================================= */
+.arizalar-search {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    color: var(--jd-ink);
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-sm);
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.arizalar-search::placeholder {
+    color: #b7b4cc;
+}
+
+.arizalar-search:focus {
+    border-color: var(--jd-accent);
+    box-shadow: 0 0 0 3px var(--jd-accent-soft);
+}
+
+select.arizalar-search {
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b87a8'/%3E%3C/svg%3E") no-repeat right 14px center;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 30px;
+}
+
+/* =============================================
+   JADVAL KARTASI
+   ============================================= */
+.arizalar-table-wrap {
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-lg);
+    overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(34, 31, 61, 0.04);
+}
+
+.arizalar-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+}
+
+.arizalar-table thead th {
+    background: #faf9ff;
+    color: var(--jd-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--jd-border);
+    white-space: nowrap;
+}
+
+.arizalar-table tbody td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--jd-ink);
+    border-bottom: 1px solid #f4f3fa;
+    vertical-align: middle;
+}
+
+.arizalar-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.arizalar-table tbody tr:hover {
+    background: var(--jd-accent-soft);
+}
+
+.arizalar-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ar-id {
+    color: var(--jd-muted);
+    font-weight: 600;
+    font-size: 12.5px;
+}
+
+/* =============================================
+   HOLAT BELGILARI (BADGE)
+   ============================================= */
+.ar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ar-badge-ok {
+    background: var(--jd-success-soft);
+    color: var(--jd-success);
+    border: 1px solid #a7f3d0;
+}
+
+.ar-badge-accent {
+    background: var(--jd-accent-soft-2);
+    color: var(--jd-accent-2);
+}
+
+.ar-badge-muted {
+    background: #f5f4fa;
+    color: #b0acc9;
+}
+
+.ar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* =============================================
+   AVATAR
+   ============================================= */
+.ar-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--jd-accent), var(--jd-accent-2));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* =============================================
+   SAHIFALASH (PAGINATION)
+   Laravel default (tailwind/bootstrap) chiqargan
+   nav/a/span elementlarini umumiy stilga o'rab beradi.
+   ============================================= */
+.ar-pagination {
+    display: flex;
+    justify-content: center;
+}
+
+.ar-pagination nav>div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.ar-pagination span,
+.ar-pagination a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--jd-ink);
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-sm);
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ar-pagination a:hover {
+    background: var(--jd-accent-soft);
+    border-color: var(--jd-accent);
+    color: var(--jd-accent-2);
+}
+
+.ar-pagination span[aria-current="page"] span,
+.ar-pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--jd-accent), var(--jd-accent-2));
+    border-color: transparent;
+    color: #fff;
+}
+
+.ar-pagination span:not([aria-current]):not(:has(a)),
+.ar-pagination .disabled .page-link {
+    color: #cfcde0;
+    cursor: default;
+}
+
+.ar-pagination svg {
+    display: none;
+}
+
+/* =============================================
+   QIDIRUVLI TANLOV (search-select) — create/edit formalar
+   ============================================= */
+.search-dropdown {
+    display: none;
+    position: absolute;
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-md);
+    box-shadow: 0 10px 28px rgba(34, 31, 61, 0.12);
+    z-index: 1050;
+    max-height: 220px;
+    overflow-y: auto;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f4fa;
+    transition: background 0.15s ease;
+    font-size: 13px;
+    color: var(--jd-ink);
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-item:hover {
+    background: var(--jd-accent-soft);
+}
+
+/* =============================================
+   MOBIL MOSLASHUV
+   ============================================= */
+@media (max-width: 768px) {
+    .oz-title {
+        font-size: 16px;
+    }
+
+    .arizalar-table {
+        min-width: 640px;
+    }
+
+    .ar-btn {
+        padding: 7px 11px;
+        font-size: 12.5px;
+    }
+}

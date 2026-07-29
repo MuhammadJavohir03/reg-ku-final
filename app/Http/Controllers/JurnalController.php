@@ -48,9 +48,14 @@ class JurnalController extends Controller
             ->distinct()
             ->pluck('subject_id');
 
-        $subjects = subject::whereIn('id', $subjectIds)
-            ->orderBy('nomi')
-            ->get(['id', 'nomi']);
+        $subjectsQuery = subject::whereIn('id', $subjectIds);
+
+        // Teacher bo'lsa faqat o'ziga tegishli fanlar, admin/boshqalar uchun cheklovsiz
+        if (auth()->user()?->role === 'teacher') {
+            $subjectsQuery->where('teacher_id', auth()->id());
+        }
+
+        $subjects = $subjectsQuery->orderBy('nomi')->get(['id', 'nomi']);
 
         return response()->json($subjects);
     }
@@ -70,6 +75,8 @@ class JurnalController extends Controller
             'bolim_id'   => 'required|integer',
             'subject_id' => 'required|integer',
         ]);
+
+        $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
 
         $mavzular = MsMavzu::where('bolim_id', $request->bolim_id)
             ->where('subject_id', $request->subject_id)
@@ -96,6 +103,8 @@ class JurnalController extends Controller
             'type'       => 'required|in:free,mini',
             'subject_id' => 'required|integer',
         ]);
+
+        $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
 
         if ($request->type === 'free') {
             $records = free_semestr::with('user')
@@ -236,6 +245,8 @@ class JurnalController extends Controller
             'type'       => 'required|in:free,mini',
             'subject_id' => 'required|integer',
         ]);
+
+        $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
 
         $bolimModel   = bolim::findOrFail($request->bolim_id);
         $subjectModel = subject::findOrFail($request->subject_id);
@@ -387,6 +398,29 @@ class JurnalController extends Controller
     }
 
     /**
+     * Teacher rolidagi foydalanuvchi faqat o'ziga biriktirilgan (subject.teacher_id)
+     * fanlarga kira oladi. Admin va boshqa rollar uchun cheklov yo'q.
+     * Ruxsat bo'lmasa 403 bilan to'xtatadi (frontend dropdown'dan tashqari,
+     * to'g'ridan-to'g'ri AJAX so'rov yuborilgan holatlar uchun ham himoya).
+     */
+    private function ensureSubjectAccessOrAbort(int $subjectId): void
+    {
+        $user = auth()->user();
+
+        if ($user?->role !== 'teacher') {
+            return;
+        }
+
+        $belongsToTeacher = subject::where('id', $subjectId)
+            ->where('teacher_id', $user->id)
+            ->exists();
+
+        if (!$belongsToTeacher) {
+            abort(403, 'Bu fanga kirish huquqingiz yo\'q.');
+        }
+    }
+
+    /**
      * Fayl nomi uchun xavfsiz matn: bo'sh joy -> "_", ruxsat etilmagan belgilar olib tashlanadi.
      */
     private function sanitizeFileName(?string $value): string
@@ -410,7 +444,6 @@ class JurnalController extends Controller
             'type'      => 'required|in:free,mini',
             'record_id' => 'required|integer',
             'field'     => 'required|string',
-            'value'     => 'nullable|numeric|min:0|max:100',
         ]);
 
         $allowedFields = [
@@ -421,6 +454,18 @@ class JurnalController extends Controller
         if (!in_array($request->field, $allowedFields[$request->type], true)) {
             return response()->json(['message' => 'Bu ustunni bu turda yangilab bo\'lmaydi.'], 422);
         }
+
+        // Har bir ustun uchun maksimal ball: Joriy=40, Oraliq=20, Yakuniy=40
+        $maxByField = [
+            'joriy_baho'   => 40,
+            'oraliq_baho'  => 20,
+            'yakuniy_baho' => 40,
+        ];
+        $max = $maxByField[$request->field] ?? 100;
+
+        $request->validate([
+            'value' => "nullable|numeric|min:0|max:{$max}",
+        ]);
 
         $model = $request->type === 'free' ? free_semestr::class : mini_semestr::class;
         $record = $model::findOrFail($request->record_id);

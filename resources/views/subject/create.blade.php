@@ -30,7 +30,7 @@
                     <div style="grid-column:1/-1;">
                         <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Ta'lim tili</label>
                         <input type="text" name="talim_tili" class="arizalar-search" style="width:100%;"
-                           placeholder="Ta'lim tilini kiriting..." value="{{ old('talim_tili') }}" required>
+                            placeholder="Ta'lim tilini kiriting..." value="{{ old('talim_tili') }}" required>
                     </div>
 
                     {{-- KAFEDRA: qidiruvli dropdown --}}
@@ -46,7 +46,8 @@
 
                         <div id="kafedra_results" class="search-dropdown">
                             @foreach ($kafedralar as $kafedra)
-                                <div class="search-item" data-id="{{ $kafedra->id }}" data-name="{{ $kafedra->nomi }}">
+                                <div class="search-item" data-id="{{ $kafedra->id }}" data-name="{{ $kafedra->nomi }}"
+                                    data-fakultet="{{ $kafedra->fakultet_id }}">
                                     {{ $kafedra->nomi }}
                                 </div>
                             @endforeach
@@ -274,10 +275,30 @@
 
             items.forEach(item => {
                 item.addEventListener('click', function() {
-                    searchInput.value = this.getAttribute('data-name');
-                    hiddenInput.value = this.getAttribute('data-id');
+
+                    searchInput.value = this.dataset.name;
+                    hiddenInput.value = this.dataset.id;
+
                     resultsBox.style.display = 'none';
                     searchInput.style.borderColor = '#3C3489';
+
+                    // Agar kafedra tanlangan bo'lsa fakultetni avtomatik tanlash
+                    if (searchId === 'kafedra_search') {
+
+                        let fakultetId = this.dataset.fakultet;
+
+                        let fakultetItem = document.querySelector(
+                            '#fakultet_results .search-item[data-id="' + fakultetId + '"]'
+                        );
+
+                        if (fakultetItem) {
+                            document.getElementById('fakultet_search').value =
+                                fakultetItem.dataset.name;
+
+                            document.getElementById('hidden_fakultet_id').value =
+                                fakultetItem.dataset.id;
+                        }
+                    }
                 });
             });
 

@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="{{ asset('css/ozlashtirish.css') }}">
     <link rel="stylesheet" href="{{ asset('css/test.css') }}">
     <link rel="stylesheet" href="{{ asset('css/jr.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/jadvallar.css') }}">
 
     <link href="https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -390,6 +391,45 @@
                     </ul>
                 </li>
             @endif
+
+            @if (auth()->user()?->role === 'teacher')
+                <li class="{{ request()->routeIs('bepul_maktab.*') ? 'active' : '' }}">
+                    <a href="{{ route('bepul_maktab.index') }}">
+                        <i class="bx bx-book-open"></i>
+                        <span class="link_name">Bepul Maktab</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('bepul_maktab.index') }}">Bepul Maktab</a></li>
+                    </ul>
+                </li>
+                <li class="{{ request()->routeIs('mini_maktab.*') ? 'active' : '' }}">
+                    <a href="{{ route('mini_maktab.index') }}">
+                        <i class="bx bx-book-reader"></i>
+                        <span class="link_name">Mini Semestr</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('mini_maktab.index') }}">Mini Semestr</a></li>
+                    </ul>
+                </li>
+                <li class="{{ request()->routeIs('jurnal.*') ? 'active' : '' }}">
+                    <a href="{{ route('jurnal.index') }}">
+                        <i class="bx bx-book-content"></i>
+                        <span class="link_name">Jurnal</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('jurnal.index') }}">Jurnal</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="{{ route('admin_chat') }}">
+                        <i class="bx bx-chat"></i>
+                        <span class="link_name">Chat</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('admin_chat') }}">Chat</a></li>
+                    </ul>
+                </li>
+            @endif
         </ul>
 
         @auth
@@ -566,6 +606,17 @@
                 </li>
             @endif
 
+            @if (auth()->user()?->role === 'teacher')
+                <li><a href="{{ route('bepul_maktab.index') }}"><i class="bx bx-book-open"></i><span
+                            class="link_name">Bepul Maktab</span></a></li>
+                <li><a href="{{ route('mini_maktab.index') }}"><i class="bx bx-book-reader"></i><span
+                            class="link_name">Mini Semestr</span></a></li>
+                <li><a href="{{ route('jurnal.index') }}"><i class="bx bx-book-content"></i><span
+                            class="link_name">Jurnal</span></a></li>
+                <li><a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span
+                            class="link_name">Chat</span></a></li>
+            @endif
+
             @auth
                 {{-- Logout --}}
                 <li style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
@@ -618,6 +669,23 @@
                             class="text-danger bx bx-file"></i><span>Arizalar
                             (admin)</span></a>
                 @endif
+            @elseif (auth()->user()->role === 'teacher')
+                <a href="{{ route('index') }}"><i class="bx bx-grid-alt"></i><span>Bosh</span></a>
+                <a href="{{ route('bepul_maktab.index') }}"><i class="bx bx-book-open"></i><span>Bepul
+                        Maktab</span></a>
+                <a href="{{ route('mini_maktab.index') }}"><i class="bx bx-book-reader"></i><span>Mini
+                        Semestr</span></a>
+                <a href="{{ route('jurnal.index') }}"><i class="bx bx-book-content"></i><span>Jurnal</span></a>
+                <a href="{{ route('admin_chat') }}"><i class="bx bx-chat"></i><span>Chat</span></a>
+
+                <a href="#" onclick="event.preventDefault(); document.getElementById('mob-logout').submit();">
+                    <i class="bx bx-log-out"></i>
+                    <span>Chiqish</span>
+                </a>
+
+                <form id="mob-logout" action="{{ route('logout') }}" method="POST" style="display:none;">
+                    @csrf
+                </form>
             @else
                 <a href="{{ route('index') }}"><i class="bx bx-grid-alt"></i><span>Bosh</span></a>
                 <a href="{{ route('free_semestr_user.index') }}"><i

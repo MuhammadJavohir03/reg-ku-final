@@ -136,7 +136,7 @@
 
             <div class="input-row">
 
-                <input id="manualVal" class="grade-input" type="number" step="0.01" placeholder="0.00">>
+                <input id="manualVal" class="grade-input" type="number" step="0.01" placeholder="0.00">
 
                 <div class="max-box">
 
@@ -178,15 +178,6 @@
 
 
         <div class="pop-footer">
-
-            <button class="btn-clear" id="clearVal">
-
-                <i class="fas fa-rotate-left"></i>
-
-                Tozalash
-
-            </button>
-
 
             <button class="btn-save" id="applyVal">
 
@@ -289,13 +280,6 @@
             z-index: 2;
         }
 
-        /* #historyPop {
-            min-width: 260px;
-            max-width: 320px;
-            max-height: 280px;
-            overflow-y: auto;
-        } */
-
         .hist-row {
             padding: 8px 10px;
             font-size: 12px;
@@ -341,6 +325,332 @@
             border-color: #d7dbe0;
             color: #999;
             cursor: not-allowed;
+        }
+
+        /* =============================================
+           BAHO TAHRIRLASH POPUP — accent dizayn
+           ============================================= */
+        .jr-pop-modern {
+            position: fixed;
+            display: none;
+            z-index: 1200;
+            width: 260px;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 18px 40px rgba(34, 31, 61, 0.18);
+            border: 1px solid #edecf5;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .jr-pop-modern.show {
+            display: block;
+        }
+
+        .jr-pop-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            background: linear-gradient(135deg, #7C6CF5, #5B4FE0);
+        }
+
+        .jr-pop-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .jr-pop-title h5 {
+            margin: 0;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .jr-pop-title span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .pop-body {
+            padding: 16px 18px 6px;
+        }
+
+        .pop-body>label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #59567a;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .grade-input {
+            flex: 1;
+            min-width: 0;
+            border: 1.5px solid #ece9f7;
+            background: #fbfaff;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #221f3d;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .grade-input:focus {
+            outline: none;
+            border-color: #7C6CF5;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(124, 108, 245, 0.12);
+        }
+
+        .max-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            min-width: 62px;
+            background: #f6f5ff;
+            border-radius: 10px;
+            padding: 4px 8px;
+            border: 1px solid #edecf5;
+        }
+
+        .max-box i {
+            font-size: 11px;
+            color: #f5a623;
+        }
+
+        .max-box small {
+            font-size: 9px;
+            color: #9490b8;
+        }
+
+        .max-box b {
+            font-size: 13px;
+            color: #5B4FE0;
+        }
+
+        .quick-values {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .quick-values button {
+            flex: 1;
+            border: 1px solid #edecf5;
+            background: #faf9ff;
+            color: #5B4FE0;
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 7px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .quick-values button:hover {
+            background: #7C6CF5;
+            border-color: #7C6CF5;
+            color: #fff;
+        }
+
+        .pop-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            background: #f6f5ff;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 14px;
+        }
+
+        .pop-info i {
+            font-size: 12px;
+            color: #f5a623;
+            margin-top: 1px;
+        }
+
+        .pop-info span {
+            font-size: 11px;
+            color: #8b87a8;
+            line-height: 1.4;
+        }
+
+        .pop-footer {
+            padding: 0 18px 18px;
+        }
+
+        .btn-save {
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, #7C6CF5, #5B4FE0);
+            color: #fff;
+            font-size: 13.5px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            padding: 11px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 8px 18px rgba(124, 108, 245, 0.3);
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        .btn-save:active {
+            transform: translateY(0);
+        }
+
+        /* =============================================
+           TARIX POPUP
+           ============================================= */
+        .history-card {
+            position: fixed;
+            display: none;
+            z-index: 1200;
+            width: 300px;
+            max-height: 320px;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(34, 31, 61, 0.18);
+            border: 1px solid #edecf5;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .history-card.show {
+            display: block;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 14px 16px;
+            background: #faf9ff;
+            border-bottom: 1px solid #edecf5;
+            position: sticky;
+            top: 0;
+        }
+
+        .history-header h5 {
+            margin: 0 0 2px;
+            font-size: 13px;
+            color: #221f3d;
+        }
+
+        .history-header small {
+            font-size: 11px;
+            color: #9490b8;
+        }
+
+        .close-history {
+            border: none;
+            background: #f0eefb;
+            color: #5B4FE0;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 11px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .history-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f4f3fa;
+            font-size: 12px;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .history-top .avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #7C6CF5, #5B4FE0);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .history-info strong {
+            display: block;
+            font-size: 12px;
+            color: #221f3d;
+        }
+
+        .history-info span {
+            font-size: 10.5px;
+            color: #9490b8;
+        }
+
+        .history-grade {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .history-grade .old {
+            color: #b0acc9;
+            text-decoration: line-through;
+        }
+
+        .history-grade .new {
+            color: #5B4FE0;
+        }
+
+        .history-grade i {
+            color: #b0acc9;
+            font-size: 13px;
+        }
+
+        .history-ip {
+            font-size: 10.5px;
+            color: #b0acc9;
         }
     </style>
 
@@ -855,14 +1165,19 @@
                     .catch(err => debug(err.message));
             }
 
+            // "Saqlash" — agar maydon bo'sh qoldirilsa, avtomatik hisoblash uchun
+            // qiymat null yuboriladi (avvalgi "Tozalash" tugmasi vazifasini bajaradi)
             document.getElementById('applyVal').addEventListener('click', function() {
-                const v = parseFloat(manualInput.value.replace(',', '.'));
+                const raw = manualInput.value.trim();
+
+                if (raw === '') {
+                    submitGrade(null);
+                    return;
+                }
+
+                const v = parseFloat(raw.replace(',', '.'));
                 if (isNaN(v) || v < 0 || v > 100) return;
                 submitGrade(v);
-            });
-
-            document.getElementById('clearVal').addEventListener('click', function() {
-                submitGrade(null);
             });
 
             // ================= TARIX POPUP =================

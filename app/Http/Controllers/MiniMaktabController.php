@@ -26,20 +26,28 @@ class MiniMaktabController extends Controller
         return view('mini_maktab.index', compact('bolimlar'));
     }
 
-    // ═══════════════════════════════════════════════
-    //  2. BOLIM ICHIDAGI FANLAR
-    // ═══════════════════════════════════════════════
     public function fanlar($bolim_id)
-    {
-        $bolim  = Bolim::findOrFail($bolim_id);
-        $fanlar = mini_semestr::where('bolim_id', $bolim_id)
-            ->with('subject')
-            ->select('subject_id')
-            ->distinct()
-            ->get();
+{
+    $bolim = Bolim::findOrFail($bolim_id);
 
-        return view('mini_maktab.fanlar', compact('bolim', 'fanlar'));
+    $query = mini_semestr::where('bolim_id', $bolim_id)
+        ->with('subject')
+        ->select('subject_id')
+        ->distinct();
+
+    // Faqat teacher uchun filter ishlaydi, admin hammasini ko'radi
+    if (auth()->user()?->role === 'teacher') {
+        $teacherId = auth()->id();
+
+        $query->whereHas('subject', function ($q) use ($teacherId) {
+            $q->where('teacher_id', $teacherId);
+        });
     }
+
+    $fanlar = $query->get();
+
+    return view('mini_maktab.fanlar', compact('bolim', 'fanlar'));
+}
 
     // ═══════════════════════════════════════════════
     //  3. FAN ICHIDAGI MAVZULAR (ASOSIY SAHIFA)
