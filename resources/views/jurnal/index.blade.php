@@ -16,36 +16,72 @@
                 </div>
 
                 <div class="jr-field">
-                    <label for="bolim_id">Bo'lim</label>
-                    <select id="bolim_id" class="jr-select">
-                        <option value="">Bo'limni tanlang</option>
-                        @foreach ($bolimlar as $bolim)
-                            <option value="{{ $bolim->id }}">{{ $bolim->nomi }}</option>
-                        @endforeach
-                    </select>
+                    <label for="bolim_id_search">Bo'lim</label>
+                    <div class="jr-ss">
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="bolim_id_search" class="jr-select" style="padding-left:34px;"
+                                placeholder="Bo'limni qidirish..." autocomplete="off">
+                        </div>
+                        <div id="bolim_id_results" class="search-dropdown">
+                            @foreach ($bolimlar as $bolim)
+                                <div class="search-item" data-id="{{ $bolim->id }}" data-name="{{ $bolim->nomi }}">
+                                    {{ $bolim->nomi }}
+                                </div>
+                            @endforeach
+                        </div>
+                        <input type="hidden" id="bolim_id">
+                    </div>
                 </div>
 
                 <div class="jr-field">
-                    <label for="school_type">Maktab turi</label>
-                    <select id="school_type" class="jr-select" disabled>
-                        <option value="">Avval bo'limni tanlang</option>
-                        <option value="free">Bepul maktab</option>
-                        <option value="mini">Mini Semestr</option>
-                    </select>
+                    <label for="school_type_search">Maktab turi</label>
+                    <div class="jr-ss">
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="school_type_search" class="jr-select" style="padding-left:34px;"
+                                placeholder="Avval bo'limni tanlang" autocomplete="off" disabled>
+                        </div>
+                        <div id="school_type_results" class="search-dropdown">
+                            <div class="search-item" data-id="free" data-name="Bepul maktab">Bepul maktab</div>
+                            <div class="search-item" data-id="mini" data-name="Mini Semestr">Mini Semestr</div>
+                        </div>
+                        <input type="hidden" id="school_type">
+                    </div>
                 </div>
 
                 <div class="jr-field">
-                    <label for="subject_id">Fan</label>
-                    <select id="subject_id" class="jr-select" disabled>
-                        <option value="">Avval maktab turini tanlang</option>
-                    </select>
+                    <label for="subject_id_search">Fan</label>
+                    <div class="jr-ss">
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="subject_id_search" class="jr-select" style="padding-left:34px;"
+                                placeholder="Avval maktab turini tanlang" autocomplete="off" disabled>
+                        </div>
+                        <div id="subject_id_results" class="search-dropdown"></div>
+                        <input type="hidden" id="subject_id">
+                    </div>
                 </div>
 
                 <div class="jr-field">
-                    <label for="guruh_filter">Guruh</label>
-                    <select id="guruh_filter" class="jr-select" disabled>
-                        <option value="">Avval fanni tanlang</option>
-                    </select>
+                    <label for="guruh_filter_search">Guruh</label>
+                    <div class="jr-ss">
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="guruh_filter_search" class="jr-select" style="padding-left:34px;"
+                                placeholder="Avval fanni tanlang" autocomplete="off" disabled>
+                        </div>
+                        <div id="guruh_filter_results" class="search-dropdown"></div>
+                        <input type="hidden" id="guruh_filter">
+                    </div>
                 </div>
 
                 <hr class="jr-hr">
@@ -233,6 +269,40 @@
             margin-bottom: 4px;
             font-size: 13px;
             color: #555;
+        }
+
+        .jr-ss {
+            position: relative;
+        }
+
+        .jr-ss .search-dropdown {
+            display: none;
+            position: absolute;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+            max-height: 220px;
+            overflow-y: auto;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .jr-ss .search-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.15s;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .jr-ss .search-item:hover {
+            background: #EEEDFE;
         }
 
         .jr-topic-th {
@@ -703,10 +773,104 @@
                 pageSize: 25,
             };
 
-            const bolimSelect = document.getElementById('bolim_id');
-            const typeSelect = document.getElementById('school_type');
-            const subjectSelect = document.getElementById('subject_id');
-            const groupFilterSelect = document.getElementById('guruh_filter');
+            // ================= QIDIRUVLI SELECT (search-select) =================
+            // Har bir filtr uchun umumiy funksiya: matn input + natijalar ro'yxati +
+            // yashirin input (haqiqiy qiymat) - subject.create sahifasidagi pattern bilan bir xil.
+            function makeSearchSelect(searchId, resultsId, hiddenId) {
+                const searchInput = document.getElementById(searchId);
+                const resultsBox = document.getElementById(resultsId);
+                const hiddenInput = document.getElementById(hiddenId);
+                let onSelectCb = null;
+
+                function bindItems() {
+                    resultsBox.querySelectorAll('.search-item').forEach(item => {
+                        item.onclick = function() {
+                            searchInput.value = this.dataset.name;
+                            hiddenInput.value = this.dataset.id;
+                            resultsBox.style.display = 'none';
+                            searchInput.style.borderColor = '#3C3489';
+                            if (onSelectCb) onSelectCb(this.dataset.id, this.dataset.name);
+                        };
+                    });
+                }
+
+                searchInput.addEventListener('input', function() {
+                    const val = this.value.toLowerCase().trim();
+                    const items = resultsBox.querySelectorAll('.search-item');
+                    let found = 0;
+
+                    if (val.length > 0) {
+                        resultsBox.style.display = 'block';
+                        items.forEach(item => {
+                            const name = item.getAttribute('data-name').toLowerCase();
+                            const id = String(item.getAttribute('data-id')).toLowerCase();
+                            const show = name.includes(val) || id === val;
+                            item.style.display = show ? 'flex' : 'none';
+                            if (show) found++;
+                        });
+                        if (found === 0) resultsBox.style.display = 'none';
+                    } else {
+                        resultsBox.style.display = 'none';
+                    }
+
+                    // Input butunlay tozalansa - tanlov ham bekor qilinadi (kaskad reset uchun)
+                    if (val === '' && hiddenInput.value !== '') {
+                        hiddenInput.value = '';
+                        searchInput.style.borderColor = '';
+                        if (onSelectCb) onSelectCb(null, '');
+                    }
+                });
+
+                searchInput.addEventListener('focus', function() {
+                    if (searchInput.disabled) return;
+                    resultsBox.querySelectorAll('.search-item').forEach(i => i.style.display = 'flex');
+                    if (resultsBox.querySelectorAll('.search-item').length) {
+                        resultsBox.style.display = 'block';
+                    }
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+                        resultsBox.style.display = 'none';
+                    }
+                });
+
+                bindItems();
+
+                return {
+                    // Ro'yxatni dinamik ma'lumot bilan qayta chizadi: [{id, name}, ...]
+                    setItems(items) {
+                        resultsBox.innerHTML = items.map(it =>
+                            `<div class="search-item" data-id="${it.id}" data-name="${String(it.name).replace(/"/g, '&quot;')}">${it.name}</div>`
+                        ).join('');
+                        bindItems();
+                    },
+                    onSelect(cb) {
+                        onSelectCb = cb;
+                    },
+                    reset(placeholder) {
+                        searchInput.value = '';
+                        hiddenInput.value = '';
+                        if (placeholder !== undefined) searchInput.placeholder = placeholder;
+                        searchInput.style.borderColor = '';
+                        resultsBox.style.display = 'none';
+                    },
+                    disable() {
+                        searchInput.disabled = true;
+                    },
+                    enable() {
+                        searchInput.disabled = false;
+                    },
+                    getValue() {
+                        return hiddenInput.value || null;
+                    }
+                };
+            }
+
+            const bolimSelect = makeSearchSelect('bolim_id_search', 'bolim_id_results', 'bolim_id');
+            const typeSelect = makeSearchSelect('school_type_search', 'school_type_results', 'school_type');
+            const subjectSelect = makeSearchSelect('subject_id_search', 'subject_id_results', 'subject_id');
+            const groupFilterSelect = makeSearchSelect('guruh_filter_search', 'guruh_filter_results', 'guruh_filter');
             const subjectTitle = document.getElementById('subjectTitle');
             const theadRow = document.getElementById('theadRow');
             const tbody = document.getElementById('tbody');
@@ -727,36 +891,37 @@
             });
 
             // ================= 1) BO'LIM TANLASH =================
-            bolimSelect.addEventListener('change', function() {
-                state.bolimId = this.value || null;
+            bolimSelect.onSelect(function(id) {
+                state.bolimId = id || null;
                 resetAfterBolim();
 
                 if (!state.bolimId) {
-                    typeSelect.disabled = true;
-                    typeSelect.value = '';
-                    subjectSelect.disabled = true;
-                    subjectSelect.innerHTML = '<option value="">Avval maktab turini tanlang</option>';
+                    typeSelect.disable();
+                    typeSelect.reset("Avval bo'limni tanlang");
+                    subjectSelect.disable();
+                    subjectSelect.reset('Avval maktab turini tanlang');
                     return;
                 }
-                typeSelect.disabled = false;
-                typeSelect.value = '';
-                subjectSelect.disabled = true;
-                subjectSelect.innerHTML = '<option value="">Avval maktab turini tanlang</option>';
+                typeSelect.enable();
+                typeSelect.reset('Maktab turini tanlang yoki qidiring...');
+                subjectSelect.disable();
+                subjectSelect.reset('Avval maktab turini tanlang');
             });
 
             // ================= 2) MAKTAB TURI TANLASH =================
-            typeSelect.addEventListener('change', function() {
-                state.type = this.value || null;
+            typeSelect.onSelect(function(id) {
+                state.type = id || null;
                 resetAfterType();
 
                 if (!state.bolimId || !state.type) {
-                    subjectSelect.disabled = true;
-                    subjectSelect.innerHTML = '<option value="">Avval maktab turini tanlang</option>';
+                    subjectSelect.disable();
+                    subjectSelect.reset('Avval maktab turini tanlang');
                     return;
                 }
 
-                subjectSelect.disabled = true;
-                subjectSelect.innerHTML = '<option value="">Yuklanmoqda...</option>';
+                subjectSelect.disable();
+                subjectSelect.setItems([]);
+                subjectSelect.reset('Yuklanmoqda...');
 
                 fetch(`${ROUTES.subjects}?bolim_id=${state.bolimId}&type=${state.type}`, {
                         headers: {
@@ -769,22 +934,24 @@
                     })
                     .then(data => {
                         if (!data.length) {
-                            subjectSelect.innerHTML =
-                                '<option value="">Bu bo\'limda fan topilmadi</option>';
-                            subjectSelect.disabled = true;
+                            subjectSelect.setItems([]);
+                            subjectSelect.reset("Bu bo'limda fan topilmadi");
+                            subjectSelect.disable();
                             return;
                         }
-                        let html = '<option value="">Fan tanlang</option>';
-                        data.forEach(item => html += `<option value="${item.id}">${item.nomi}</option>`);
-                        subjectSelect.innerHTML = html;
-                        subjectSelect.disabled = false;
+                        subjectSelect.setItems(data.map(item => ({
+                            id: item.id,
+                            name: item.nomi
+                        })));
+                        subjectSelect.reset('Fan qidirish...');
+                        subjectSelect.enable();
                     })
                     .catch(err => debug('Fanlarni yuklashda xato: ' + err.message));
             });
 
             // ================= 3) FAN TANLASH =================
-            subjectSelect.addEventListener('change', function() {
-                state.subjectId = this.value || null;
+            subjectSelect.onSelect(function(id, name) {
+                state.subjectId = id || null;
                 state.page = 1;
                 state.students = [];
                 state.topics = [];
@@ -798,7 +965,7 @@
                     return;
                 }
 
-                subjectTitle.textContent = this.options[this.selectedIndex].text;
+                subjectTitle.textContent = name;
                 updateExportBtnState();
                 tbody.innerHTML =
                     '<tr><td colspan="10" style="text-align:center;color:#999;padding:24px;">Yuklanmoqda...</td></tr>';
@@ -856,21 +1023,26 @@
             // ================= GURUH FILTRI =================
             function resetGroupFilter() {
                 state.groupFilter = null;
-                groupFilterSelect.disabled = true;
-                groupFilterSelect.innerHTML = '<option value="">Avval fanni tanlang</option>';
+                groupFilterSelect.setItems([]);
+                groupFilterSelect.reset('Avval fanni tanlang');
+                groupFilterSelect.disable();
             }
 
             function populateGroupFilter() {
                 const groups = Array.from(new Set(state.students.map(s => s.group).filter(Boolean))).sort();
-                let html = '<option value="">Barcha guruhlar</option>';
-                groups.forEach(g => html += `<option value="${g}">${g}</option>`);
-                groupFilterSelect.innerHTML = html;
-                groupFilterSelect.disabled = groups.length === 0;
+                groupFilterSelect.setItems(groups.map(g => ({
+                    id: g,
+                    name: g
+                })));
+                groupFilterSelect.reset(groups.length ? "Barcha guruhlar (qidirish uchun yozing)" :
+                    'Guruh topilmadi');
+                groupFilterSelect.disable();
+                if (groups.length) groupFilterSelect.enable();
                 state.groupFilter = null;
             }
 
-            groupFilterSelect.addEventListener('change', function() {
-                state.groupFilter = this.value || null;
+            groupFilterSelect.onSelect(function(id) {
+                state.groupFilter = id || null;
                 state.page = 1;
                 renderStudents();
             });

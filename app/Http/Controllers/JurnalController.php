@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use ZipArchive;
 
 class JurnalController extends Controller
 {
@@ -233,10 +234,16 @@ class JurnalController extends Controller
 
     /**
      * Bo'lim + maktab turi + fan bo'yicha talabalar baholarini Excel (.xlsx) formatida eksport qiladi.
-     * Har qanday holatda (free yoki mini) 5 ta ustun chiqadi:
+     *
+     * ESLATMA (YANGI): endi ikkita rejimda ishlaydi ('rejim' parametri orqali):
+     *   - 'yagona'   (default): barcha talabalar BITTA Excel faylda (eski xatti-harakat, o'zgarmagan).
+     *   - 'guruhlab': har bir guruh (Guruh ustuni) uchun ALOHIDA Excel yaratiladi va
+     *                 barchasi bitta ZIP arxivda yuklab beriladi (vedomost eksportidagi mantiq bilan bir xil).
+     *
+     * Har qanday holatda 5 ta ustun chiqadi:
      * Joriy baho, Oraliq baho, Joriy+Oraliq, Yakuniy baho, Umumiy baho.
-     * Fayl nomi: {bolim_nomi}_{fan_nomi}_{maktab_turi}.xlsx
-     * (GET /jurnal/export?bolim_id=..&type=free|mini&subject_id=..)
+     * Fayl nomi: {bolim_nomi}_{fan_nomi}_{maktab_turi}.xlsx (yoki _guruhlab.zip)
+     * (GET/POST /jurnal/export?bolim_id=..&type=free|mini&subject_id=..&rejim=yagona|guruhlab)
      */
     public function export(Request $request)
     {
@@ -244,6 +251,7 @@ class JurnalController extends Controller
             'bolim_id'   => 'required|integer',
             'type'       => 'required|in:free,mini',
             'subject_id' => 'required|integer',
+            'rejim'      => 'nullable|in:yagona,guruhlab',
         ]);
 
         $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
@@ -251,8 +259,102 @@ class JurnalController extends Controller
         $bolimModel   = bolim::findOrFail($request->bolim_id);
         $subjectModel = subject::findOrFail($request->subject_id);
 
-        $rows = $this->collectExportRows((int) $request->bolim_id, $request->type, (int) $request->subject_id);
+        $rows  = $this->collectExportRows((int) $request->bolim_id, $request->type, (int) $request->subject_id);
+        $rejim = $request->input('rejim', 'yagona');
 
+        $typeLabel = $request->type === 'free' ? 'Bepul_maktab' : 'Mini_semestr';
+        $baseName  = $this->sanitizeFileName($bolimModel->nomi) . '_'
+            . $this->sanitizeFileName($subjectModel->nomi) . '_'
+            . $typeLabel;
+
+        if ($rejim === 'guruhlab') {
+            return $this->exportGroupedZip($rows, $subjectModel->nomi, $baseName);
+        }
+
+        return $this->exportSingleFile($rows, $subjectModel->nomi, $baseName);
+    }
+
+    /**
+     * YAGONA rejim: barcha talabalarni bitta Excel faylga yozadi va yuklab beradi.
+     * (Eski export() metodining asosiy qismi shu yerga ko'chirildi, mantiq o'zgarmagan.)
+     */
+    private function exportSingleFile(array $rows, string $subjectNomi, string $baseName)
+    {
+        $spreadsheet = $this->buildSpreadsheetForRows($rows, $subjectNomi);
+
+        $fileName = $baseName . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * GURUHLAB rejim: talabalarni 'group' (Guruh) ustuni bo'yicha guruhlarga bo'ladi,
+     * har bir guruh uchun alohida Excel yaratadi va barchasini bitta ZIP arxivga yig'ib yuklab beradi.
+     * Mantiq VedomostController'dagi ZIP eksport bilan bir xil g'oyaga asoslangan.
+     */
+    private function exportGroupedZip(array $rows, string $subjectNomi, string $baseName)
+    {
+        $grouped = collect($rows)->groupBy(fn($row) => $row['group'] ?: 'Nomalum_guruh');
+
+        if ($grouped->isEmpty()) {
+            abort(404, 'Eksport qilish uchun ma\'lumot topilmadi.');
+        }
+
+        $tmpDir = storage_path('app/tmp/jurnal_export_' . uniqid());
+        if (!is_dir($tmpDir)) {
+            mkdir($tmpDir, 0755, true);
+        }
+
+        $zipFileName = $baseName . '_guruhlab.zip';
+        $zipPath = $tmpDir . '/' . $zipFileName;
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            abort(500, 'ZIP arxiv yaratib bo\'lmadi.');
+        }
+
+        $generatedFiles = [];
+
+        foreach ($grouped as $guruhNomi => $guruhRows) {
+            $spreadsheet = $this->buildSpreadsheetForRows($guruhRows->values()->all(), $subjectNomi);
+            $writer = new Xlsx($spreadsheet);
+
+            $groupFileName = $this->sanitizeFileName((string) $guruhNomi) . '.xlsx';
+            $groupFilePath = $tmpDir . '/' . $groupFileName;
+
+            $writer->save($groupFilePath);
+            $zip->addFile($groupFilePath, $groupFileName);
+            $generatedFiles[] = $groupFilePath;
+        }
+
+        $zip->close();
+
+        // Alohida .xlsx fayllar endi ZIP ichida, disk ustidagi nusxalarga endi ehtiyoj yo'q
+        foreach ($generatedFiles as $filePath) {
+            @unlink($filePath);
+        }
+
+        // Javob yuborilgach vaqtinchalik papkani ham tozalaymiz
+        app()->terminating(function () use ($tmpDir) {
+            @rmdir($tmpDir);
+        });
+
+        return response()->download($zipPath, $zipFileName, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Berilgan qatorlar (talaba + baholar) asosida bitta Excel Spreadsheet obyektini quradi.
+     * Ham "yagona" (barcha talabalar), ham "guruhlab" (bitta guruh talabalari) rejimida ishlatiladi.
+     */
+    private function buildSpreadsheetForRows(array $rows, string $subjectNomi): Spreadsheet
+    {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Baholar');
@@ -263,7 +365,7 @@ class JurnalController extends Controller
         $sheet->setCellValue('A1', 'Talaba F.I.O.');
 
         $sheet->mergeCells('B1:F1');
-        $sheet->setCellValue('B1', $subjectModel->nomi);
+        $sheet->setCellValue('B1', $subjectNomi);
 
         $sheet->setCellValue('B2', 'Joriy baho');
         $sheet->setCellValue('C2', 'Oraliq baho');
@@ -310,26 +412,17 @@ class JurnalController extends Controller
             $sheet->getColumnDimension($col)->setWidth(14);
         }
 
-        // ---------- Fayl nomi ----------
-        $typeLabel = $request->type === 'free' ? 'Bepul_maktab' : 'Mini_semestr';
-        $fileName = $this->sanitizeFileName($bolimModel->nomi) . '_'
-            . $this->sanitizeFileName($subjectModel->nomi) . '_'
-            . $typeLabel . '.xlsx';
-
-        $writer = new Xlsx($spreadsheet);
-
-        return response()->streamDownload(function () use ($writer) {
-            $writer->save('php://output');
-        }, $fileName, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        return $spreadsheet;
     }
 
     /**
      * Eksport uchun bo'lim+fan+maktab turiga tegishli har bir talabaning
-     * FIO va 5 ta baho ustuni (joriy, oraliq, joriy_oraliq, yakuniy, umumiy) ni tayyorlaydi.
+     * FIO, guruhi va 5 ta baho ustuni (joriy, oraliq, joriy_oraliq, yakuniy, umumiy) ni tayyorlaydi.
      * Mantiq students() metodidagi bilan bir xil: bazadagi qiymat bo'lsa o'shani,
      * bo'lmasa avtomatik hisoblangan qiymatni oladi.
+     *
+     * YANGI: endi har bir qatorda 'group' kaliti ham bor - "guruhlab" eksport rejimi
+     * shu qiymat bo'yicha talabalarni ajratadi.
      */
     private function collectExportRows(int $bolimId, string $type, int $subjectId): array
     {
@@ -354,6 +447,7 @@ class JurnalController extends Controller
 
                     return [
                         'name'         => $r->user->{'To‘liq_ismi'} ?? '—',
+                        'group'        => $r->user->Guruh ?? null,
                         'joriy_baho'   => $joriyBaho,
                         'oraliq_baho'  => $oraliqBaho,
                         'joriy_oraliq' => $joriyOraliq,
@@ -386,6 +480,7 @@ class JurnalController extends Controller
 
                 return [
                     'name'         => $r->user->{'To‘liq_ismi'} ?? '—',
+                    'group'        => $r->user->Guruh ?? null,
                     'joriy_baho'   => $joriyBaho,
                     'oraliq_baho'  => $oraliqBaho,
                     'joriy_oraliq' => $joriyOraliq,
@@ -515,6 +610,37 @@ class JurnalController extends Controller
             'baho'     => 'nullable|numeric|min:0|max:100',
         ]);
 
+        $mavzu = MsMavzu::findOrFail($request->mavzu_id);
+        $subjectId = $mavzu->subject_id;
+
+        // YANGI: Joriy baho = shu fandagi barcha "mavzu" turidagi baholarning yig'indisi,
+        // va bu yig'indi 40 balldan OSHMASLIGI kerak. Shuning uchun yangi qiymat saqlanishidan
+        // oldin, "shu mavzudan tashqari qolgan barcha mavzular yig'indisi + yangi qiymat"ni
+        // tekshiramiz. Agar 40 dan oshsa - saqlamay, aniq xato xabari bilan qaytaramiz.
+        if ($request->baho !== null) {
+            $mavzuIds = MsMavzu::where('bolim_id', $mavzu->bolim_id)
+                ->where('subject_id', $subjectId)
+                ->where('tur', 'mavzu')
+                ->pluck('id');
+
+            $boshqaMavzularYigindisi = MsJoriyBaho::where('user_id', $request->user_id)
+                ->whereIn('mavzu_id', $mavzuIds)
+                ->where('mavzu_id', '!=', $request->mavzu_id)
+                ->sum('baho');
+
+            $yangiYigindi = $boshqaMavzularYigindisi + $request->baho;
+
+            if ($yangiYigindi > 40) {
+                $maksimalRuxsat = max(0, 40 - $boshqaMavzularYigindisi);
+
+                return response()->json([
+                    'message' => "Joriy baho (barcha mavzular yig'indisi) 40 balldan oshmasligi kerak. "
+                        . "Boshqa mavzular yig'indisi: {$boshqaMavzularYigindisi} ball, "
+                        . "shu mavzu uchun maksimal qiymat: {$maksimalRuxsat} ball.",
+                ], 422);
+            }
+        }
+
         $existing = MsJoriyBaho::where('user_id', $request->user_id)
             ->where('mavzu_id', $request->mavzu_id)
             ->first();
@@ -529,8 +655,6 @@ class JurnalController extends Controller
                 ['user_id' => $request->user_id, 'mavzu_id' => $request->mavzu_id],
                 ['baho' => $request->baho]
             );
-
-            $subjectId = MsMavzu::findOrFail($request->mavzu_id)->subject_id;
 
             $this->recalculateMiniSemester(
                 $request->user_id,
@@ -649,14 +773,22 @@ class JurnalController extends Controller
             ->whereIn('mavzu_id', $mavzuIds)
             ->sum('baho');
 
+        // XAVFSIZLIK UCHUN QO'SHIMCHA CHEKLOV (clamp): updateTopicGrade() da yig'indi
+        // 40 dan oshmasligi allaqachon tekshiriladi, lekin shu yerda ham 40 dan
+        // oshib ketmasligini kafolatlaymiz (masalan eski ma'lumotlar uchun).
+        $joriy = min($joriy, 40);
+
         // Joriy
         $mini->joriy_baho = $joriy;
 
-        // Joriy + Oraliq
-        $mini->joriy_oraliq = $joriy + ($mini->oraliq_baho ?? 0);
+        // Joriy + Oraliq (Oraliq ham updateGrade() da 0-20 oralig'ida tekshiriladi)
+        $oraliq = min($mini->oraliq_baho ?? 0, 20);
+        $mini->joriy_oraliq = $joriy + $oraliq;
 
-        // Umumiy
-        $mini->umumiy = $mini->joriy_oraliq + ($mini->yakuniy_baho ?? 0);
+        // Umumiy (Yakuniy ham updateGrade() da 0-40 oralig'ida tekshiriladi,
+        // shuning uchun umumiy hech qachon 100 dan oshmaydi: 40 + 20 + 40 = 100)
+        $yakuniy = min($mini->yakuniy_baho ?? 0, 40);
+        $mini->umumiy = $mini->joriy_oraliq + $yakuniy;
 
         $mini->save();
     }

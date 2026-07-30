@@ -375,3 +375,215 @@ select.arizalar-search {
         font-size: 12.5px;
     }
 }
+
+/* =============================================================
+   BOOTSTRAP KOMPONENTLARINI QAYTA RANGLASH
+   Ba'zi eski sahifalar hali ham xom Bootstrap classlaridan
+   (.card, .btn-primary, .modal, .form-control, .table, .form-check)
+   foydalanadi. Ularning markup/JS xatti-harakatiga (data-bs-toggle
+   va hokazo) tegmasdan, faqat ko'rinishini shu yerda accent-uslubga
+   moslaymiz — shu CSS ulangan har qanday sahifada avtomatik ishlaydi.
+   ============================================= */
+
+.oz-wrap .card,
+.card.custom-card {
+    border: 1px solid var(--jd-border) !important;
+    border-radius: var(--jd-radius-lg) !important;
+    box-shadow: 0 2px 12px rgba(34, 31, 61, 0.04) !important;
+}
+
+.oz-wrap .card-title,
+.oz-wrap h3,
+.oz-wrap h4 {
+    color: var(--jd-ink);
+}
+
+.oz-wrap .border-primary {
+    border-color: var(--jd-accent) !important;
+}
+
+.oz-wrap .text-primary {
+    color: var(--jd-accent-2) !important;
+}
+
+/* Tugmalar */
+.oz-wrap .btn,
+.modal .btn {
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.18s ease;
+}
+
+.oz-wrap .btn-primary,
+.modal .btn-primary {
+    background: linear-gradient(135deg, var(--jd-accent), var(--jd-accent-2));
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(124, 108, 245, 0.28);
+}
+
+.oz-wrap .btn-primary:hover,
+.modal .btn-primary:hover {
+    filter: brightness(1.05);
+}
+
+.oz-wrap .btn-outline-primary,
+.modal .btn-outline-primary {
+    color: var(--jd-accent-2);
+    border-color: var(--jd-accent);
+    background: #fff;
+}
+
+.oz-wrap .btn-outline-primary:hover,
+.modal .btn-outline-primary:hover {
+    background: var(--jd-accent-soft);
+    color: var(--jd-accent-2);
+    border-color: var(--jd-accent);
+}
+
+.oz-wrap .btn-danger,
+.modal .btn-danger {
+    background: var(--jd-danger);
+    border-color: transparent;
+}
+
+.oz-wrap .btn-danger:hover,
+.modal .btn-danger:hover {
+    filter: brightness(1.05);
+}
+
+.oz-wrap .btn-outline-danger,
+.modal .btn-outline-danger {
+    color: var(--jd-danger);
+    border-color: var(--jd-danger);
+    background: #fff;
+}
+
+.oz-wrap .btn-outline-danger:hover,
+.modal .btn-outline-danger:hover {
+    background: var(--jd-danger);
+    color: #fff;
+}
+
+.oz-wrap .btn-outline-secondary,
+.oz-wrap .btn-light,
+.modal .btn-outline-secondary,
+.modal .btn-light {
+    color: var(--jd-muted);
+    border-color: var(--jd-border);
+    background: #fff;
+}
+
+.oz-wrap .btn-outline-secondary:hover,
+.oz-wrap .btn-light:hover,
+.modal .btn-outline-secondary:hover,
+.modal .btn-light:hover {
+    background: #f5f4fa;
+    color: var(--jd-ink);
+}
+
+.oz-wrap .btn-warning {
+    background: #fef3e2;
+    border-color: transparent;
+    color: #b7791f;
+}
+
+.oz-wrap .btn-warning:hover {
+    background: #b7791f;
+    color: #fff;
+}
+
+/* Formalar */
+.oz-wrap .form-control,
+.oz-wrap .form-select,
+.modal .form-control,
+.modal .form-select {
+    border: 1.5px solid var(--jd-border);
+    border-radius: 10px;
+    font-size: 13.5px;
+    padding: 10px 14px;
+    font-family: 'Poppins', sans-serif;
+    color: var(--jd-ink);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.oz-wrap .form-control:focus,
+.oz-wrap .form-select:focus,
+.modal .form-control:focus,
+.modal .form-select:focus {
+    border-color: var(--jd-accent);
+    box-shadow: 0 0 0 3px var(--jd-accent-soft);
+}
+
+.oz-wrap .form-label,
+.modal .form-label,
+.oz-wrap label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #59567a;
+}
+
+.oz-wrap .form-check-input:checked {
+    background-color: var(--jd-accent);
+    border-color: var(--jd-accent);
+}
+
+.oz-wrap .form-check-input:focus {
+    box-shadow: 0 0 0 3px var(--jd-accent-soft);
+    border-color: var(--jd-accent);
+}
+
+/* Xom Bootstrap jadvali (.table) — arizalar-table bilan bir xil ko'rinish */
+.oz-wrap .table {
+    font-size: 13px;
+    color: var(--jd-ink);
+}
+
+.oz-wrap .table thead th {
+    background: #faf9ff;
+    color: var(--jd-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--jd-border);
+}
+
+.oz-wrap .table td,
+.oz-wrap .table th {
+    vertical-align: middle;
+    border-color: #f4f3fa;
+}
+
+.oz-wrap .table tbody tr:hover {
+    background: var(--jd-accent-soft);
+}
+
+/* Modal */
+.modal-content {
+    border: none;
+    border-radius: var(--jd-radius-lg);
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(34, 31, 61, 0.2);
+}
+
+.modal-header {
+    background: #faf9ff;
+    border-bottom: 1px solid var(--jd-border);
+    padding: 16px 20px;
+}
+
+.modal-header .modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--jd-ink);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--jd-border);
+    padding: 14px 20px;
+}
+
+.modal-body {
+    padding: 20px;
+}

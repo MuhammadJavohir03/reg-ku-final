@@ -86,6 +86,6 @@ class MiniSemestrAdminController extends Controller
     public function destroy($id)
     {
         mini_semestr::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Ariza o\'chirildi!');
+        return redirect()->route('mini_semestr_admin.index')->with('success', 'Ariza o\'chirildi!');
     }
 }

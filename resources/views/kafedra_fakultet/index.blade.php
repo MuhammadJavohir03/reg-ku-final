@@ -1,57 +1,61 @@
 <x-layouts.sidebar>
     <x-slot:title>Kafedra va Fakultetlar</x-slot:title>
 
-    <div class="container-fluid py-4">
+    <link rel="stylesheet" href="{{ asset('css/jadvallar.css') }}">
+
+    <div class="oz-wrap container-fluid py-4">
 
         <div class="row g-4">
 
             {{-- ===================== KAFEDRALAR ===================== --}}
             <div class="col-lg-6">
-                <div class="card border-0 shadow-sm">
+                <div class="card custom-card border-0">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2 class="fw-bold text-dark border-start border-primary border-4 ps-3 mb-0">Kafedralar</h2>
-                            <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal"
+                            <h2 class="fw-bold border-start border-primary border-4 ps-3 mb-0" style="font-size:18px;">Kafedralar</h2>
+                            <button type="button" class="ar-btn ar-btn-ok" data-bs-toggle="modal"
                                 data-bs-target="#kafedraAddModal">
                                 <i class="bx bx-plus"></i> Yangi kafedra
                             </button>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table align-middle">
+                        <div class="arizalar-table-wrap">
+                            <table class="arizalar-table">
                                 <thead>
                                     <tr>
                                         <th style="width:60px;">#</th>
                                         <th>Nomi</th>
                                         <th>Fakultet</th>
-                                        <th style="width:120px;" class="text-end">Amallar</th>
+                                        <th style="width:120px;">Amallar</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($kafedralar as $kafedra)
                                         <tr>
-                                            <td>{{ $kafedra->id }}</td>
-                                            <td>{{ $kafedra->nomi }}</td>
-                                            <td>{{ $kafedra->fakultet->nomi ?? '-' }}</td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    data-bs-toggle="modal" data-bs-target="#kafedraEditModal"
-                                                    data-id="{{ $kafedra->id }}" data-nomi="{{ $kafedra->nomi }}"
-                                                    data-fakultet-id="{{ $kafedra->fakultet_id }}"
-                                                    onclick="fillKafedraEdit(this)">
-                                                    <i class="bx bx-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    data-bs-toggle="modal" data-bs-target="#kafedraDeleteModal"
-                                                    data-id="{{ $kafedra->id }}" data-nomi="{{ $kafedra->nomi }}"
-                                                    onclick="fillKafedraDelete(this)">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
+                                            <td class="ar-id">{{ $kafedra->id }}</td>
+                                            <td style="font-weight:500;">{{ $kafedra->nomi }}</td>
+                                            <td style="color:#888;">{{ $kafedra->fakultet->nomi ?? '-' }}</td>
+                                            <td>
+                                                <div style="display:flex; gap:6px;">
+                                                    <button type="button" class="ar-btn" style="padding:6px 9px;"
+                                                        data-bs-toggle="modal" data-bs-target="#kafedraEditModal"
+                                                        data-id="{{ $kafedra->id }}" data-nomi="{{ $kafedra->nomi }}"
+                                                        data-fakultet-id="{{ $kafedra->fakultet_id }}"
+                                                        onclick="fillKafedraEdit(this)">
+                                                        <i class="bx bx-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="ar-btn ar-btn-rej" style="padding:6px 9px;"
+                                                        data-bs-toggle="modal" data-bs-target="#kafedraDeleteModal"
+                                                        data-id="{{ $kafedra->id }}" data-nomi="{{ $kafedra->nomi }}"
+                                                        onclick="fillKafedraDelete(this)">
+                                                        <i class="bx bx-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted py-4">Kafedralar mavjud emas
+                                            <td colspan="4" style="text-align:center; color:#888; padding:2rem;">Kafedralar mavjud emas
                                             </td>
                                         </tr>
                                     @endforelse
@@ -64,49 +68,51 @@
 
             {{-- ===================== FAKULTETLAR ===================== --}}
             <div class="col-lg-6">
-                <div class="card border-0 shadow-sm">
+                <div class="card custom-card border-0">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2 class="fw-bold text-dark border-start border-primary border-4 ps-3 mb-0">Fakultetlar
+                            <h2 class="fw-bold border-start border-primary border-4 ps-3 mb-0" style="font-size:18px;">Fakultetlar
                             </h2>
-                            <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal"
+                            <button type="button" class="ar-btn ar-btn-ok" data-bs-toggle="modal"
                                 data-bs-target="#fakultetAddModal">
                                 <i class="bx bx-plus"></i> Yangi fakultet
                             </button>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table align-middle">
+                        <div class="arizalar-table-wrap">
+                            <table class="arizalar-table">
                                 <thead>
                                     <tr>
                                         <th style="width:60px;">#</th>
                                         <th>Nomi</th>
-                                        <th style="width:120px;" class="text-end">Amallar</th>
+                                        <th style="width:120px;">Amallar</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($fakultetlar as $fakultet)
                                         <tr>
-                                            <td>{{ $fakultet->id }}</td>
-                                            <td>{{ $fakultet->nomi }}</td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    data-bs-toggle="modal" data-bs-target="#fakultetEditModal"
-                                                    data-id="{{ $fakultet->id }}" data-nomi="{{ $fakultet->nomi }}"
-                                                    onclick="fillFakultetEdit(this)">
-                                                    <i class="bx bx-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    data-bs-toggle="modal" data-bs-target="#fakultetDeleteModal"
-                                                    data-id="{{ $fakultet->id }}" data-nomi="{{ $fakultet->nomi }}"
-                                                    onclick="fillFakultetDelete(this)">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
+                                            <td class="ar-id">{{ $fakultet->id }}</td>
+                                            <td style="font-weight:500;">{{ $fakultet->nomi }}</td>
+                                            <td>
+                                                <div style="display:flex; gap:6px;">
+                                                    <button type="button" class="ar-btn" style="padding:6px 9px;"
+                                                        data-bs-toggle="modal" data-bs-target="#fakultetEditModal"
+                                                        data-id="{{ $fakultet->id }}" data-nomi="{{ $fakultet->nomi }}"
+                                                        onclick="fillFakultetEdit(this)">
+                                                        <i class="bx bx-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="ar-btn ar-btn-rej" style="padding:6px 9px;"
+                                                        data-bs-toggle="modal" data-bs-target="#fakultetDeleteModal"
+                                                        data-id="{{ $fakultet->id }}" data-nomi="{{ $fakultet->nomi }}"
+                                                        onclick="fillFakultetDelete(this)">
+                                                        <i class="bx bx-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="text-center text-muted py-4">Fakultetlar mavjud emas
+                                            <td colspan="3" style="text-align:center; color:#888; padding:2rem;">Fakultetlar mavjud emas
                                             </td>
                                         </tr>
                                     @endforelse
@@ -280,9 +286,9 @@
 
     <style>
         .custom-label {
-            font-size: 0.8rem;
+            font-size: 11px;
             font-weight: 700;
-            color: #6c757d;
+            color: #8b87a8;
             margin-bottom: 6px;
             display: block;
             text-transform: uppercase;

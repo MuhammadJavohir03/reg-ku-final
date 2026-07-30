@@ -59,7 +59,7 @@
                         </td>
                         <td>
                             <div class="ar-btn-group">
-                                <form action="{{ route('free_semestr.destroy', $talaba->id) }}" method="POST">
+                                <form action="{{ route('mini_semestr_admin.destroy', $talaba->id) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
                                     <button class="ar-btn ar-btn-rej"

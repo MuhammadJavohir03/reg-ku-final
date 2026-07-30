@@ -27,7 +27,7 @@
                     style="position:absolute; left:10px; top:50%;
                     transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
                 <input type="text" name="search" class="arizalar-search" style="width:100%; padding-left:34px;"
-                    placeholder="Fan nomi boyicha qidirish..." value="{{ request('search') }}">
+                    placeholder="Fan va o'qituvchi boyicha qidirish..." value="{{ request('search') }}">
             </div>
             @if (request('search'))
                 <a href="{{ route('subject.index') }}" class="ar-btn ar-btn-rej">✕</a>
@@ -37,6 +37,8 @@
                 <option value="20" {{ request('page_size') == 20 ? 'selected' : '' }}>20 ta</option>
                 <option value="50" {{ request('page_size') == 50 ? 'selected' : '' }}>50 ta</option>
                 <option value="100" {{ request('page_size') == 100 ? 'selected' : '' }}>100 ta</option>
+                <option value="500" {{ request('page_size') == 500 ? 'selected' : '' }}>500 ta</option>
+
             </select>
             <button type="submit" class="ar-btn ar-btn-ok">
                 <i class="bx bx-search"></i> Qidirish
