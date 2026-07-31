@@ -143,6 +143,16 @@ class MiniSemestrController extends Controller
             ->pluck('subject_id')
             ->toArray();
 
+        // Talaba bitta bo'lim uchun ko'pi bilan 3 ta fanga ariza topshira oladi.
+        // Eslatma: bu chekni faqat frontendga (checkbox disable) ishonib qoldirmaslik kerak,
+        // chunki foydalanuvchi so'rovni to'g'ridan-to'g'ri (masalan Postman orqali) ham
+        // yuborishi mumkin — shuning uchun bu yerda, serverda ham tekshiriladi.
+        $totalAfterSubmit = count(array_unique(array_merge($alreadySubmitted, $request->subject_ids)));
+
+        if ($totalAfterSubmit > 3) {
+            return redirect()->back()->with('error', 'Bir bo\'lim uchun ko\'pi bilan 3 ta fanga ariza topshirish mumkin.');
+        }
+
         foreach ($request->subject_ids as $subjectId) {
 
             // agar allaqachon topshirilgan bo'lsa — o'tkazib yuborish

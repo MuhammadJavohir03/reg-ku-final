@@ -6,9 +6,10 @@
 
     <div class="oz-wrap">
 
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
             <div class="oz-title" style="margin:0;">
                 <i class="bx bx-megaphone" style="color:#3C3489;"></i> E'lonlar
+                <span style="font-size:12px; font-weight:500; color:#8b87a8;">({{ $elons->total() }} ta)</span>
             </div>
 
             @if (auth()->user()?->role === 'admin')
@@ -17,6 +18,39 @@
                 </a>
             @endif
         </div>
+
+
+        <form method="GET" action="{{ route('elons.index') }}" class="oz-filter-bar">
+            <input type="text" name="search" value="{{ request('search') }}" class="arizalar-search"
+                placeholder="Sarlavha bo'yicha qidirish...">
+
+            <select name="category_id" class="arizalar-search">
+                <option value="">Barcha yo'nalishlar</option>
+                @foreach ($categories as $category)
+                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                        {{ $category->nomi }}
+                    </option>
+                @endforeach
+            </select>
+
+            <select name="kurs" class="arizalar-search">
+                <option value="">Barcha kurslar</option>
+                @for ($i = 1; $i <= 4; $i++)
+                    <option value="{{ $i }}" {{ request('kurs') == $i ? 'selected' : '' }}>{{ $i }}-kurs</option>
+                @endfor
+            </select>
+
+            <div style="display:flex; gap:8px;">
+                <button type="submit" class="ar-btn ar-btn-ok" style="justify-content:center;">
+                    <i class="bx bx-search"></i>
+                </button>
+                @if (request()->hasAny(['search', 'category_id', 'kurs']))
+                    <a href="{{ route('elons.index') }}" class="ar-btn ar-btn-rej" style="justify-content:center;">
+                        <i class="bx bx-x"></i>
+                    </a>
+                @endif
+            </div>
+        </form>
 
         <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px;">
 
@@ -27,7 +61,12 @@
                         <img src="{{ asset('storage/' . ($elon->photo ?? 'elons/default.png')) }}"
                             alt="Post" style="width:100%; height:100%; object-fit:cover; display:block;">
 
-                        <div style="position:absolute; top:10px; left:10px;">
+                        <div style="position:absolute; top:10px; left:10px; display:flex; gap:6px;">
+                            @if ($elon->created_at->greaterThan(now()->subDay()))
+                                <span class="ar-badge ar-badge-new">
+                                    <span class="ar-dot"></span> Yangi
+                                </span>
+                            @endif
                             <span class="ar-badge" style="background:rgba(255,255,255,.9); color:#333;">
                                 <i class="bx bx-time" style="color:#f5a623;"></i>
                                 {{ $elon->created_at->diffForHumans() }}
@@ -53,7 +92,7 @@
                                 <div class="ar-avatar" style="width:28px; height:28px; font-size:12px;">
                                     <i class="bx bx-user"></i>
                                 </div>
-                                <span style="font-size:13px; font-weight:600; color:#555;">{{ $elon->kurs }} - Kurs</span>
+                                <span style="font-size:13px; font-weight:600; color:#555;">{{ $elon->kurs ?? 'Barcha' }} - Kurs</span>
                             </div>
 
                             <a href="{{ route('elons.show', $elon->id) }}" class="ar-btn ar-btn-ok" style="padding:6px 14px; font-size:13px;">
@@ -63,8 +102,16 @@
                     </div>
                 </div>
             @empty
-                <div style="grid-column:1/-1; background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:30px; text-align:center; color:#888;">
+                <div class="oz-empty" style="grid-column:1/-1; background:#fff; border:1px solid #f0f0f0; border-radius:12px;">
+                    <i class="bx bx-search-alt"></i>
                     E'lonlar topilmadi.
+                    @if (request()->hasAny(['search', 'category_id', 'kurs']))
+                        <div style="margin-top:8px;">
+                            <a href="{{ route('elons.index') }}" style="color:#3C3489; font-weight:600; text-decoration:none;">
+                                Filterni tozalash
+                            </a>
+                        </div>
+                    @endif
                 </div>
             @endforelse
 

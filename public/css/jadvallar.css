@@ -13,6 +13,13 @@
      .ar-id                             -> jadval tartib raqami ustuni
      .ar-pagination                     -> Laravel paginator
      .search-dropdown, .search-item     -> qidiruvli tanlov (create/edit forma)
+     .soz-card, .soz-grid, .soz-field,
+     .soz-input, .soz-divider           -> forma (create/edit) qurilish bloklari
+     .soz-dropzone, .soz-preview        -> rasm yuklash + oldindan ko'rish
+     .oz-alert                          -> flash / validatsiya xabarlari
+     .oz-filter-bar                     -> index sahifasi qidiruv/filtr paneli
+     .ar-badge-new                      -> "Yangi" belgisi
+     .oz-empty                          -> bo'sh holat ko'rinishi
    ============================================================= */
 
 :root {
@@ -132,6 +139,7 @@
     border-radius: var(--jd-radius-sm);
     outline: none;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    width: 100%;
 }
 
 .arizalar-search::placeholder {
@@ -237,12 +245,29 @@ select.arizalar-search {
     color: #b0acc9;
 }
 
+.ar-badge-new {
+    background: linear-gradient(135deg, var(--jd-accent), var(--jd-accent-2));
+    color: #fff;
+}
+
 .ar-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
     display: inline-block;
+}
+
+.ar-badge-new .ar-dot {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    animation: jd-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes jd-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .35; }
 }
 
 /* =============================================
@@ -356,6 +381,216 @@ select.arizalar-search {
 
 .search-item:hover {
     background: var(--jd-accent-soft);
+}
+
+/* =============================================
+   XABARLAR (ALERT / FLASH MESSAGE)
+   ============================================= */
+.oz-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: var(--jd-radius-md);
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+
+.oz-alert i {
+    font-size: 18px;
+}
+
+.oz-alert-success {
+    background: var(--jd-success-soft);
+    color: var(--jd-success);
+    border: 1px solid #a7f3d0;
+}
+
+.oz-alert-danger {
+    background: var(--jd-danger-soft);
+    color: var(--jd-danger);
+    border: 1px solid #ffd1d1;
+}
+
+/* =============================================
+   FORMA KARTASI (create / edit) — soz-*
+   ============================================= */
+.soz-card {
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-lg);
+    box-shadow: 0 2px 12px rgba(34, 31, 61, 0.04);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.soz-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 768px) {
+    .soz-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.soz-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.soz-field label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #59567a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.soz-input {
+    width: 100%;
+    border: 1.5px solid var(--jd-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-family: 'Poppins', sans-serif;
+    color: var(--jd-ink);
+    background: #fafaff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.soz-input:focus {
+    border-color: var(--jd-accent);
+    box-shadow: 0 0 0 3px var(--jd-accent-soft);
+    background: #fff;
+}
+
+.soz-input.is-invalid {
+    border-color: var(--jd-danger);
+}
+
+.soz-error {
+    font-size: 11.5px;
+    color: var(--jd-danger);
+    font-weight: 600;
+}
+
+.soz-hint {
+    font-size: 11px;
+    color: var(--jd-muted);
+    text-align: right;
+}
+
+.soz-divider {
+    height: 1px;
+    background: var(--jd-border);
+    margin: 22px 0;
+    border: none;
+}
+
+/* Rasm yuklash maydoni (dropzone) */
+.soz-dropzone {
+    display: block;
+    border: 2px dashed var(--jd-border);
+    border-radius: var(--jd-radius-md);
+    padding: 26px;
+    text-align: center;
+    background: #fafaff;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    position: relative;
+}
+
+.soz-dropzone:hover,
+.soz-dropzone.is-dragover {
+    border-color: var(--jd-accent);
+    background: var(--jd-accent-soft);
+}
+
+.soz-dropzone i {
+    font-size: 30px;
+    color: var(--jd-accent);
+}
+
+.soz-dropzone p {
+    margin: 6px 0 0;
+    color: var(--jd-muted);
+    font-size: 12.5px;
+}
+
+.soz-dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.soz-preview {
+    margin-top: 14px;
+    display: none;
+}
+
+.soz-preview img {
+    max-width: 220px;
+    max-height: 160px;
+    border-radius: 12px;
+    border: 1px solid var(--jd-border);
+    object-fit: cover;
+    display: block;
+}
+
+.soz-preview-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--jd-danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+    font-weight: 600;
+    padding: 0;
+}
+
+/* =============================================
+   INDEX QIDIRUV / FILTR PANELI
+   ============================================= */
+.oz-filter-bar {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-md);
+    padding: 14px;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 768px) {
+    .oz-filter-bar {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Bo'sh holat (empty state) */
+.oz-empty {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--jd-muted);
+}
+
+.oz-empty i {
+    font-size: 46px;
+    color: var(--jd-border);
+    display: block;
+    margin-bottom: 10px;
 }
 
 /* =============================================
@@ -586,4 +821,369 @@ select.arizalar-search {
 
 .modal-body {
     padding: 20px;
+}
+
+/* =============================================================
+   TOAST XABARNOMALAR (jd-toast)
+   Sidebar layout orqali global chiqadigan session xabarlari
+   (success/error/info/warning) va validatsiya xabarlari uchun.
+   Bir nechta toast bir vaqtda chiqsa ustma-ust tushmasligi uchun
+   .jd-toast-stack konteyneri flex-column bilan ishlatiladi.
+   ============================================= */
+.jd-toast-stack {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 380px;
+    pointer-events: none;
+}
+
+.jd-toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 280px;
+    max-width: 380px;
+    padding: 14px 38px 16px 14px;
+    border-radius: var(--jd-radius-md);
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    background: rgba(34, 31, 61, 0.94);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 25px rgba(34, 31, 61, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    animation: jdToastIn 0.5s cubic-bezier(.16, 1, .3, 1);
+    pointer-events: auto;
+}
+
+.jd-toast-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 17px;
+}
+
+.jd-toast-body {
+    flex: 1;
+    padding-top: 2px;
+    min-width: 0;
+}
+
+.jd-toast-title {
+    font-weight: 700;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.jd-toast-text {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12.5px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.jd-toast-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    font-size: 17px;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.jd-toast-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.jd-toast-bar {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.jd-toast-bar span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform-origin: left;
+    animation: jdToastShrink linear forwards;
+}
+
+.jd-toast-success { border-left: 4px solid var(--jd-success); }
+.jd-toast-success .jd-toast-icon { color: var(--jd-success); }
+.jd-toast-success .jd-toast-bar span { background: var(--jd-success); }
+
+.jd-toast-error { border-left: 4px solid var(--jd-danger); }
+.jd-toast-error .jd-toast-icon { color: var(--jd-danger); }
+.jd-toast-error .jd-toast-bar span { background: var(--jd-danger); }
+
+.jd-toast-info { border-left: 4px solid var(--jd-accent); }
+.jd-toast-info .jd-toast-icon { color: var(--jd-accent); }
+.jd-toast-info .jd-toast-bar span { background: var(--jd-accent); }
+
+.jd-toast-warning { border-left: 4px solid #f5a623; }
+.jd-toast-warning .jd-toast-icon { color: #f5a623; }
+.jd-toast-warning .jd-toast-bar span { background: #f5a623; }
+
+.jd-toast.jd-toast-hide {
+    animation: jdToastOut 0.35s ease forwards;
+}
+
+.jd-toast:hover .jd-toast-bar span {
+    animation-play-state: paused;
+}
+
+@keyframes jdToastIn {
+    0% { transform: translateX(120%) scale(.9); opacity: 0; filter: blur(4px); }
+    60% { transform: translateX(-8px) scale(1.02); opacity: 1; filter: blur(0); }
+    100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes jdToastOut {
+    to { transform: translateX(120%) scale(.9); opacity: 0; }
+}
+
+@keyframes jdToastShrink {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+@media (max-width: 600px) {
+    .jd-toast-stack {
+        left: 12px;
+        right: 12px;
+        top: 12px;
+        max-width: none;
+    }
+
+    .jd-toast {
+        max-width: none;
+    }
+}
+
+/* =============================================================
+   ARIZA OQIMI (banner + step kartalar + fan ro'yxati)
+   mini_semestr / free_semestr kabi "ariza topshirish" sahifalari uchun.
+   ============================================= */
+.oz-banner {
+    background: linear-gradient(135deg, var(--jd-accent), var(--jd-accent-2));
+    border-radius: var(--jd-radius-lg);
+    padding: 28px 30px;
+    color: #fff;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(124, 108, 245, 0.25);
+}
+
+.oz-banner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.16);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.oz-banner h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.oz-banner p {
+    margin: 0;
+    font-size: 13.5px;
+    opacity: 0.85;
+}
+
+.oz-step {
+    background: #fff;
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius-lg);
+    box-shadow: 0 2px 12px rgba(34, 31, 61, 0.04);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+.oz-step-header {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--jd-border);
+}
+
+.oz-step-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: var(--jd-accent-soft);
+    color: var(--jd-accent-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.oz-step-header h3 {
+    margin: 0 0 2px;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--jd-ink);
+}
+
+.oz-step-header p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--jd-muted);
+}
+
+.oz-step-body {
+    padding: 20px 24px;
+}
+
+.oz-static-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 768px) {
+    .oz-static-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.oz-static-field label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #59567a;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.oz-static-value {
+    background: #fafaff;
+    border: 1.5px solid var(--jd-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    color: var(--jd-ink);
+    font-weight: 600;
+}
+
+.oz-highlight-box {
+    background: #EEEDFE;
+    border-left: 4px solid var(--jd-accent-2);
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.oz-highlight-box h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--jd-accent-2);
+}
+
+.oz-limit-counter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafaff;
+    border: 1px solid var(--jd-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #59567a;
+}
+
+.oz-limit-counter strong {
+    color: var(--jd-accent-2);
+    font-size: 13.5px;
+}
+
+.oz-subject-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: 16px;
+}
+
+.oz-subject-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--jd-border);
+    border-radius: 10px;
+    transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.oz-subject-item.is-checked {
+    border-color: var(--jd-accent);
+    background: var(--jd-accent-soft);
+}
+
+.oz-subject-item.is-limit-disabled {
+    opacity: 0.5;
+}
+
+.oz-subject-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--jd-ink);
+}
+
+.oz-subject-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--jd-accent);
+    cursor: pointer;
+}
+
+.oz-hint-text {
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--jd-muted);
 }

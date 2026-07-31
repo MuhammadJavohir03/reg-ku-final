@@ -57,9 +57,29 @@ class ElonController extends Controller
                 ->whereNull('kurs');
         }
 
-        $elons = $query->latest()->paginate(9);
+        // 2. Qo'shimcha: qidiruv va filtr (foydalanuvchi index sahifasidan yuboradi)
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('short_content', 'like', "%{$search}%");
+            });
+        }
 
-        return view('elons.index', compact('elons'));
+        if ($categoryId = request('category_id')) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($kurs = request('kurs')) {
+            $query->where('kurs', $kurs);
+        }
+
+        $elons = $query->latest()
+            ->paginate(9)
+            ->withQueryString(); // sahifalash havolalarida filtr/qidiruv saqlanib qoladi
+
+        $categories = Category::all();
+
+        return view('elons.index', compact('elons', 'categories'));
     }
 
     /**
@@ -130,6 +150,10 @@ class ElonController extends Controller
 
             // Endi eski faylni o'chiramiz — lekin faqat u default rasm bo'lmasa
             $this->deletePhotoIfNotDefault($elon->photo);
+        } elseif ($request->boolean('remove_photo')) {
+            // Foydalanuvchi mavjud rasmni olib tashlashni so'ragan
+            $this->deletePhotoIfNotDefault($elon->photo);
+            $path = self::DEFAULT_PHOTO;
         }
 
         $elon->update([

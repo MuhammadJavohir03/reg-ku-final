@@ -50,7 +50,7 @@
             <table class="arizalar-table">
                 <thead>
                     <tr>
-                        <th style="width:1px;">№</th>
+                        <th style="width:45px;">ID</th>
                         <th style="width:300px">Fan nomi</th>
                         <th style="width:110px;">O'quv yili</th>
                         <th style="width:60px;">Yo'nalish</th>
@@ -63,12 +63,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($subjects as $index => $subject)
+                    @forelse ($subjects as $subject)
                         @php
                             $teacher = $subject->teacher['To‘liq_ismi'] ?? 'Tayinlanmagan';
                         @endphp
                         <tr>
-                            <td class="ar-id">{{ $subjects->firstItem() + $index }}</td>
+                            <td class="ar-id">#{{ $subject->id }}</td>
 
                             {{-- Fan nomi --}}
                             <td>
@@ -135,7 +135,7 @@
 
                                     {{-- KO'RISH --}}
                                     <a href="{{ route('grades.index', $subject->id) }}" class="ar-btn"
-                                        title="Baholarni ko'rish" style="color:#217346; padding:5px 8px;">
+                                        title="Baholarni ko'rish" style="color:#868400; padding:5px 8px;">
                                         <i class="bx bx-show"></i>
                                     </a>
 
@@ -152,7 +152,7 @@
                                         @csrf
                                         <label class="ar-btn" title="Excel import"
                                             style="cursor:pointer; margin:0; padding:5px 8px;">
-                                            <i class="bx bx-import import-icon" style="color:#217346;"></i>
+                                            <i class="bx bx-import import-icon" style="color:#277eff;"></i>
                                             <div class="row-progress" style="display:none; align-items:center; gap:4px;">
                                                 <div style="position:relative; width:28px; height:28px; flex-shrink:0;">
                                                     <svg width="28" height="28" style="transform:rotate(-90deg);">
@@ -166,7 +166,7 @@
                                                     <span class="circle-pct"
                                                         style="position:absolute;top:50%;left:50%;
                                                         transform:translate(-50%,-50%);
-                                                        font-size:7px;font-weight:700;color:#217346;">0%</span>
+                                                        font-size:7px;font-weight:700;color:#ff0000;">0%</span>
                                                 </div>
                                             </div>
                                             <input type="file" name="excel_file" accept=".xlsx,.xls,.csv"

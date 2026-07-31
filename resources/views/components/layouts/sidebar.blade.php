@@ -38,128 +38,79 @@
     }
 </style>
 
-
-<style>
-    .toast-message {
-        position: fixed;
-        top: 24px;
-        right: 24px;
-        min-width: 280px;
-        max-width: 380px;
-
-        padding: 14px 16px;
-        border-radius: 14px;
-
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        font-size: 14px;
-        font-weight: 500;
-        color: #fff;
-
-        z-index: 99999;
-
-        /* GLASS EFFECT */
-        background: rgba(30, 41, 59, 0.92);
-        backdrop-filter: blur(12px);
-
-        border: 1px solid rgba(255, 255, 255, 0.08);
-
-        box-shadow:
-            0 10px 25px rgba(0, 0, 0, 0.25),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-        animation: toastSlide 0.5s cubic-bezier(.16, 1, .3, 1);
-        overflow: hidden;
-    }
-
-    /* ICON CIRCLE */
-    .toast-message i {
-        font-size: 18px;
-        padding: 8px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.08);
-    }
-
-    /* SUCCESS */
-    .toast-message.success {
-        border-left: 4px solid #22c55e;
-    }
-
-    .toast-message.success i {
-        color: #22c55e;
-    }
-
-    /* ERROR */
-    .toast-message.error {
-        border-left: 4px solid #ef4444;
-    }
-
-    .toast-message.error i {
-        color: #ef4444;
-    }
-
-    /* ANIMATION */
-    @keyframes toastSlide {
-        0% {
-            transform: translateX(120%) scale(0.9);
-            opacity: 0;
-            filter: blur(4px);
-        }
-
-        60% {
-            transform: translateX(-10px) scale(1.02);
-            opacity: 1;
-            filter: blur(0);
-        }
-
-        100% {
-            transform: translateX(0) scale(1);
-        }
-    }
-
-    /* EXIT ANIMATION CLASS (JS bilan qo‘shasan) */
-    .toast-hide {
-        animation: toastOut 0.4s ease forwards;
-    }
-
-    @keyframes toastOut {
-        to {
-            transform: translateX(120%) scale(0.9);
-            opacity: 0;
-        }
-    }
-
-    /* MOBILE */
-    @media (max-width: 600px) {
-        .toast-message {
-            left: 12px;
-            right: 12px;
-            top: 12px;
-            max-width: none;
-        }
-    }
-</style>
+{{--
+    Diqqat: toast (success/error/info/warning) xabarnomalarining butun dizayni
+    endi jadvallar.css ichida ".jd-toast-*" nomi bilan yashaydi — shu sahifada
+    inline saqlanmaydi, shunda barcha sahifalarda bir xil, markazlashgan
+    dizayn ishlatiladi.
+--}}
 
 <body>
-    @if (session()->has('success'))
-        <div class="toast-message success">
-            {{ session('success') }}
-        </div>
-    @endif
+    <div class="jd-toast-stack" id="jdToastStack">
 
-    @if (session()->has('error'))
-        <div class="toast-message error">
-            {{ session('error') }}
-        </div>
-    @endif
+        @if (session('success'))
+            <div class="jd-toast jd-toast-success" data-autohide="4000">
+                <div class="jd-toast-icon"><i class="bx bx-check-circle"></i></div>
+                <div class="jd-toast-body">
+                    <span class="jd-toast-title">Muvaffaqiyatli</span>
+                    <div class="jd-toast-text">{{ session('success') }}</div>
+                </div>
+                <button type="button" class="jd-toast-close" aria-label="Yopish"><i class="bx bx-x"></i></button>
+                <div class="jd-toast-bar"><span style="animation-duration:4000ms;"></span></div>
+            </div>
+        @endif
 
-    @if ($errors->any())
-        <div class="toast-message error">
-            {{ $errors->first() }}
-        </div>
-    @endif
+        @if (session('error'))
+            <div class="jd-toast jd-toast-error" data-autohide="5000">
+                <div class="jd-toast-icon"><i class="bx bx-error-circle"></i></div>
+                <div class="jd-toast-body">
+                    <span class="jd-toast-title">Xatolik</span>
+                    <div class="jd-toast-text">{{ session('error') }}</div>
+                </div>
+                <button type="button" class="jd-toast-close" aria-label="Yopish"><i class="bx bx-x"></i></button>
+                <div class="jd-toast-bar"><span style="animation-duration:5000ms;"></span></div>
+            </div>
+        @endif
+
+        @if (session('info'))
+            <div class="jd-toast jd-toast-info" data-autohide="4000">
+                <div class="jd-toast-icon"><i class="bx bx-info-circle"></i></div>
+                <div class="jd-toast-body">
+                    <span class="jd-toast-title">Ma'lumot</span>
+                    <div class="jd-toast-text">{{ session('info') }}</div>
+                </div>
+                <button type="button" class="jd-toast-close" aria-label="Yopish"><i class="bx bx-x"></i></button>
+                <div class="jd-toast-bar"><span style="animation-duration:4000ms;"></span></div>
+            </div>
+        @endif
+
+        @if (session('warning'))
+            <div class="jd-toast jd-toast-warning" data-autohide="4500">
+                <div class="jd-toast-icon"><i class="bx bx-error"></i></div>
+                <div class="jd-toast-body">
+                    <span class="jd-toast-title">Diqqat</span>
+                    <div class="jd-toast-text">{{ session('warning') }}</div>
+                </div>
+                <button type="button" class="jd-toast-close" aria-label="Yopish"><i class="bx bx-x"></i></button>
+                <div class="jd-toast-bar"><span style="animation-duration:4500ms;"></span></div>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="jd-toast jd-toast-error" data-autohide="6000">
+                <div class="jd-toast-icon"><i class="bx bx-error-circle"></i></div>
+                <div class="jd-toast-body">
+                    <span class="jd-toast-title">
+                        Formada {{ $errors->count() }} ta xatolik bor
+                    </span>
+                    <div class="jd-toast-text">{{ $errors->first() }}</div>
+                </div>
+                <button type="button" class="jd-toast-close" aria-label="Yopish"><i class="bx bx-x"></i></button>
+                <div class="jd-toast-bar"><span style="animation-duration:6000ms;"></span></div>
+            </div>
+        @endif
+
+    </div>
 
     {{-- ===================== PC SIDEBAR ===================== --}}
     <div class="sidebar close" id="pc-sidebar">
@@ -594,7 +545,8 @@
                                     imkoniyatlar</a></li>
                         @endif
                         @if ($showMini)
-                            <li class='my-2'><a href="{{ route('mini_semestr_user.index') }}">Mini Semestr</a></li>
+                            <li class='my-2'><a href="{{ route('mini_semestr_user.index') }}">Mini Semestr</a>
+                            </li>
                         @endif
                     </ul>
                 </li>
@@ -807,18 +759,40 @@
     </script>
 
     <script>
+        // Barcha toast'lar (success/error/info/warning/validatsiya) uchun
+        // mustaqil ishlaydigan yopilish mantig'i.
+        // Eslatma: avvalgi versiyada faqat BITTA (birinchi) toast avtomatik
+        // yopilardi, qolganlari abadiy ekranda qolib ketardi — shu bug shu yerda tuzatildi.
         document.addEventListener('DOMContentLoaded', () => {
-            const toast = document.querySelector('.toast-message');
+            document.querySelectorAll('.jd-toast').forEach(toast => {
+                let timer;
 
-            if (toast) {
-                setTimeout(() => {
-                    toast.classList.add('toast-hide');
+                const hideToast = () => {
+                    toast.classList.add('jd-toast-hide');
+                    setTimeout(() => toast.remove(), 350);
+                };
 
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 400);
-                }, 3000);
-            }
+                const startTimer = (ms) => {
+                    clearTimeout(timer);
+                    timer = setTimeout(hideToast, ms);
+                };
+
+                const duration = parseInt(toast.dataset.autohide || '4000', 10);
+                startTimer(duration);
+
+                // Sichqoncha ustida turganda avtomatik yopilishni to'xtatib turadi
+                toast.addEventListener('mouseenter', () => clearTimeout(timer));
+                toast.addEventListener('mouseleave', () => startTimer(1500));
+
+                // Qo'lda yopish tugmasi
+                const closeBtn = toast.querySelector('.jd-toast-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        clearTimeout(timer);
+                        hideToast();
+                    });
+                }
+            });
         });
     </script>
 

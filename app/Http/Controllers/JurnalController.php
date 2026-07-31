@@ -9,12 +9,9 @@ use App\Models\mini_semestr;
 use App\Models\MsMavzu;
 use App\Models\MsJoriyBaho;
 use App\Models\GradeEditLog;
+use App\Services\VedomostReportBuilder;
 use Illuminate\Http\Request;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use ZipArchive;
 
 class JurnalController extends Controller
@@ -56,9 +53,20 @@ class JurnalController extends Controller
             $subjectsQuery->where('teacher_id', auth()->id());
         }
 
-        $subjects = $subjectsQuery->orderBy('nomi')->get(['id', 'nomi']);
+        $subjects = $subjectsQuery->with('teacher')->orderBy('nomi')->get(['id', 'nomi', 'teacher_id']);
 
-        return response()->json($subjects);
+        // Frontendda fan tanlanganda o'qituvchi nomini ham ko'rsatish uchun
+        // 'teacher_name' ni alohida qo'shib qaytaramiz (subject.teacher_id orqali).
+        $result = $subjects->map(function ($s) {
+            return [
+                'id'           => $s->id,
+                'nomi'         => $s->nomi,
+                'teacher_id'   => $s->teacher_id,
+                'teacher_name' => optional($s->teacher)->{'To‘liq_ismi'} ?? null,
+            ];
+        });
+
+        return response()->json($result);
     }
 
     /**
@@ -235,15 +243,18 @@ class JurnalController extends Controller
     /**
      * Bo'lim + maktab turi + fan bo'yicha talabalar baholarini Excel (.xlsx) formatida eksport qiladi.
      *
-     * ESLATMA (YANGI): endi ikkita rejimda ishlaydi ('rejim' parametri orqali):
-     *   - 'yagona'   (default): barcha talabalar BITTA Excel faylda (eski xatti-harakat, o'zgarmagan).
-     *   - 'guruhlab': har bir guruh (Guruh ustuni) uchun ALOHIDA Excel yaratiladi va
-     *                 barchasi bitta ZIP arxivda yuklab beriladi (vedomost eksportidagi mantiq bilan bir xil).
+     * YANGI: endi VedomostController bilan AYNAN BIR XIL "Baholash qaydnomasi" formatida
+     * chiqadi (universitet sarlavhasi, baho shkalasi, harfiy baho, imzo qatori va h.k.) -
+     * ikkalasi ham umumiy App\Services\VedomostReportBuilder orqali quriladi.
      *
-     * Har qanday holatda 5 ta ustun chiqadi:
-     * Joriy baho, Oraliq baho, Joriy+Oraliq, Yakuniy baho, Umumiy baho.
-     * Fayl nomi: {bolim_nomi}_{fan_nomi}_{maktab_turi}.xlsx (yoki _guruhlab.zip)
-     * (GET/POST /jurnal/export?bolim_id=..&type=free|mini&subject_id=..&rejim=yagona|guruhlab)
+     * 'guruh' parametri orqali ikkita rejim:
+     *   - 'guruh' berilmasa (yoki 'hammasi'): fandagi BARCHA guruhlar uchun alohida-alohida
+     *     xlsx yaratiladi va bitta ZIP arxivda yuklab beriladi.
+     *   - 'guruh' aniq bitta guruh nomi bo'lsa: faqat o'sha guruh uchun bitta xlsx
+     *     to'g'ridan-to'g'ri yuklab beriladi (frontenddagi tanlangan "Guruh filtri" qiymati
+     *     shu yerga uzatiladi - jadvalda qanday filtrlangan bo'lsa, eksport ham shunga mos bo'ladi).
+     *
+     * (GET/POST /jurnal/export?bolim_id=..&type=free|mini&subject_id=..&guruh=..)
      */
     public function export(Request $request)
     {
@@ -251,7 +262,7 @@ class JurnalController extends Controller
             'bolim_id'   => 'required|integer',
             'type'       => 'required|in:free,mini',
             'subject_id' => 'required|integer',
-            'rejim'      => 'nullable|in:yagona,guruhlab',
+            'guruh'      => 'nullable|string|max:255',
         ]);
 
         $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
@@ -259,31 +270,81 @@ class JurnalController extends Controller
         $bolimModel   = bolim::findOrFail($request->bolim_id);
         $subjectModel = subject::findOrFail($request->subject_id);
 
-        $rows  = $this->collectExportRows((int) $request->bolim_id, $request->type, (int) $request->subject_id);
-        $rejim = $request->input('rejim', 'yagona');
+        $rows = $this->collectExportRows((int) $request->bolim_id, $request->type, (int) $request->subject_id);
+
+        if (empty($rows)) {
+            abort(404, "Bu fan uchun baholar topilmadi");
+        }
+
+        $grouped = collect($rows)->groupBy(fn($row) => $row['group'] ?: 'Nomalum_guruh');
 
         $typeLabel = $request->type === 'free' ? 'Bepul_maktab' : 'Mini_semestr';
         $baseName  = $this->sanitizeFileName($bolimModel->nomi) . '_'
             . $this->sanitizeFileName($subjectModel->nomi) . '_'
             . $typeLabel;
 
-        if ($rejim === 'guruhlab') {
-            return $this->exportGroupedZip($rows, $subjectModel->nomi, $baseName);
+        $tanlanganGuruh = trim((string) $request->input('guruh', ''));
+
+        // Aniq bitta guruh tanlangan bo'lsa - faqat o'sha guruh uchun bitta xlsx
+        if ($tanlanganGuruh !== '' && $tanlanganGuruh !== 'hammasi') {
+            if (!$grouped->has($tanlanganGuruh)) {
+                return response()->json([
+                    'message' => "Tanlangan guruh ({$tanlanganGuruh}) uchun ma'lumot topilmadi",
+                ], 404);
+            }
+
+            return $this->exportSingleGroup($subjectModel, $tanlanganGuruh, $grouped[$tanlanganGuruh]->values()->all());
         }
 
-        return $this->exportSingleFile($rows, $subjectModel->nomi, $baseName);
+        // Guruh tanlanmagan - fandagi barcha guruhlar uchun alohida xlsx yaratib ZIP qilamiz
+        return $this->exportGroupedZip($subjectModel, $grouped, $baseName);
     }
 
     /**
-     * YAGONA rejim: barcha talabalarni bitta Excel faylga yozadi va yuklab beradi.
-     * (Eski export() metodining asosiy qismi shu yerga ko'chirildi, mantiq o'zgarmagan.)
+     * collectExportRows() dan kelgan bitta qatorni VedomostReportBuilder kutgan
+     * ('ismi', 'talaba_id', 'joriy', 'oraliq', 'reyting', 'yakuniy', 'umumiy') formatga o'giradi.
      */
-    private function exportSingleFile(array $rows, string $subjectNomi, string $baseName)
+    private function toVedomostStudentRow(array $row): array
     {
-        $spreadsheet = $this->buildSpreadsheetForRows($rows, $subjectNomi);
+        return [
+            'ismi'      => $row['name'] ?? '-',
+            'talaba_id' => $row['talaba_id'] ?? '-',
+            'joriy'     => is_numeric($row['joriy_baho']) ? (float) $row['joriy_baho'] : 0,
+            'oraliq'    => is_numeric($row['oraliq_baho']) ? (float) $row['oraliq_baho'] : 0,
+            'reyting'   => is_numeric($row['joriy_oraliq']) ? (float) $row['joriy_oraliq'] : 0,
+            'yakuniy'   => is_numeric($row['yakuniy_baho']) ? (float) $row['yakuniy_baho'] : 0,
+            'umumiy'    => is_numeric($row['umumiy']) ? (float) $row['umumiy'] : 0,
+        ];
+    }
 
-        $fileName = $baseName . '.xlsx';
-        $writer = new Xlsx($spreadsheet);
+    /**
+     * subject modelidan VedomostReportBuilder uchun kerakli qo'shimcha ma'lumotlarni yig'adi
+     * (VedomostController::form() dagi $defaults bilan bir xil mantiq).
+     */
+    private function vedomostDefaultsFor(subject $subject): array
+    {
+        return [
+            'fakultet'      => optional($subject->fakultet)->nomi ?? '',
+            'kafedra'       => optional($subject->kafedra)->nomi ?? '',
+            'fan_krediti'   => $subject->kredit ?? '',
+            'fan_oqituvchi' => optional($subject->teacher)->{'To‘liq_ismi'} ?? '',
+            'talim_tili'    => $subject->talim_tili ?? '',
+            'oquv_yili'     => optional($subject->oquv_yili)->nomi ?? '',
+        ];
+    }
+
+    /**
+     * Bitta guruh uchun "Baholash qaydnomasi" xlsx faylini to'g'ridan-to'g'ri yuklab beradi.
+     */
+    private function exportSingleGroup(subject $subjectModel, string $guruh, array $rows)
+    {
+        $students = array_map([$this, 'toVedomostStudentRow'], $rows);
+        $data     = $this->vedomostDefaultsFor($subjectModel);
+
+        $spreadsheet = VedomostReportBuilder::buildSheet($subjectModel, $guruh, $students, $data);
+        $writer      = new Xlsx($spreadsheet);
+
+        $fileName = "Baholash_qaydnomasi_{$this->sanitizeFileName($guruh)}.xlsx";
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
@@ -293,14 +354,11 @@ class JurnalController extends Controller
     }
 
     /**
-     * GURUHLAB rejim: talabalarni 'group' (Guruh) ustuni bo'yicha guruhlarga bo'ladi,
-     * har bir guruh uchun alohida Excel yaratadi va barchasini bitta ZIP arxivga yig'ib yuklab beradi.
-     * Mantiq VedomostController'dagi ZIP eksport bilan bir xil g'oyaga asoslangan.
+     * Fandagi barcha guruhlar uchun alohida "Baholash qaydnomasi" xlsx yaratib,
+     * barchasini bitta ZIP arxivda yuklab beradi (VedomostController'dagi mantiq bilan bir xil).
      */
-    private function exportGroupedZip(array $rows, string $subjectNomi, string $baseName)
+    private function exportGroupedZip(subject $subjectModel, $grouped, string $baseName)
     {
-        $grouped = collect($rows)->groupBy(fn($row) => $row['group'] ?: 'Nomalum_guruh');
-
         if ($grouped->isEmpty()) {
             abort(404, 'Eksport qilish uchun ma\'lumot topilmadi.');
         }
@@ -310,7 +368,7 @@ class JurnalController extends Controller
             mkdir($tmpDir, 0755, true);
         }
 
-        $zipFileName = $baseName . '_guruhlab.zip';
+        $zipFileName = $baseName . '_qaydnomalar.zip';
         $zipPath = $tmpDir . '/' . $zipFileName;
 
         $zip = new ZipArchive();
@@ -318,21 +376,42 @@ class JurnalController extends Controller
             abort(500, 'ZIP arxiv yaratib bo\'lmadi.');
         }
 
+        $data = $this->vedomostDefaultsFor($subjectModel);
         $generatedFiles = [];
 
-        foreach ($grouped as $guruhNomi => $guruhRows) {
-            $spreadsheet = $this->buildSpreadsheetForRows($guruhRows->values()->all(), $subjectNomi);
-            $writer = new Xlsx($spreadsheet);
+        try {
+            foreach ($grouped as $guruhNomi => $guruhRows) {
+                $students = array_map([$this, 'toVedomostStudentRow'], $guruhRows->values()->all());
 
-            $groupFileName = $this->sanitizeFileName((string) $guruhNomi) . '.xlsx';
-            $groupFilePath = $tmpDir . '/' . $groupFileName;
+                $spreadsheet = VedomostReportBuilder::buildSheet($subjectModel, (string) $guruhNomi, $students, $data);
+                $writer = new Xlsx($spreadsheet);
 
-            $writer->save($groupFilePath);
-            $zip->addFile($groupFilePath, $groupFileName);
-            $generatedFiles[] = $groupFilePath;
+                $groupFileName = $this->sanitizeFileName((string) $guruhNomi) . '.xlsx';
+                $groupFilePath = $tmpDir . '/' . $groupFileName;
+
+                $writer->save($groupFilePath);
+                $zip->addFile($groupFilePath, $groupFileName);
+                $generatedFiles[] = $groupFilePath;
+
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet, $writer);
+            }
+
+            $zip->close();
+        } catch (\Throwable $e) {
+            foreach ($generatedFiles as $filePath) {
+                @unlink($filePath);
+            }
+            @rmdir($tmpDir);
+
+            \Illuminate\Support\Facades\Log::error('Jurnal eksport xatosi: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => "Eksport vaqtida xatolik yuz berdi: " . $e->getMessage(),
+            ], 500);
         }
-
-        $zip->close();
 
         // Alohida .xlsx fayllar endi ZIP ichida, disk ustidagi nusxalarga endi ehtiyoj yo'q
         foreach ($generatedFiles as $filePath) {
@@ -347,72 +426,6 @@ class JurnalController extends Controller
         return response()->download($zipPath, $zipFileName, [
             'Content-Type' => 'application/zip',
         ])->deleteFileAfterSend(true);
-    }
-
-    /**
-     * Berilgan qatorlar (talaba + baholar) asosida bitta Excel Spreadsheet obyektini quradi.
-     * Ham "yagona" (barcha talabalar), ham "guruhlab" (bitta guruh talabalari) rejimida ishlatiladi.
-     */
-    private function buildSpreadsheetForRows(array $rows, string $subjectNomi): Spreadsheet
-    {
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Baholar');
-
-        // ---------- Sarlavhalar ----------
-        // 1-qator: F.I.O (A1:A2 birlashtiriladi) | Fan nomi (B1:F1 birlashtiriladi)
-        $sheet->mergeCells('A1:A2');
-        $sheet->setCellValue('A1', 'Talaba F.I.O.');
-
-        $sheet->mergeCells('B1:F1');
-        $sheet->setCellValue('B1', $subjectNomi);
-
-        $sheet->setCellValue('B2', 'Joriy baho');
-        $sheet->setCellValue('C2', 'Oraliq baho');
-        $sheet->setCellValue('D2', 'Joriy+Oraliq');
-        $sheet->setCellValue('E2', 'Yakuniy baho');
-        $sheet->setCellValue('F2', 'Umumiy baho');
-
-        // ---------- Sarlavha stili ----------
-        $headerRange = 'A1:F2';
-        $sheet->getStyle($headerRange)->getFont()->setBold(true);
-        $sheet->getStyle($headerRange)->getAlignment()
-            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-            ->setVertical(Alignment::VERTICAL_CENTER)
-            ->setWrapText(true);
-        $sheet->getStyle($headerRange)->getFill()
-            ->setFillType(Fill::FILL_SOLID)
-            ->getStartColor()->setRGB('EEEDFE');
-        $sheet->getStyle($headerRange)->getBorders()->getAllBorders()
-            ->setBorderStyle(Border::BORDER_THIN);
-
-        // ---------- Ma'lumotlar ----------
-        $rowNum = 3;
-        foreach ($rows as $row) {
-            $sheet->setCellValue("A{$rowNum}", $row['name']);
-            $sheet->setCellValue("B{$rowNum}", $row['joriy_baho']);
-            $sheet->setCellValue("C{$rowNum}", $row['oraliq_baho']);
-            $sheet->setCellValue("D{$rowNum}", $row['joriy_oraliq']);
-            $sheet->setCellValue("E{$rowNum}", $row['yakuniy_baho']);
-            $sheet->setCellValue("F{$rowNum}", $row['umumiy']);
-            $rowNum++;
-        }
-
-        $lastRow = $rowNum - 1;
-        if ($lastRow >= 3) {
-            $sheet->getStyle("A3:F{$lastRow}")->getBorders()->getAllBorders()
-                ->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle("B3:F{$lastRow}")->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        }
-
-        // ---------- Ustun kengliklari ----------
-        $sheet->getColumnDimension('A')->setWidth(32);
-        foreach (['B', 'C', 'D', 'E', 'F'] as $col) {
-            $sheet->getColumnDimension($col)->setWidth(14);
-        }
-
-        return $spreadsheet;
     }
 
     /**
@@ -448,6 +461,7 @@ class JurnalController extends Controller
                     return [
                         'name'         => $r->user->{'To‘liq_ismi'} ?? '—',
                         'group'        => $r->user->Guruh ?? null,
+                        'talaba_id'    => $r->user->Talaba_ID ?? '-',
                         'joriy_baho'   => $joriyBaho,
                         'oraliq_baho'  => $oraliqBaho,
                         'joriy_oraliq' => $joriyOraliq,
@@ -481,6 +495,7 @@ class JurnalController extends Controller
                 return [
                     'name'         => $r->user->{'To‘liq_ismi'} ?? '—',
                     'group'        => $r->user->Guruh ?? null,
+                    'talaba_id'    => $r->user->Talaba_ID ?? '-',
                     'joriy_baho'   => $joriyBaho,
                     'oraliq_baho'  => $oraliqBaho,
                     'joriy_oraliq' => $joriyOraliq,

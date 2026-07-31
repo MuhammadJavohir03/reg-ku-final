@@ -15,6 +15,12 @@
             display: flex;
             gap: 12px;
             margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .elon-show-stats>div {
+            flex: 1;
+            min-width: calc(25% - 9px);
         }
 
         @media (max-width: 768px) {
@@ -23,11 +29,7 @@
                 gap: 16px;
             }
 
-            .elon-show-stats {
-                flex-wrap: wrap;
-            }
-
-            .elon-show-stats > div {
+            .elon-show-stats>div {
                 min-width: calc(50% - 6px);
             }
         }
@@ -35,10 +37,20 @@
 
     <div class="oz-wrap">
 
+        @if (session('success'))
+            <div class="oz-alert oz-alert-success">
+                <i class="bx bx-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
+
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
             <a href="{{ route('elons.index') }}" class="ar-btn">
                 <i class="bx bx-arrow-back"></i> Orqaga
             </a>
+
+            <button type="button" class="ar-btn" id="copyLinkBtn" data-url="{{ route('elons.show', $elon->id) }}">
+                <i class="bx bx-link"></i> Havolani nusxalash
+            </button>
 
             @if (auth()->check() && auth()->user()->role === 'admin')
                 <a href="{{ route('elons.edit', $elon->id) }}" class="ar-btn">
@@ -73,23 +85,34 @@
                     </div>
                 </div>
 
+                @php
+                    $wordCount = str_word_count(strip_tags($elon->full_content));
+                    $readMinutes = max(1, (int) ceil($wordCount / 200));
+                @endphp
+
                 <div class="elon-show-stats">
-                    <div style="flex:1; background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-id-card" style="font-size:20px; color:#3C3489;"></i>
                         <div style="font-weight:700; margin-top:4px;">{{ $elon->id }}</div>
                         <small style="color:#888;">E'lon ID</small>
                     </div>
 
-                    <div style="flex:1; background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-calendar-event" style="font-size:20px; color:#10b981;"></i>
                         <div style="font-weight:700; margin-top:4px;">{{ $elon->created_at->format('d.m.Y') }}</div>
                         <small style="color:#888;">Sana</small>
                     </div>
 
-                    <div style="flex:1; background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-map" style="font-size:20px; color:#ef4444;"></i>
-                        <div style="font-weight:700; margin-top:4px;">{{ $elon->kurs }} - Kurs</div>
+                        <div style="font-weight:700; margin-top:4px;">{{ $elon->kurs ?? 'Barcha' }} - Kurs</div>
                         <small style="color:#888;">{{ $elon->category->nomi ?? 'Umumiy' }}</small>
+                    </div>
+
+                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                        <i class="bx bx-time-five" style="font-size:20px; color:#f5a623;"></i>
+                        <div style="font-weight:700; margin-top:4px;">{{ $readMinutes }} daqiqa</div>
+                        <small style="color:#888;">O'qish vaqti</small>
                     </div>
                 </div>
             </div>
@@ -129,5 +152,16 @@
         </div>
 
     </div>
+
+    <script>
+        const copyBtn = document.getElementById('copyLinkBtn');
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(copyBtn.dataset.url).then(() => {
+                const original = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="bx bx-check"></i> Nusxalandi!';
+                setTimeout(() => copyBtn.innerHTML = original, 1800);
+            });
+        });
+    </script>
 
 </x-layouts.sidebar>

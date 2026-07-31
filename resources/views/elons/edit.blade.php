@@ -15,6 +15,19 @@
             </div>
         </div>
 
+        @if (session('success'))
+            <div class="oz-alert oz-alert-success">
+                <i class="bx bx-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="oz-alert oz-alert-danger">
+                <i class="bx bx-error-circle"></i>
+                Formada xatoliklar bor, iltimos, quyidagi maydonlarni tekshiring.
+            </div>
+        @endif
+
         <form action="{{ route('elons.update', $elon->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -25,14 +38,24 @@
 
                     <div class="soz-field">
                         <label><i class="bx bx-heading" style="color:#3C3489;"></i> E'lon sarlavhasi</label>
-                        <input value="{{ $elon->title }}" type="text" name="title" class="soz-input"
+                        <input value="{{ old('title', $elon->title) }}" type="text" name="title"
+                            class="soz-input @error('title') is-invalid @enderror"
                             placeholder="Sarlavhani kiriting...">
+                        @error('title')
+                            <span class="soz-error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="soz-field">
                         <label><i class="bx bx-text" style="color:#3C3489;"></i> Qisqacha</label>
-                        <input value="{{ $elon->short_content }}" type="text" name="short_content" class="soz-input"
+                        <input value="{{ old('short_content', $elon->short_content) }}" type="text"
+                            name="short_content" id="shortContent" maxlength="150"
+                            class="soz-input @error('short_content') is-invalid @enderror"
                             placeholder="Qisqacha tavsif...">
+                        <div class="soz-hint"><span id="shortCount">0</span>/150</div>
+                        @error('short_content')
+                            <span class="soz-error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="soz-field">
@@ -40,7 +63,7 @@
                         <select name="category_id" class="soz-input">
                             <option value="">Barcha yo'nalishlar (Hammaga)</option>
                             @foreach ($categories as $cat)
-                                <option value="{{ $cat->id }}" {{ $elon->category_id == $cat->id ? 'selected' : '' }}>
+                                <option value="{{ $cat->id }}" {{ old('category_id', $elon->category_id) == $cat->id ? 'selected' : '' }}>
                                     {{ $cat->nomi }}
                                 </option>
                             @endforeach
@@ -52,7 +75,7 @@
                         <select name="kurs" class="soz-input">
                             <option value="">Barcha kurslar</option>
                             @for ($i = 1; $i <= 4; $i++)
-                                <option value="{{ $i }}" {{ $elon->kurs == $i ? 'selected' : '' }}>
+                                <option value="{{ $i }}" {{ old('kurs', $elon->kurs) == $i ? 'selected' : '' }}>
                                     {{ $i }}-kurs
                                 </option>
                             @endfor
@@ -63,27 +86,40 @@
 
                 <div class="soz-divider"></div>
 
-                @if ($elon->photo)
-                    <div class="soz-field" style="margin-bottom:16px;">
-                        <label><i class="bx bx-image" style="color:#3C3489;"></i> Joriy rasm</label>
-                        <img src="{{ asset('storage/' . $elon->photo) }}" alt="Rasm"
-                            style="max-width:220px; border-radius:12px; border:1px solid #f0f0f0; display:block;">
-                    </div>
-                @endif
-
                 <div class="soz-field" style="margin-bottom:16px;">
-                    <label><i class="bx bx-image-add" style="color:#3C3489;"></i> Rasm yuklash (yangilash uchun)</label>
-                    <div style="border:2px dashed #e0e0e0; border-radius:12px; padding:24px; text-align:center; background:#fafafa;">
-                        <i class="bx bx-cloud-upload" style="font-size:32px; color:#3C3489;"></i>
-                        <p style="margin:6px 0 10px; color:#888; font-size:13px;">Rasmni shu yerga tashlang yoki tanlang</p>
-                        <input type="file" name="photo" class="soz-input" style="max-width:280px; margin:0 auto;">
+                    <label><i class="bx bx-image-add" style="color:#3C3489;"></i> Rasm</label>
+
+                    @php $hasCustomPhoto = $elon->photo && $elon->photo !== 'elons/default.png'; @endphp
+
+                    <label class="soz-dropzone" id="dropzone" style="{{ $hasCustomPhoto ? 'display:none;' : '' }}">
+                        <i class="bx bx-cloud-upload"></i>
+                        <p>Rasmni shu yerga tashlang yoki tanlash uchun bosing</p>
+                        <input type="file" name="photo" id="photoInput" accept="image/*">
+                    </label>
+
+                    <div class="soz-preview" id="preview" @if ($hasCustomPhoto) style="display:block;" @endif>
+                        <img id="previewImg" src="{{ $hasCustomPhoto ? asset('storage/' . $elon->photo) : '' }}" alt="Rasm">
+                        <button type="button" class="soz-preview-remove" id="removePreview">
+                            <i class="bx bx-trash"></i> Rasmni o'chirish
+                        </button>
                     </div>
+
+                    <input type="hidden" name="remove_photo" id="removePhotoFlag" value="0">
+
+                    @error('photo')
+                        <span class="soz-error">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="soz-field">
                     <label><i class="bx bx-file" style="color:#3C3489;"></i> E'lon matni</label>
-                    <textarea name="full_content" class="soz-input" rows="5"
-                        style="resize:vertical;">{{ $elon->full_content }}</textarea>
+                    <textarea name="full_content" id="fullContent"
+                        class="soz-input @error('full_content') is-invalid @enderror" rows="5"
+                        style="resize:vertical;">{{ old('full_content', $elon->full_content) }}</textarea>
+                    <div class="soz-hint"><span id="fullCount">0</span> ta belgi</div>
+                    @error('full_content')
+                        <span class="soz-error">{{ $message }}</span>
+                    @enderror
                 </div>
 
             </div>
@@ -101,5 +137,60 @@
         </form>
 
     </div>
+
+    <script>
+        const shortInput = document.getElementById('shortContent');
+        const shortCount = document.getElementById('shortCount');
+        const updateShortCount = () => shortCount.textContent = shortInput.value.length;
+        shortInput.addEventListener('input', updateShortCount);
+        updateShortCount();
+
+        const fullInput = document.getElementById('fullContent');
+        const fullCount = document.getElementById('fullCount');
+        const updateFullCount = () => fullCount.textContent = fullInput.value.length;
+        fullInput.addEventListener('input', updateFullCount);
+        updateFullCount();
+
+        const dropzone = document.getElementById('dropzone');
+        const photoInput = document.getElementById('photoInput');
+        const preview = document.getElementById('preview');
+        const previewImg = document.getElementById('previewImg');
+        const removePreview = document.getElementById('removePreview');
+        const removePhotoFlag = document.getElementById('removePhotoFlag');
+
+        function showPreview(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                previewImg.src = e.target.result;
+                preview.style.display = 'block';
+                dropzone.style.display = 'none';
+                removePhotoFlag.value = '0';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        photoInput.addEventListener('change', () => showPreview(photoInput.files[0]));
+
+        ['dragover', 'dragenter'].forEach(evt =>
+            dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('is-dragover'); })
+        );
+        ['dragleave', 'drop'].forEach(evt =>
+            dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('is-dragover'); })
+        );
+        dropzone.addEventListener('drop', e => {
+            if (e.dataTransfer.files.length) {
+                photoInput.files = e.dataTransfer.files;
+                showPreview(e.dataTransfer.files[0]);
+            }
+        });
+
+        removePreview.addEventListener('click', () => {
+            photoInput.value = '';
+            preview.style.display = 'none';
+            dropzone.style.display = 'block';
+            removePhotoFlag.value = '1'; // saqlashda mavjud rasm default'ga almashadi
+        });
+    </script>
 
 </x-layouts.sidebar>

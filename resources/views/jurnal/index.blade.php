@@ -67,6 +67,10 @@
                         <div id="subject_id_results" class="search-dropdown"></div>
                         <input type="hidden" id="subject_id">
                     </div>
+                    <div id="subjectTeacherInfo" style="display:none; margin-top:6px; font-size:12px; color:#555;">
+                        <i class="bx bx-user" style="color:#3C3489;"></i>
+                        <span id="subjectTeacherName"></span>
+                    </div>
                 </div>
 
                 <div class="jr-field">
@@ -94,7 +98,7 @@
                     <h2 id="subjectTitle">Fan tanlanmagan</h2>
                     <div class="jr-top-actions">
                         <button id="exportBtn" class="jr-export-btn" disabled title="Avval bo'lim, maktab turi va fanni tanlang">
-                            <i class="fas fa-file-excel"></i> Excel'ga yuklash
+                            <i class="fas fa-file-excel"></i> <span id="exportBtnLabel">Excel'ga yuklash</span>
                         </button>
                         <div class="jr-page-select">
                             Ko'rsatish:
@@ -871,6 +875,22 @@
             const typeSelect = makeSearchSelect('school_type_search', 'school_type_results', 'school_type');
             const subjectSelect = makeSearchSelect('subject_id_search', 'subject_id_results', 'subject_id');
             const groupFilterSelect = makeSearchSelect('guruh_filter_search', 'guruh_filter_results', 'guruh_filter');
+
+            // Fan ro'yxatidagi qo'shimcha ma'lumotlarni (jumladan o'qituvchi nomini) saqlab qo'yamiz,
+            // chunki makeSearchSelect faqat id/nomi bilan ishlaydi.
+            let subjectsData = [];
+            const subjectTeacherInfo = document.getElementById('subjectTeacherInfo');
+            const subjectTeacherName = document.getElementById('subjectTeacherName');
+
+            function updateSubjectTeacherInfo(subjectId) {
+                const found = subjectsData.find(s => String(s.id) === String(subjectId));
+                if (found && found.teacher_name) {
+                    subjectTeacherName.textContent = "O'qituvchi: " + found.teacher_name;
+                    subjectTeacherInfo.style.display = 'block';
+                } else {
+                    subjectTeacherInfo.style.display = 'none';
+                }
+            }
             const subjectTitle = document.getElementById('subjectTitle');
             const theadRow = document.getElementById('theadRow');
             const tbody = document.getElementById('tbody');
@@ -879,14 +899,24 @@
             const pageSizeSelect = document.getElementById('pageSize');
             const exportBtn = document.getElementById('exportBtn');
 
+            const exportBtnLabel = document.getElementById('exportBtnLabel');
+
             function updateExportBtnState() {
                 exportBtn.disabled = !(state.bolimId && state.type && state.subjectId);
+                if (state.groupFilter) {
+                    exportBtnLabel.textContent = `"${state.groupFilter}" guruhi uchun Excel`;
+                } else {
+                    exportBtnLabel.textContent = "Barcha guruhlar - Excel (ZIP)";
+                }
             }
 
             exportBtn.addEventListener('click', function() {
                 if (exportBtn.disabled) return;
+                // Jadvalda "Guruh filtri" tanlangan bo'lsa - faqat o'sha guruh uchun bitta
+                // Excel yuklanadi; tanlanmagan bo'lsa - fandagi barcha guruhlar ZIP qilib yuklanadi.
+                const guruhParam = state.groupFilter ? `&guruh=${encodeURIComponent(state.groupFilter)}` : '';
                 const url =
-                    `${ROUTES.export}?bolim_id=${state.bolimId}&type=${state.type}&subject_id=${state.subjectId}`;
+                    `${ROUTES.export}?bolim_id=${state.bolimId}&type=${state.type}&subject_id=${state.subjectId}${guruhParam}`;
                 window.location.href = url;
             });
 
@@ -933,6 +963,9 @@
                         return res.json();
                     })
                     .then(data => {
+                        subjectsData = data;
+                        subjectTeacherInfo.style.display = 'none';
+
                         if (!data.length) {
                             subjectSelect.setItems([]);
                             subjectSelect.reset("Bu bo'limda fan topilmadi");
@@ -959,6 +992,7 @@
 
                 if (!state.subjectId) {
                     subjectTitle.textContent = 'Fan tanlanmagan';
+                    subjectTeacherInfo.style.display = 'none';
                     renderTableHead();
                     renderStudents();
                     updateExportBtnState();
@@ -966,6 +1000,7 @@
                 }
 
                 subjectTitle.textContent = name;
+                updateSubjectTeacherInfo(state.subjectId);
                 updateExportBtnState();
                 tbody.innerHTML =
                     '<tr><td colspan="10" style="text-align:center;color:#999;padding:24px;">Yuklanmoqda...</td></tr>';
@@ -1003,6 +1038,7 @@
                 state.students = [];
                 state.topics = [];
                 subjectTitle.textContent = 'Fan tanlanmagan';
+                subjectTeacherInfo.style.display = 'none';
                 resetGroupFilter();
                 renderTableHead();
                 renderStudents();
@@ -1014,6 +1050,7 @@
                 state.students = [];
                 state.topics = [];
                 subjectTitle.textContent = 'Fan tanlanmagan';
+                subjectTeacherInfo.style.display = 'none';
                 resetGroupFilter();
                 renderTableHead();
                 renderStudents();
