@@ -54,7 +54,7 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
                 $talaba->Guruh ?? '-',
             ];
             foreach ($this->fanlar as $fan) {
-                $grade = $talaba->getMergedGrade($fan->id);
+                $grade = $talaba->getMergedGradeForGroup($fan->subject_ids);
                 $row[] = $grade?->joriy_oraliq ?? '-';
                 $row[] = $grade?->umumiy       ?? '-';
                 $row[] = $grade?->davomat !== null ? $grade->davomat . '%' : '-';
@@ -128,7 +128,7 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
         foreach ($this->talabalar as $i => $talaba) {
             $rowNum = $i + 3;
             foreach ($this->fanlar as $j => $fan) {
-                $grade = $talaba->getMergedGrade($fan->id);
+                $grade = $talaba->getMergedGradeForGroup($fan->subject_ids);
 
                 $joCol = Coordinate::stringFromColumnIndex(4 + ($j * 3));
                 $uCol  = Coordinate::stringFromColumnIndex(5 + ($j * 3));

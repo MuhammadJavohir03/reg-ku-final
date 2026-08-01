@@ -169,4 +169,22 @@ class User extends Authenticatable
 
         return $result;
     }
+
+    public function getMergedGradeForGroup(array $subjectIds)
+{
+    $candidates = collect($subjectIds)
+        ->map(fn($id) => $this->getMergedGrade($id))
+        ->filter(fn($g) => $g && ($g->joriy_oraliq !== null || $g->umumiy !== null || $g->davomat !== null));
+
+    if ($candidates->isEmpty()) return null;
+
+    return $candidates->reduce(function ($best, $g) {
+        if (!$best) return $g;
+        $merged = clone $best;
+        $merged->joriy_oraliq = max($best->joriy_oraliq ?? 0, $g->joriy_oraliq ?? 0);
+        $merged->umumiy       = max($best->umumiy ?? 0, $g->umumiy ?? 0);
+        $merged->davomat      = min($best->davomat ?? 100, $g->davomat ?? 100); // kam davomat = yaxshi
+        return $merged;
+    });
+}
 }

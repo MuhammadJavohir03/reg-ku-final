@@ -20,15 +20,20 @@ class OzlashtirishController extends Controller
         $gradeUserIds = grade::distinct()->pluck('user_id');
 
         // Filtr dropdownlari uchun ro'yxatlar
-        // Guruhlar - tanlangan yo'nalishga tegishli guruhlar (agar yo'nalish tanlangan bo'lsa)
+        // Guruhlar - tanlangan yo'nalish VA tanlangan kursga mos guruhlar
+        // (guruh ro'yxati kurs tanlovi bilan ham moslashadi)
         $guruhlar = User::whereIn('id', $gradeUserIds)
             ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
+            ->when($request->kurs, fn($q) => $q->where('Kurs', $request->kurs))
             ->distinct()
             ->pluck('Guruh')
             ->filter();
 
+        // Kurslar - tanlangan yo'nalish VA tanlangan guruhga mos kurslar
+        // (kurs ro'yxati guruh tanlovi bilan ham moslashadi)
         $kurslar = User::whereIn('id', $gradeUserIds)
             ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
+            ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
             ->distinct()
             ->pluck('Kurs')
             ->filter();
@@ -69,13 +74,20 @@ class OzlashtirishController extends Controller
         }
 
         // --- 2) FANLAR ENDI FAQAT TANLANGAN YO'NALISHGA TEGISHLI BO'LADI ---
-        $fanlar = subject::where('category_id', $request->category_id)
-            ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
-            ->get();
+        // Diqqat: bitta fan bir nechta o'qituvchi tomonidan o'qitilgani uchun
+        // `subjects` jadvalida bir xil nomli bir nechta qator bo'lishi mumkin.
+        // Shu sababli fanlarni nomi+semestr bo'yicha guruhlab, har bir guruhga
+        // tegishli barcha subject_id larni birlashtiramiz (self::groupDuplicateSubjects).
+        $fanlar = self::groupDuplicateSubjects(
+            subject::where('category_id', $request->category_id)
+                ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
+                ->get()
+        );
 
         $talabalarQuery = User::whereIn('id', $gradeUserIds)
             ->where('category_id', $request->category_id)
             ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
+            ->when($request->kurs, fn($q) => $q->where('Kurs', $request->kurs))
             ->when($request->search, fn($q) => $q->where("To‘liq_ismi", 'like', '%' . $request->search . '%'));
 
         $talabalar = (clone $talabalarQuery)
@@ -103,7 +115,7 @@ class OzlashtirishController extends Controller
 
             foreach ($fanlar as $fan) {
 
-                $g = $talaba->getMergedGrade($fan->id);
+                $g = $talaba->getMergedGradeForGroup($fan->subject_ids);
 
                 if (($g->joriy_oraliq ?? 0) < 20) {
                     $hasJoriy = true;
@@ -156,6 +168,30 @@ class OzlashtirishController extends Controller
         ) + ['yonalishTanlanmagan' => false]);
     }
 
+    /**
+     * Bitta fan bir nechta o'qituvchi tomonidan o'qitilgani sababli
+     * `subjects` jadvalida bir xil nomli (masalan, "Xorijiy til") bir nechta
+     * qator hosil bo'lgan. Bu funksiya shunday nomdosh fanlarni nomi+semestr
+     * bo'yicha bitta "virtual" fanga birlashtiradi va unga tegishli barcha
+     * subject_id larni `subject_ids` maydonida saqlaydi. Natijada natijalar
+     * jadvalida bitta fan endi faqat bitta marta chiqadi.
+     *
+     * Eslatma: bu DB arxitekturasini o'zgartirmaydi — faqat query/qatlam
+     * darajasida guruhlaydi, xuddi so'ralganidek.
+     */
+    private static function groupDuplicateSubjects($subjects)
+    {
+        return $subjects
+            ->groupBy(fn($fan) => $fan->nomi . '|' . $fan->semster)
+            ->map(function ($guruh) {
+                $vakil = $guruh->first();
+                // Shu nomdagi fanga tegishli barcha subject_id lar (turli o'qituvchilar)
+                $vakil->subject_ids = $guruh->pluck('id')->all();
+                return $vakil;
+            })
+            ->values();
+    }
+
     public function export(Request $request)
     {
         // Export ham yo'nalish tanlanmasa ishlamasin
@@ -168,6 +204,7 @@ class OzlashtirishController extends Controller
         $talabalar = User::whereIn('id', $gradeUserIds)
             ->where('category_id', $request->category_id)
             ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
+            ->when($request->kurs, fn($q) => $q->where('Kurs', $request->kurs))
             ->when($request->search, fn($q) => $q->where("To‘liq_ismi", 'like', '%' . $request->search . '%'))
             ->with([
                 'grades',
@@ -177,9 +214,12 @@ class OzlashtirishController extends Controller
             ->get();
 
         // fanlar endi tanlangan yo'nalishga qarab filtrlanadi
-        $fanlar = subject::where('category_id', $request->category_id)
-            ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
-            ->get();
+        // (index() dagi kabi bir xil nomli fanlar birlashtiriladi)
+        $fanlar = self::groupDuplicateSubjects(
+            subject::where('category_id', $request->category_id)
+                ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
+                ->get()
+        );
 
         // Fayl nomi
         $parts = ['ozlashtirish'];

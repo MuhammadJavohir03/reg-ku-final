@@ -129,6 +129,29 @@ class ArizaAdminController extends Controller
     }
 
     /**
+     * AJAX: tanlangan talabaga tegishli fanlar ro'yxati.
+     * Faqat shu talabaning "grade" jadvalida yozuvi bor fanlar qaytariladi
+     * (ya'ni import grade bookda bahosi mavjud fanlar).
+     */
+    public function subjectsByUser(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $subjectIds = grade::where('user_id', $validated['user_id'])
+            ->pluck('subject_id');
+
+        $subjects = subject::whereIn('id', $subjectIds)
+            ->orderBy('nomi')
+            ->get(['id', 'nomi']);
+
+        return response()->json([
+            'subjects' => $subjects,
+        ]);
+    }
+
+    /**
      * AJAX: talaba + fan tanlanganda gradesda shu fan bo'yicha bahosi bormi yo'qmi tekshirish.
      * Hech qanday filtr qo'llanilmaydi — shunchaki mavjud/mavjud emasligini bildiradi.
      */

@@ -59,7 +59,7 @@
                         <th style="width:60px;">Turi</th>
                         <th style="width:200px;">O'qituvchi</th>
                         <th style="width:80px;">Holat</th>
-                        <th style="width:160px;">Amallar</th>
+                        <th style="width:195px;">Amallar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -142,7 +142,7 @@
                                     {{-- Vedmostga eksport qilish --}}
                                     <a href="{{ route('grades.vedomost.form', $subject->id) }}" class="ar-btn"
                                         target="_blank" title="Vedomostga eksport" style="padding:5px 8px;">
-                                        <i class="bx bx-spreadsheet" style="color:#217346;"></i>
+                                        <i class="bx bx-spreadsheet" style="color:#277eff;"></i>
                                     </a>
 
                                     {{-- IMPORT --}}
@@ -152,7 +152,7 @@
                                         @csrf
                                         <label class="ar-btn" title="Excel import"
                                             style="cursor:pointer; margin:0; padding:5px 8px;">
-                                            <i class="bx bx-import import-icon" style="color:#277eff;"></i>
+                                            <i class="bx bx-import import-icon" style="color:#217346;"></i>
                                             <div class="row-progress" style="display:none; align-items:center; gap:4px;">
                                                 <div style="position:relative; width:28px; height:28px; flex-shrink:0;">
                                                     <svg width="28" height="28" style="transform:rotate(-90deg);">
@@ -166,7 +166,7 @@
                                                     <span class="circle-pct"
                                                         style="position:absolute;top:50%;left:50%;
                                                         transform:translate(-50%,-50%);
-                                                        font-size:7px;font-weight:700;color:#ff0000;">0%</span>
+                                                        font-size:7px;font-weight:700;color:#217346;">0%</span>
                                                 </div>
                                             </div>
                                             <input type="file" name="excel_file" accept=".xlsx,.xls,.csv"
@@ -186,6 +186,13 @@
                                             </button>
                                         </form>
                                     @endif
+
+                                    {{-- NUSXALASH --}}
+                                    <button type="button" class="ar-btn" style="padding:5px 8px;"
+                                        title="Fanni nusxalash (yangi o'qituvchi bilan)"
+                                        onclick="openDuplicateModal({{ $subject->id }}, {{ \Illuminate\Support\Js::from($subject->nomi) }})">
+                                        <i class="bx bx-copy-alt" style="color:#f59e0b;"></i>
+                                    </button>
 
                                     {{-- TAHRIRLASH --}}
                                     <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
@@ -222,7 +229,119 @@
             {{ $subjects->withQueryString()->links() }}
         </div>
 
+        {{-- ================= NUSXALASH MODALI ================= --}}
+        <div id="duplicateModalOverlay" class="dup-modal-overlay">
+            <div class="dup-modal">
+                <div class="dup-modal-header">
+                    <h4><i class="bx bx-copy-alt" style="color:#f59e0b;"></i> Fanni nusxalash</h4>
+                    <button type="button" class="dup-modal-close" onclick="closeDuplicateModal()">&times;</button>
+                </div>
+
+                <p style="font-size:13px; color:#666; margin:0 0 16px;">
+                    "<b id="dupSubjectName"></b>" fani <u>hamma parametri bilan bir xil</u> holda nusxalanadi,
+                    faqat quyida tanlagan o'qituvchi biriktiriladi.
+                </p>
+
+                <form id="duplicateForm" method="POST">
+                    @csrf
+
+                    <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Yangi
+                        o'qituvchi</label>
+                    <div style="position:relative;">
+                        <div style="position:relative;">
+                            <i class="bx bx-search"
+                                style="position:absolute; left:10px; top:50%;
+                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                            <input type="text" id="dup_teacher_search" class="arizalar-search"
+                                style="width:100%; padding-left:34px;" placeholder="ID yoki ismni yozing..."
+                                autocomplete="off" required>
+                        </div>
+
+                        <div id="dup_teacher_results" class="search-dropdown">
+                            @foreach ($teachers as $teacher)
+                                <div class="search-item" data-id="{{ $teacher->id }}"
+                                    data-name="{{ $teacher['To‘liq_ismi'] }}">
+                                    <span
+                                        style="background:#EEEDFE; color:#3C3489; padding:2px 8px;
+                                        border-radius:6px; font-size:11px; font-weight:700; flex-shrink:0;">
+                                        #{{ $teacher->id }}
+                                    </span>
+                                    <span style="font-size:13px; color:#333; font-weight:500;">
+                                        {{ $teacher['To‘liq_ismi'] }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <input type="hidden" name="teacher_id" id="dup_hidden_teacher_id" required>
+                    </div>
+
+                    <div style="display:flex; gap:8px; margin-top:18px;">
+                        <button type="submit" id="dupSubmitBtn" class="ar-btn ar-btn-ok"
+                            style="flex:1; justify-content:center;" disabled>
+                            <i class="bx bx-copy-alt"></i> Nusxalash
+                        </button>
+                        <button type="button" class="ar-btn" onclick="closeDuplicateModal()">Bekor qilish</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
+
+    <style>
+        .dup-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 20, 30, 0.4);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dup-modal-overlay.show {
+            display: flex;
+        }
+
+        .dup-modal {
+            background: #fff;
+            border-radius: 14px;
+            padding: 22px;
+            width: 380px;
+            max-width: 92vw;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+        }
+
+        .dup-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .dup-modal-header h4 {
+            margin: 0;
+            font-size: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dup-modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            line-height: 1;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .dup-modal-close:hover {
+            color: #333;
+        }
+    </style>
 
     <script>
         document.querySelectorAll('.grade-import-form').forEach(function(form) {
@@ -270,6 +389,98 @@
                         alert('Xatolik yuz berdi!');
                     });
             });
+        });
+    </script>
+
+    <script>
+        // Route helperi ":id" ni URL-encode qilib qo'yishi mumkinligi uchun,
+        // shablonni SONLI placeholder (999999) bilan yasab, keyin JS orqali almashtiramiz.
+        const duplicateUrlTemplate = "{{ route('subject.duplicate', 999999) }}";
+
+        const dupOverlay = document.getElementById('duplicateModalOverlay');
+        const dupForm = document.getElementById('duplicateForm');
+        const dupSubjectName = document.getElementById('dupSubjectName');
+        const dupTeacherSearch = document.getElementById('dup_teacher_search');
+        const dupHiddenTeacherId = document.getElementById('dup_hidden_teacher_id');
+        const dupTeacherResults = document.getElementById('dup_teacher_results');
+        const dupSubmitBtn = document.getElementById('dupSubmitBtn');
+
+        function openDuplicateModal(subjectId, subjectName) {
+            dupForm.action = duplicateUrlTemplate.replace('999999', subjectId);
+            dupSubjectName.textContent = subjectName;
+
+            // Har safar oyna ochilganda tanlovni tozalaymiz
+            dupTeacherSearch.value = '';
+            dupHiddenTeacherId.value = '';
+            dupTeacherSearch.style.borderColor = '';
+            dupSubmitBtn.disabled = true;
+
+            dupOverlay.classList.add('show');
+            setTimeout(() => dupTeacherSearch.focus(), 50);
+        }
+
+        function closeDuplicateModal() {
+            dupOverlay.classList.remove('show');
+        }
+
+        dupOverlay.addEventListener('click', function(e) {
+            if (e.target === dupOverlay) closeDuplicateModal();
+        });
+
+        // "O'qituvchi" qidiruvli dropdown - create.blade.php dagi bilan bir xil mantiq
+        (function() {
+            const items = dupTeacherResults.querySelectorAll('.search-item');
+
+            dupTeacherSearch.addEventListener('input', function() {
+                const val = this.value.toLowerCase().trim();
+                let found = 0;
+
+                dupHiddenTeacherId.value = '';
+                dupSubmitBtn.disabled = true;
+
+                if (val.length > 0) {
+                    dupTeacherResults.style.display = 'block';
+                    items.forEach(item => {
+                        const name = item.getAttribute('data-name').toLowerCase();
+                        const id = item.getAttribute('data-id');
+                        const show = name.includes(val) || id === val;
+                        item.style.display = show ? 'flex' : 'none';
+                        if (show) found++;
+                    });
+                    if (found === 0) dupTeacherResults.style.display = 'none';
+                } else {
+                    dupTeacherResults.style.display = 'none';
+                }
+            });
+
+            dupTeacherSearch.addEventListener('focus', function() {
+                if (this.value.trim().length > 0) {
+                    dupTeacherResults.style.display = 'block';
+                }
+            });
+
+            items.forEach(item => {
+                item.addEventListener('click', function() {
+                    dupTeacherSearch.value = this.dataset.name;
+                    dupHiddenTeacherId.value = this.dataset.id;
+                    dupTeacherResults.style.display = 'none';
+                    dupTeacherSearch.style.borderColor = '#3C3489';
+                    dupSubmitBtn.disabled = false;
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!dupTeacherSearch.contains(e.target) && !dupTeacherResults.contains(e.target)) {
+                    dupTeacherResults.style.display = 'none';
+                }
+            });
+        })();
+
+        dupForm.addEventListener('submit', function(e) {
+            if (!dupHiddenTeacherId.value) {
+                e.preventDefault();
+                alert("Iltimos, avval yangi o'qituvchini tanlang.");
+            }
         });
     </script>
 

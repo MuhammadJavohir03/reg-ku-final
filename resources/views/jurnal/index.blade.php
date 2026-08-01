@@ -1081,6 +1081,7 @@
             groupFilterSelect.onSelect(function(id) {
                 state.groupFilter = id || null;
                 state.page = 1;
+                updateExportBtnState();
                 renderStudents();
             });
 

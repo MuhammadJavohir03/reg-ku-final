@@ -42,7 +42,10 @@ class SubjectController extends Controller
             'subject' => \App\Models\Subject::count(),
         ];
 
-        return view('subject.index', compact('subjects', 'subjectCounts'));
+        // Nusxalash oynasidagi "Yangi o'qituvchi" qidiruvli dropdown uchun
+        $teachers = User::where('role', 'teacher')->get();
+
+        return view('subject.index', compact('subjects', 'subjectCounts', 'teachers'));
     }
 
     /**
@@ -146,5 +149,32 @@ class SubjectController extends Controller
     {
         $subject->delete();
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli o\'chirildi.');
+    }
+
+    /**
+     * Mavjud fanni nusxalaydi: barcha parametrlar ($subject bilan bir xil) saqlanadi,
+     * faqat FOYDALANUVCHI TANLAGAN yangi o'qituvchi (teacher_id) biriktiriladi.
+     * (POST /subject/{subject}/duplicate  { teacher_id })
+     */
+    public function duplicate(Request $request, subject $subject)
+    {
+        $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+        ]);
+
+        subject::create([
+            'nomi'           => $subject->nomi,
+            'category_id'    => $subject->category_id,
+            'kafedra_id'     => $subject->kafedra_id,
+            'fakultet_id'    => $subject->fakultet_id,
+            'oquv_yili_id'   => $subject->oquv_yili_id,
+            'talim_tili'     => $subject->talim_tili,
+            'teacher_id'     => $request->input('teacher_id'),
+            'lesson_type_id' => $subject->lesson_type_id,
+            'semster'        => $subject->semster,
+            'kredit'         => $subject->kredit,
+        ]);
+
+        return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli nusxalandi.');
     }
 }

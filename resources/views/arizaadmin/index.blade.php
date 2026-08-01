@@ -1,7 +1,7 @@
 <x-layouts.sidebar>
-    <x-slot:title>Arizalar</x-slot:title>
+    <x-slot:title>Arizalar | admin tomonidan</x-slot:title>
 
-    <!-- ARIZA_ADMIN_VIEW_V3 -->
+    <!-- ARIZA_ADMIN_VIEW_V4 -->
     <div class="oz-wrap ariza-page">
 
         <div class="oz-title" style="margin-bottom:16px;">Arizalar</div>
@@ -69,16 +69,13 @@
                 </div>
             </div>
 
-            {{-- 3-QADAM: FAN --}}
+            {{-- 3-QADAM: FAN (talaba tanlangach AJAX orqali dinamik yuklanadi) --}}
             <div class="ariza-step is-locked" id="step-3">
                 <div class="ariza-step-label">
                     <span class="ariza-step-badge">3</span> Fanni tanlang
                 </div>
-                <select id="fanSelect" class="ariza-input">
-                    <option value="">Tanlang</option>
-                    @foreach ($subjects as $subject)
-                        <option value="{{ $subject->id }}">{{ $subject->nomi }}</option>
-                    @endforeach
+                <select id="fanSelect" class="ariza-input" disabled>
+                    <option value="">Avval talabani tanlang</option>
                 </select>
             </div>
 
@@ -442,6 +439,12 @@
             box-shadow: 0 0 0 3px rgba(79, 70, 229, .12);
         }
 
+        .ariza-input:disabled {
+            background: #f8f9fb;
+            color: #9aa0ac;
+            cursor: not-allowed;
+        }
+
         .ariza-input-icon {
             padding-left: 38px;
         }
@@ -718,7 +721,7 @@
     </style>
 
     <script>
-        console.log('[ARIZA_ADMIN_V3] script bloki topildi va ishga tushdi');
+        console.log('[ARIZA_ADMIN_V4] script bloki topildi va ishga tushdi');
         try {
             (function() {
                 const bolimSelect = document.getElementById('bolimSelect');
@@ -760,15 +763,17 @@
                 };
                 for (const key in requiredEls) {
                     if (!requiredEls[key]) {
-                        console.error('[ARIZA_ADMIN_V3] Element topilmadi:', key, '— HTML idlari mos kelmayapti.');
+                        console.error('[ARIZA_ADMIN_V4] Element topilmadi:', key, '— HTML idlari mos kelmayapti.');
                         return;
                     }
                 }
-                console.log('[ARIZA_ADMIN_V3] Barcha elementlar topildi, event listenerlar ulanmoqda...');
+                console.log('[ARIZA_ADMIN_V4] Barcha elementlar topildi, event listenerlar ulanmoqda...');
 
                 let currentUserId = null;
                 let currentMaktabTuri = null;
                 let searchTimer = null;
+
+                const FAN_DEFAULT_OPTION = '<option value="">Avval talabani tanlang</option>';
 
                 function setStepper(activeStep) {
                     [1, 2, 3, 4].forEach(function(n) {
@@ -807,6 +812,8 @@
 
                 function resetFromFan() {
                     fanSelect.value = '';
+                    fanSelect.innerHTML = FAN_DEFAULT_OPTION;
+                    fanSelect.disabled = true;
                     lock(step3);
                     resetFromMaktab();
                 }
@@ -832,7 +839,7 @@
                 }
 
                 bolimSelect.addEventListener('change', function() {
-                    console.log('[ARIZA_ADMIN_V3] bolim change:', this.value);
+                    console.log('[ARIZA_ADMIN_V4] bolim change:', this.value);
                     resetFromUser();
                     if (this.value) unlock(step2);
                     else lock(step2);
@@ -906,6 +913,7 @@
 
                     resetFromFan();
                     unlock(step3);
+                    loadSubjectsForUser(id);
                     updateStepperState();
                 }
 
@@ -915,8 +923,38 @@
                     updateStepperState();
                 });
 
+                function loadSubjectsForUser(userId) {
+                    fanSelect.disabled = true;
+                    fanSelect.innerHTML = '<option value="">Yuklanmoqda...</option>';
+
+                    fetch(`{{ route('ariza_admin.subjects_by_user') }}?user_id=${userId}`)
+                        .then(function(r) {
+                            return r.json();
+                        })
+                        .then(function(data) {
+                            const subjects = data.subjects || [];
+
+                            if (!subjects.length) {
+                                fanSelect.innerHTML =
+                                    '<option value="">Bu talabaga tegishli fan topilmadi</option>';
+                                fanSelect.disabled = true;
+                                return;
+                            }
+
+                            fanSelect.innerHTML = '<option value="">Tanlang</option>' +
+                                subjects.map(function(s) {
+                                    return '<option value="' + s.id + '">' + s.nomi + '</option>';
+                                }).join('');
+                            fanSelect.disabled = false;
+                        })
+                        .catch(function() {
+                            fanSelect.innerHTML = '<option value="">Xatolik yuz berdi</option>';
+                            fanSelect.disabled = true;
+                        });
+                }
+
                 fanSelect.addEventListener('change', function() {
-                    console.log('[ARIZA_ADMIN_V3] fan change:', this.value);
+                    console.log('[ARIZA_ADMIN_V4] fan change:', this.value);
                     resetFromMaktab();
                     if (this.value) unlock(step4);
                     else lock(step4);
@@ -1036,10 +1074,10 @@
                 });
 
                 updateStepperState();
-                console.log('[ARIZA_ADMIN_V3] Muvaffaqiyatli ishga tushdi, tayyor.');
+                console.log('[ARIZA_ADMIN_V4] Muvaffaqiyatli ishga tushdi, tayyor.');
             })();
         } catch (e) {
-            console.error('[ARIZA_ADMIN_V3] KUTILMAGAN XATOLIK:', e);
+            console.error('[ARIZA_ADMIN_V4] KUTILMAGAN XATOLIK:', e);
         }
     </script>
 </x-layouts.sidebar>

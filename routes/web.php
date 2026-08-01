@@ -40,6 +40,7 @@ Route::get('/free_semestr', [PageController::class, 'freeSemestr'])->name('free_
 Route::get('/mini_semestr', [PageController::class, 'miniSemestr'])->name('mini_semestr');
 
 Route::resource('subject', SubjectController::class);
+Route::post('/subject/{subject}/duplicate', [SubjectController::class, 'duplicate'])->name('subject.duplicate');
 Route::get('subject/{subject}/vedomost', [VedomostController::class, 'form'])
     ->name('grades.vedomost.form');
 
@@ -185,7 +186,12 @@ Route::prefix('ariza_admin')->name('ariza_admin.')->group(function () {
     Route::delete('/{type}/{ariza_admin}', [ArizaAdminController::class, 'destroy'])
         ->where('type', 'mini|free')
         ->name('destroy');
+    Route::get('ariza-admin/subjects-by-user', [ArizaAdminController::class, 'subjectsByUser'])
+        ->name('ariza_admin.subjects_by_user');
 });
+
+Route::get('ariza-admin/subjects-by-user', [ArizaAdminController::class, 'subjectsByUser'])
+    ->name('ariza_admin.subjects_by_user');
 
 
 Route::prefix('mini_maktab')->name('mini_maktab.')->group(function () {

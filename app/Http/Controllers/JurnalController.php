@@ -397,7 +397,24 @@ class JurnalController extends Controller
                 unset($spreadsheet, $writer);
             }
 
-            $zip->close();
+            // MUHIM: ba'zi serverlarda (Docker, tarmoq/mounted fayl tizimlari va h.k.)
+            // ZipArchive yopilayotganda ichki vaqtinchalik faylni o'chira olmasligi mumkin
+            // va PHP shunga zararsiz E_WARNING chiqaradi:
+            // "Cannot destroy the zip context: Can't remove file: Unknown error".
+            // ZIP faylning o'zi bunga qaramasdan TO'G'RI yoziladi - lekin Laravel bu kabi
+            // warning'larni ham ErrorException'ga aylantirib, butun eksportni "xato" deb
+            // bekor qilib qo'yadi. Shuning uchun aynan shu tor bosqichda (yopish + obyektni
+            // yo'q qilish) ogohlantirishlarni xavfsiz o'chirib, keyin darhol qaytaramiz.
+            $prevErrorReporting = error_reporting();
+            error_reporting(0);
+            try {
+                $zip->close();
+            } finally {
+                // Destruktor ham shu "susayltirilgan" muhitda ishga tushishi uchun
+                // aynan shu yerda unset qilamiz (funksiya oxirigacha kutmaymiz).
+                unset($zip);
+                error_reporting($prevErrorReporting);
+            }
         } catch (\Throwable $e) {
             foreach ($generatedFiles as $filePath) {
                 @unlink($filePath);
