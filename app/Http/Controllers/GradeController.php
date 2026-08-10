@@ -51,4 +51,9 @@ class GradeController extends Controller
         // 2. O'chirib bo'lingach, to'g'ridan-to'g'ri fanlar ro'yxatiga (subject.index) qaytaramiz
         return redirect()->route('subject.index')->with('success', 'Fanning barcha baholari muvaffaqiyatli tozalandi.');
     }
+
+    public function destroy(grade $grade){
+        $grade->delete();
+        return redirect()->back()->with('success', 'Natija muvaffaqiyatli o\'chirildi.');
+    }
 }

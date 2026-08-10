@@ -10,6 +10,7 @@
                 <h4 class="mb-4" style="font-weight: 700;">Tahrirlash</h4>
                 <form action="{{ route('category.update', $category->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    @method('PUT')
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted">Yo'nalish nomi</label>

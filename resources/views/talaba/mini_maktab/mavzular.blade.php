@@ -4,7 +4,7 @@
     <div class="oz-wrap">
 
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
-            <a href="{{ route('talaba.mini_maktab.index') }}" class="ar-btn">
+            <a href="{{ route('talaba.mini_maktab.fanlar', $miniSemestr->bolim_id) }}" class="ar-btn">
                 <i class="bx bx-arrow-back"></i>
             </a>
             <div>

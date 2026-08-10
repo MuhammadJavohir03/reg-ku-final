@@ -23,7 +23,8 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nomi' => 'required|string|max:255'
+            'nomi' => 'required|string|max:255',
+            'guruh' => 'required|string|max:255'
         ];
     }
 }

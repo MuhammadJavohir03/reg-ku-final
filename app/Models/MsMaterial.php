@@ -74,4 +74,9 @@ class MsMaterial extends Model
 
         return asset('storage/' . $path);
     }
+
+    public function topshiriqlar()
+    {
+        return $this->hasMany(\App\Models\MsTopshiriq::class, 'ms_material_id');
+    }
 }

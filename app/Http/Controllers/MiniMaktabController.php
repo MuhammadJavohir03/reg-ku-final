@@ -9,9 +9,12 @@ use App\Models\Question;
 use App\Models\QuestionBank;
 use App\Models\MsMavzu;
 use App\Models\MsMaterial;
+use App\Models\MsTopshiriq;
 use App\Models\User;
 use App\Models\TestSession;
 use App\Models\QuestionUser;
+use App\Models\SubjectsToSubject;
+use App\Models\SubjectsToSubjectTeacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,77 +29,195 @@ class MiniMaktabController extends Controller
         return view('mini_maktab.index', compact('bolimlar'));
     }
 
+    // ═══════════════════════════════════════════════
+    //  2. FANLAR (subjects_to_subject bo'yicha GURUHLANGAN)
+    // ═══════════════════════════════════════════════
     public function fanlar($bolim_id)
-{
-    $bolim = Bolim::findOrFail($bolim_id);
+    {
+        $bolim = Bolim::findOrFail($bolim_id);
 
-    $query = mini_semestr::where('bolim_id', $bolim_id)
-        ->with('subject')
-        ->select('subject_id')
-        ->distinct();
+        $query = mini_semestr::where('bolim_id', $bolim_id)
+            ->with(['subject.subjectsToSubject', 'teacher']);
 
-    // Faqat teacher uchun filter ishlaydi, admin hammasini ko'radi
-    if (auth()->user()?->role === 'teacher') {
-        $teacherId = auth()->id();
+        if (auth()->user()?->role === 'teacher') {
+            $query->where('teacher_id', auth()->id());
+        }
 
-        $query->whereHas('subject', function ($q) use ($teacherId) {
-            $q->where('teacher_id', $teacherId);
-        });
+        $arizalar = $query->get();
+
+        // Bir xil nomdagi fanlar (masalan 10 ta "Falsafa" subject_id) subjects_to_subject_id
+        // bo'yicha bitta qatorga birlashtiriladi. Guruhga tegishli bo'lmagan subject_id'lar
+        // (hali biriktirilmagan) o'z holicha alohida ko'rsatiladi.
+        $fanlar = $arizalar
+            ->groupBy(function ($ariza) {
+                return $ariza->subject->subjects_to_subject_id
+                    ? 'G' . $ariza->subject->subjects_to_subject_id
+                    : 'S' . $ariza->subject_id;
+            })
+            ->map(function ($guruhArizalari) {
+                $vakilSubject = $guruhArizalari->first()->subject;
+                $guruh        = $vakilSubject->subjectsToSubject;
+
+                return (object) [
+                    'subject'           => $vakilSubject, // link uchun vakil subject_id
+                    'nomi'              => $guruh->nomi ?? $vakilSubject->nomi,
+                    'arizalar_soni'     => $guruhArizalari->count(),
+                    'oqituvchilar_soni' => $guruhArizalari->pluck('teacher_id')->filter()->unique()->count(),
+                ];
+            })
+            ->sortBy('nomi')
+            ->values();
+
+        return view('mini_maktab.fanlar', compact('bolim', 'fanlar'));
     }
-
-    $fanlar = $query->get();
-
-    return view('mini_maktab.fanlar', compact('bolim', 'fanlar'));
-}
 
     // ═══════════════════════════════════════════════
     //  3. FAN ICHIDAGI MAVZULAR (ASOSIY SAHIFA)
     // ═══════════════════════════════════════════════
-    public function mavzular($bolim_id, $subject_id)
+    public function mavzular(Request $request, $bolim_id, $subject_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
-        $subject = Subject::findOrFail($subject_id);
+        $subject = Subject::with('subjectsToSubject')->findOrFail($subject_id);
+        $foydalanuvchi = auth()->user();
 
-        $mavzular = MsMavzu::where('bolim_id', $bolim_id)
-            ->where('subject_id', $subject_id)
-            ->withCount('materiallar')
-            ->orderBy('tartib')
-            ->orderBy('id')
-            ->get()
-            ->groupBy('tur'); // ['mavzu' => [...], 'oraliq' => [...], 'yakuniy' => [...]]
+        // ── "Katta fan" (subjects_to_subject) guruhi va unga tegishli BARCHA subject_id'lar ──
+        // Bir xil nomdagi fan (masalan "Falsafa") bir nechta subject_id sifatida saqlangan
+        // bo'lishi mumkin — o'qituvchilar va talabalar shu guruh darajasida umumlashtiriladi.
+        $guruh = $subject->subjectsToSubject;
 
-        $talabalar = mini_semestr::where('bolim_id', $bolim_id)
-            ->where('subject_id', $subject_id)
-            ->with('user')
-            ->paginate(20);
+        $subjectIds = $guruh
+            ? Subject::where('subjects_to_subject_id', $guruh->id)->pluck('id')
+            : collect([$subject->id]);
 
-        return view('mini_maktab.mavzular', compact('bolim', 'subject', 'mavzular', 'talabalar'));
+        if ($guruh) {
+            $guruh->load('teachers.teacher');
+        }
+
+        // ── Qaysi o'qituvchining mavzulari ko'rsatilmoqda ──
+        // O'qituvchi har doim faqat O'ZINI ko'radi (tanlash so'ralmaydi).
+        // Admin esa pastdagi kartochkalardan birini bosib tanlaydi (?teacher_id=...).
+        if ($foydalanuvchi->role === 'teacher') {
+            $tanlanganTeacherId = $foydalanuvchi->id;
+        } else {
+            $tanlanganTeacherId = $request->filled('teacher_id') ? (int) $request->teacher_id : null;
+        }
+
+        // ── Mavzular: FAQAT tanlangan o'qituvchiga tegishli bo'limlar ──
+        // Har bir o'qituvchi o'z mavzu/materiallarini alohida yuritadi.
+        // Har doim 'mavzu' | 'oraliq' | 'yakuniy' kalitlari mavjud bo'lsin — hali hech
+        // narsa yaratilmagan bo'limda ham view'dagi tab bo'sh ro'yxat sifatida ishlasin.
+        $mavzular = collect(['mavzu' => collect(), 'oraliq' => collect(), 'yakuniy' => collect()]);
+        if ($tanlanganTeacherId) {
+            $topilganlar = MsMavzu::where('bolim_id', $bolim_id)
+                ->where('subject_id', $subject_id)
+                ->where('teacher_id', $tanlanganTeacherId)
+                ->withCount('materiallar')
+                ->orderBy('tartib')
+                ->orderBy('id')
+                ->get()
+                ->groupBy('tur'); // ['mavzu' => [...], 'oraliq' => [...], 'yakuniy' => [...]]
+
+            $mavzular = $mavzular->merge($topilganlar);
+        }
+
+        // ── Talabalar: guruhdagi barcha subject_id'lar bo'yicha, filtrlar bilan ──
+        $talabalarQuery = mini_semestr::where('bolim_id', $bolim_id)
+            ->whereIn('subject_id', $subjectIds)
+            ->with(['user', 'teacher']);
+
+        if ($foydalanuvchi->role === 'teacher') {
+            // O'qituvchi faqat O'ZIGA biriktirilgan talabalarni ko'radi
+            $talabalarQuery->where('teacher_id', $foydalanuvchi->id);
+        } elseif ($request->filled('teacher_id')) {
+            $talabalarQuery->where('teacher_id', $request->teacher_id);
+        }
+
+        if ($request->filled('ism')) {
+            $talabalarQuery->whereHas('user', fn($q) => $q->where('To‘liq_ismi', 'like', '%' . $request->ism . '%'));
+        }
+        if ($request->filled('guruh_nomi')) {
+            $talabalarQuery->whereHas('user', fn($q) => $q->where('Guruh', $request->guruh_nomi));
+        }
+        if ($request->filled('kurs')) {
+            $talabalarQuery->whereHas('user', fn($q) => $q->where('Kurs', $request->kurs));
+        }
+
+        $talabalar = $talabalarQuery->paginate(20)->withQueryString();
+
+        // ── Har bir o'qituvchining band o'rinlari (kartochkalarda son ko'rsatish uchun) ──
+        $bandSoni = mini_semestr::where('bolim_id', $bolim_id)
+            ->whereIn('subject_id', $subjectIds)
+            ->whereNotNull('teacher_id')
+            ->selectRaw('teacher_id, count(*) as soni')
+            ->groupBy('teacher_id')
+            ->pluck('soni', 'teacher_id');
+
+        $jamiTalaba     = mini_semestr::where('bolim_id', $bolim_id)->whereIn('subject_id', $subjectIds)->count();
+        $bolinmagan     = mini_semestr::where('bolim_id', $bolim_id)->whereIn('subject_id', $subjectIds)->whereNull('teacher_id')->count();
+        $kerakliTeacher = $jamiTalaba > 0 ? (int) ceil($jamiTalaba / 30) : 0;
+
+        $oqituvchilar = collect();
+        if ($foydalanuvchi->role === 'admin') {
+            $oqituvchilar = User::where('role', 'teacher')->get();
+        }
+
+        return view('mini_maktab.mavzular', compact(
+            'bolim', 'subject', 'guruh', 'mavzular', 'talabalar',
+            'bandSoni', 'jamiTalaba', 'bolinmagan', 'kerakliTeacher',
+            'oqituvchilar', 'tanlanganTeacherId'
+        ));
     }
 
     // ═══════════════════════════════════════════════
-    //  4. MAVZU YARATISH
+    //  4. MAVZU YARATISH (har doim biror o'qituvchiga tegishli)
     // ═══════════════════════════════════════════════
     public function mavzuYarat(Request $request, $bolim_id, $subject_id)
     {
+        $foydalanuvchi = auth()->user();
+
         $request->validate([
             'nomi' => 'required|string|max:255',
             'tur'  => 'required|in:mavzu,oraliq,yakuniy',
         ]);
 
-        $tartib = MsMavzu::where('bolim_id', $bolim_id)
+        // O'qituvchi bo'lsa — teacher_id har doim O'ZI, formadan kutilmaydi.
+        // Admin bo'lsa — forma/URL orqali (masalan ?teacher_id=..) yuborilgan bo'lishi kerak.
+        if ($foydalanuvchi->role === 'teacher') {
+            $teacherId = $foydalanuvchi->id;
+        } else {
+            $teacherId = $request->filled('teacher_id') ? (int) $request->teacher_id : null;
+        }
+
+        // Avvalgi kodda 'teacher_id' => 'required|exists:users,id' shart edi.
+        // Agar forma teacher_id yubormasa (masalan o'qituvchi uchun yashirin maydon
+        // qo'yilmagan bo'lsa), so'rov 422 bilan validatsiyadan o'tmay, hech narsa
+        // yaratilmasdan orqaga qaytardi — foydalanuvchiga esa xato ko'rinmasdi.
+        if (! $teacherId || ! User::where('id', $teacherId)->where('role', 'teacher')->exists()) {
+            return redirect()->back()->with('error', "Avval o'qituvchini tanlang, keyin mavzu/oraliq/yakuniy yarating!");
+        }
+
+        // O'qituvchi faqat O'ZIGA tegishli bo'lim yarata oladi
+        if ($foydalanuvchi->role === 'teacher' && $teacherId !== $foydalanuvchi->id) {
+            abort(403);
+        }
+
+        $tartib = (int) MsMavzu::where('bolim_id', $bolim_id)
             ->where('subject_id', $subject_id)
+            ->where('teacher_id', $teacherId)
             ->where('tur', $request->tur)
             ->max('tartib') + 1;
 
         MsMavzu::create([
             'bolim_id'   => $bolim_id,
             'subject_id' => $subject_id,
+            'teacher_id' => $teacherId,
             'nomi'       => $request->nomi,
             'tur'        => $request->tur,
             'tartib'     => $tartib,
         ]);
 
-        return redirect()->back()->with('success', 'Mavzu yaratildi!');
+        $turNomlari = ['mavzu' => 'Mavzu', 'oraliq' => 'Oraliq', 'yakuniy' => 'Yakuniy'];
+        return redirect()->back()->with('success', ($turNomlari[$request->tur] ?? 'Mavzu') . ' yaratildi!');
     }
 
     // ═══════════════════════════════════════════════
@@ -137,24 +258,50 @@ class MiniMaktabController extends Controller
 
         $banklar = QuestionBank::withCount('questions')->get();
 
+        $talabalarList = mini_semestr::where('bolim_id', $bolim_id)
+            ->where('subject_id', $subject_id)
+            ->with('user')
+            ->get();
+
+        $topshiriqlarByMaterial = [];
+        foreach ($materiallar->where('tur', 'topshiriq') as $tm) {
+            $topshiriqlarByMaterial[$tm->id] = MsTopshiriq::where('ms_material_id', $tm->id)
+                ->get()
+                ->keyBy('user_id');
+        }
+
+        // ── Biriktirilgan oqituvchi va (admin uchun) oqituvchilar royxati ──
+        $biriktirilganTeacherId = mini_semestr::where('bolim_id', $bolim_id)
+            ->where('subject_id', $subject_id)
+            ->value('teacher_id');
+
+        $oqituvchilar = collect();
+        if (auth()->user()?->role === 'admin') {
+            $oqituvchilar = User::where('role', 'teacher')->get();
+        }
+
         return view('mini_maktab.mavzu_show', compact(
             'bolim',
             'subject',
             'mavzu',
             'materiallar',
-            'banklar'
+            'banklar',
+            'talabalarList',
+            'topshiriqlarByMaterial',
+            'biriktirilganTeacherId',
+            'oqituvchilar'
         ));
     }
 
     // ═══════════════════════════════════════════════
-    //  7. MATERIAL QO'SHISH (test | video | pdf)
+    //  7. MATERIAL QO'SHISH (test | video | pdf | topshiriq)
     // ═══════════════════════════════════════════════
     public function materialQosh(Request $request, $mavzu_id)
     {
         $mavzu = MsMavzu::findOrFail($mavzu_id);
 
         $request->validate([
-            'tur'  => 'required|in:test,video,pdf',
+            'tur'  => 'required|in:test,video,pdf,topshiriq',
             'nomi' => 'required|string|max:255',
         ]);
 
@@ -207,7 +354,7 @@ class MiniMaktabController extends Controller
             ];
         }
 
-        // ── PDF ──
+        // ── PDF (maruza) ──
         if ($request->tur === 'pdf') {
             $request->validate([
                 'pdf' => 'required|file|mimes:pdf|max:51200', // max 50MB
@@ -215,6 +362,22 @@ class MiniMaktabController extends Controller
 
             $file = $request->file('pdf');
             $path = $file->store('ms_pdfs', 'public');
+
+            $data += [
+                'pdf_path'      => $path,
+                'pdf_size'      => round($file->getSize() / 1048576, 2) . ' MB',
+                'pdf_sahifalar' => $request->pdf_sahifalar ?: null,
+            ];
+        }
+
+        // ── TOPSHIRIQ (PDF) ──
+        if ($request->tur === 'topshiriq') {
+            $request->validate([
+                'pdf' => 'required|file|mimes:pdf|max:51200', // max 50MB
+            ]);
+
+            $file = $request->file('pdf');
+            $path = $file->store('ms_topshiriqlar', 'public');
 
             $data += [
                 'pdf_path'      => $path,
@@ -289,8 +452,7 @@ class MiniMaktabController extends Controller
     }
 
     // ═══════════════════════════════════════════════
-    //  10. TALABA STATUS TOGGLE (faqat shu fan uchun,
-    //      status=0 bo'lsa talabaga "yakuniy" ko'rinmaydi)
+    //  10. TALABA STATUS TOGGLE
     // ═══════════════════════════════════════════════
     public function statusToggle($id)
     {
@@ -327,8 +489,6 @@ class MiniMaktabController extends Controller
 
         $sessions = TestSession::where('user_id', $user_id)
             ->where('ms_material_id', $material_id)
-            // Statusdan qat'i nazar HAMMASINI ko'rsatamiz (active/finished/expired) —
-            // shunda talaba testni tugatmagan bo'lsa ham admin buni ko'radi.
             ->orderBy('created_at')
             ->get()
             ->map(function ($s) {
@@ -376,7 +536,6 @@ class MiniMaktabController extends Controller
     {
         $session = TestSession::findOrFail($id);
 
-        // Redirect uchun kerakli ma'lumotlarni o'chirishdan OLDIN saqlab qolamiz
         $userId     = $session->user_id;
         $materialId = $session->ms_material_id;
         $material   = MsMaterial::with('mavzu')->find($materialId);
@@ -384,7 +543,6 @@ class MiniMaktabController extends Controller
         QuestionUser::where('session_id', $session->id)->delete();
         $session->delete();
 
-        // Urinishlar ro'yxatiga qaytaramiz (bank sahifasiga emas)
         if ($material && $material->mavzu) {
             return redirect()->route('mini_maktab.talaba.sessions', [
                 $material->mavzu->bolim_id,
@@ -398,7 +556,97 @@ class MiniMaktabController extends Controller
     }
 
     // ═══════════════════════════════════════════════
-    //  PRIVATE HELPER
+    //  14. TOPSHIRIQ BAHOLARINI SAQLASH (o'qituvchi)
+    // ═══════════════════════════════════════════════
+    public function topshiriqBaholar(Request $request, $material_id)
+    {
+        $material = MsMaterial::where('tur', 'topshiriq')
+            ->with('mavzu')
+            ->findOrFail($material_id);
+
+        $request->validate([
+            'ballar'   => 'required|array',
+            'ballar.*' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $mavzu     = $material->mavzu;
+        $bolimId   = $mavzu->bolim_id;
+        $subjectId = $mavzu->subject_id;
+
+        foreach ($request->ballar as $userId => $ball) {
+            $topshiriq = MsTopshiriq::firstOrCreate(
+                [
+                    'ms_material_id' => $material_id,
+                    'user_id'        => $userId,
+                ],
+                ['pdf_path' => null]
+            );
+
+            $topshiriq->update([
+                'ball' => ($ball === '' || $ball === null) ? null : (float) $ball,
+            ]);
+
+            $this->recalcMiniSemestrScores((int) $userId, $bolimId, $subjectId);
+        }
+
+        return redirect()->back()->with('success', 'Baholar saqlandi!');
+    }
+
+    // ═══════════════════════════════════════════════
+    //  15. TALABA: TOPSHIRIQ PDF YUKLASH
+    // ═══════════════════════════════════════════════
+    public function topshiriqYukla(Request $request, $material_id)
+    {
+        $material = MsMaterial::where('tur', 'topshiriq')
+            ->where('faol', 1)
+            ->with('mavzu')
+            ->findOrFail($material_id);
+
+        $user = auth()->user();
+
+        $ariza = mini_semestr::where('bolim_id', $material->mavzu->bolim_id)
+            ->where('subject_id', $material->mavzu->subject_id)
+            ->where('user_id', $user->id)
+            ->where('status', 1)
+            ->first();
+
+        if (! $ariza) {
+            return redirect()->back()->with('error', 'Bu fanga arizangiz yo\'q yoki bloklangansiz.');
+        }
+
+        $request->validate([
+            'pdf' => 'required|file|mimes:pdf|max:51200',
+        ]);
+
+        $file = $request->file('pdf');
+
+        $fio = preg_replace(
+            '/[^a-zA-Z0-9_\-а-яА-ЯёЁўқғҳʼ\' ]/u',
+            '',
+            $user->getAttribute('To‘liq_ismi') ?? $user->name ?? 'talaba'
+        );
+        $fio = str_replace(' ', '_', trim($fio));
+        $filename = $fio . '_' . time() . '.pdf';
+
+        $path = $file->storeAs('ms_topshiriq_javoblar', $filename, 'public');
+
+        $topshiriq = MsTopshiriq::firstOrNew([
+            'ms_material_id' => $material_id,
+            'user_id'        => $user->id,
+        ]);
+
+        if ($topshiriq->pdf_path && Storage::disk('public')->exists($topshiriq->pdf_path)) {
+            Storage::disk('public')->delete($topshiriq->pdf_path);
+        }
+
+        $topshiriq->pdf_path = $path;
+        $topshiriq->save();
+
+        return redirect()->back()->with('success', 'Topshiriq yuklandi!');
+    }
+
+    // ═══════════════════════════════════════════════
+    //  PRIVATE HELPERS
     // ═══════════════════════════════════════════════
     private function materialFaylOchir(MsMaterial $material): void
     {
@@ -408,5 +656,212 @@ class MiniMaktabController extends Controller
         if ($material->pdf_path && Storage::disk('public')->exists($material->pdf_path)) {
             Storage::disk('public')->delete($material->pdf_path);
         }
+    }
+
+    /**
+     * Barcha topshiriq ballarini mavzu.tur bo'yicha yig'adi:
+     *   mavzu   → joriy_baho
+     *   oraliq  → oraliq_baho
+     *   yakuniy → yakuniy_baho
+     * Keyin:
+     *   joriy_oraliq = joriy + oraliq
+     *   umumiy       = joriy + oraliq + yakuniy
+     */
+    private function recalcMiniSemestrScores(int $userId, int $bolimId, int $subjectId): void
+    {
+        $ariza = mini_semestr::where('bolim_id', $bolimId)
+            ->where('subject_id', $subjectId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (! $ariza) {
+            return;
+        }
+
+        $base = MsTopshiriq::query()
+            ->where('user_id', $userId)
+            ->whereNotNull('ball')
+            ->whereHas('material.mavzu', function ($q) use ($bolimId, $subjectId) {
+                $q->where('bolim_id', $bolimId)
+                    ->where('subject_id', $subjectId);
+            });
+
+        $joriy = (clone $base)
+            ->whereHas('material.mavzu', fn($q) => $q->where('tur', 'mavzu'))
+            ->sum('ball');
+
+        $oraliq = (clone $base)
+            ->whereHas('material.mavzu', fn($q) => $q->where('tur', 'oraliq'))
+            ->sum('ball');
+
+        $yakuniy = (clone $base)
+            ->whereHas('material.mavzu', fn($q) => $q->where('tur', 'yakuniy'))
+            ->sum('ball');
+
+        $ariza->update([
+            'joriy_baho'   => $joriy,
+            'oraliq_baho'  => $oraliq,
+            'joriy_oraliq' => $joriy + $oraliq,
+            'yakuniy_baho' => $yakuniy,
+            'umumiy'       => $joriy + $oraliq + $yakuniy,
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  O'QITUVCHI KARTOCHKA QO'SHISH (admin)
+    // ═══════════════════════════════════════════════
+    public function guruhTeacherQosh(Request $request, $subjectsToSubjectId)
+    {
+        if (auth()->user()?->role !== 'admin') abort(403);
+
+        $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+            'max_talaba' => 'nullable|integer|min:1|max:200',
+        ]);
+
+        SubjectsToSubjectTeacher::firstOrCreate(
+            [
+                'subjects_to_subject_id' => $subjectsToSubjectId,
+                'teacher_id'             => $request->teacher_id,
+            ],
+            ['max_talaba' => $request->max_talaba ?: 30]
+        );
+
+        return redirect()->back()->with('success', "O'qituvchi kartochkasi qo'shildi!");
+    }
+
+    // ═══════════════════════════════════════════════
+    //  O'QITUVCHI KARTOCHKASINI OLIB TASHLASH
+    // ═══════════════════════════════════════════════
+    public function guruhTeacherOchir($id)
+    {
+        if (auth()->user()?->role !== 'admin') abort(403);
+
+        $card = SubjectsToSubjectTeacher::findOrFail($id);
+
+        $subjectIds = Subject::where('subjects_to_subject_id', $card->subjects_to_subject_id)->pluck('id');
+
+        // subject_id yoki subjects_to_subject_id orqali topib teacher_id ni null qilamiz
+        mini_semestr::where('teacher_id', $card->teacher_id)
+            ->where(function ($q) use ($subjectIds, $card) {
+                if ($subjectIds->isNotEmpty()) {
+                    $q->whereIn('subject_id', $subjectIds);
+                }
+                if ($card->subjects_to_subject_id) {
+                    $q->orWhere('subjects_to_subject_id', $card->subjects_to_subject_id);
+                }
+            })
+            ->update(['teacher_id' => null]);
+
+        $card->delete();
+
+        return redirect()->back()->with('success', "O'qituvchi olib tashlandi, talabalari bo'shab qoldi.");
+    }
+
+    // ═══════════════════════════════════════════════
+    //  AVTOMATIK TAQSIMLASH (faqat teacher_id bo'sh bo'lganlarga)
+    // ═══════════════════════════════════════════════
+    public function guruhAvtoTaqsimla(Request $request, $subjectsToSubjectId)
+    {
+        if (auth()->user()?->role !== 'admin') abort(403);
+
+        $teachers = SubjectsToSubjectTeacher::where('subjects_to_subject_id', $subjectsToSubjectId)->get();
+
+        if ($teachers->isEmpty()) {
+            return redirect()->back()->with('error', "Avval kamida bitta o'qituvchi kartochkasini qo'shing.");
+        }
+
+        // Guruhdagi barcha subject_id'lar — mavzular sahifasi bilan bir xil mantiq
+        $subjectIds = Subject::where('subjects_to_subject_id', $subjectsToSubjectId)->pluck('id');
+
+        if ($subjectIds->isEmpty()) {
+            return redirect()->back()->with('error', "Bu guruhga hali hech qanday fan biriktirilmagan.");
+        }
+
+        // Formadan kelgan bolim_id (joriy bo'lim)
+        $bolimId = $request->filled('bolim_id') ? (int) $request->bolim_id : null;
+
+        // Har bir teacher uchun band o'rinlar
+        $bandSoni = [];
+        foreach ($teachers as $t) {
+            $q = mini_semestr::whereIn('subject_id', $subjectIds)
+                ->where('teacher_id', $t->teacher_id);
+            if ($bolimId) {
+                $q->where('bolim_id', $bolimId);
+            }
+            $bandSoni[$t->teacher_id] = $q->count();
+        }
+
+        // Bo'sh talabalar
+        $boshQuery = mini_semestr::whereIn('subject_id', $subjectIds)
+            ->whereNull('teacher_id');
+        if ($bolimId) {
+            $boshQuery->where('bolim_id', $bolimId);
+        }
+        $boshTalabalar = $boshQuery->pluck('id')->shuffle();
+
+        if ($boshTalabalar->isEmpty()) {
+            return redirect()->back()->with('success', "Bo'sh talaba qolmadi — hammasi allaqachon biriktirilgan.");
+        }
+
+        $taqsimlandi = 0;
+        foreach ($boshTalabalar as $arizaId) {
+            // Eng ko'p bo'sh joyi qolgan o'qituvchini tanlaymiz
+            $tanlangan = $teachers->sortByDesc(function ($t) use ($bandSoni) {
+                return $t->max_talaba - ($bandSoni[$t->teacher_id] ?? 0);
+            })->first();
+
+            $updated = mini_semestr::where('id', $arizaId)->update([
+                'teacher_id' => $tanlangan->teacher_id,
+            ]);
+
+            if ($updated) {
+                $bandSoni[$tanlangan->teacher_id] = ($bandSoni[$tanlangan->teacher_id] ?? 0) + 1;
+                $taqsimlandi++;
+            }
+        }
+
+        return redirect()->back()->with('success', "Bo'sh talabalar taqsimlandi ({$taqsimlandi} ta)!");
+    }
+
+    // ═══════════════════════════════════════════════
+    //  QO'LDA BIRIKTIRISH (AJAX, cheklovsiz — "erkin biriktirish")
+    // ═══════════════════════════════════════════════
+    public function talabaTeacherOzgartir(Request $request, $arizaId)
+    {
+        if (auth()->user()?->role !== 'admin') abort(403);
+
+        $request->validate(['teacher_id' => 'nullable|exists:users,id']);
+
+        $ariza = mini_semestr::findOrFail($arizaId);
+        $ariza->update(['teacher_id' => $request->teacher_id]);
+
+        // Band sonini hisoblash: arizaning subject_id orqali guruhni topamiz
+        $subject = Subject::find($ariza->subject_id);
+        $guruhId = $subject?->subjects_to_subject_id;
+
+        $subjectIds = $guruhId
+            ? Subject::where('subjects_to_subject_id', $guruhId)->pluck('id')
+            : collect([$ariza->subject_id]);
+
+        $band = $request->teacher_id
+            ? mini_semestr::whereIn('subject_id', $subjectIds)
+                ->where('teacher_id', $request->teacher_id)
+                ->count()
+            : 0;
+
+        $max = $request->teacher_id && $guruhId
+            ? (SubjectsToSubjectTeacher::where('subjects_to_subject_id', $guruhId)
+                ->where('teacher_id', $request->teacher_id)
+                ->value('max_talaba') ?? 30)
+            : 30;
+
+        return response()->json([
+            'success'     => true,
+            'teacher_id'  => $request->teacher_id,
+            'band'        => $band,
+            'max'         => $max,
+            'oshib_ketdi' => $request->teacher_id ? $band > $max : false,
+        ]);
     }
 }

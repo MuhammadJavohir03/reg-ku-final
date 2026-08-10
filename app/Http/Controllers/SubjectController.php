@@ -12,6 +12,7 @@ use App\Models\grade;
 use App\Models\kafedra;
 use App\Models\fakultet;
 use App\Models\OquvYili;
+use App\Models\SubjectsToSubject;
 
 class SubjectController extends Controller
 {
@@ -26,9 +27,13 @@ class SubjectController extends Controller
         $subjects = subject::with(['category', 'teacher', 'kafedra', 'lesson_type'])
             ->withExists('grades')
             ->when($search, function ($query, $search) {
-                // Fan nomi yoki fan biriktirilgan o'qituvchining to'liq ismi bo'yicha qidiradi
+                // Fan nomi, biriktirilgan o'qituvchining to'liq ismi, yoki semestr bo'yicha qidiradi
                 return $query->where(function ($q) use ($search) {
                     $q->where('nomi', 'like', "%{$search}%")
+                        ->orWhere('semster', 'like', "%{$search}%")
+                        ->orWhereHas('category', function ($q3) use ($search) {
+                            $q3->where('guruh', 'like', "%{$search}%");
+                        })
                         ->orWhereHas('teacher', function ($q2) use ($search) {
                             $q2->where('To‘liq_ismi', 'like', "%{$search}%");
                         });
@@ -38,7 +43,7 @@ class SubjectController extends Controller
             ->paginate($pageSize)
             ->withQueryString();
 
-            $subjectCounts = [
+        $subjectCounts = [
             'subject' => \App\Models\Subject::count(),
         ];
 
@@ -68,8 +73,15 @@ class SubjectController extends Controller
      */
     public function store(StoreSubjectRequest $request)
     {
+        $nomi = $request->input('nomi');
+
+        // Bir xil nomdagi katta fan guruhini topamiz yoki yaratamiz
+        $group = SubjectsToSubject::firstOrCreate(
+            ['nomi' => $nomi]
+        );
+
         $subject = subject::create([
-            'nomi' => $request->input('nomi'),
+            'nomi' => $nomi,
             'category_id' => $request->input('category_id'),
             'kafedra_id' => $request->input('kafedra_id'),
             'fakultet_id' => $request->input('fakultet_id'),
@@ -79,6 +91,7 @@ class SubjectController extends Controller
             'lesson_type_id' => $request->input('lesson_type_id'),
             'semster' => $request->input('semster'),
             'kredit' => $request->input('kredit'),
+            'subjects_to_subject_id' => $group->id,
         ]);
 
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli yaratildi.');
@@ -176,5 +189,175 @@ class SubjectController extends Controller
         ]);
 
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli nusxalandi.');
+    }
+
+    /**
+     * Biriktirish sahifasini ko'rsatadi.
+     */
+    public function biriktirish()
+    {
+        $subjects = subject::with(['teacher', 'category', 'oquv_yili'])
+            ->whereNull('subjects_to_subject_id')
+            ->latest()
+            ->get();
+
+        $groups = SubjectsToSubject::withCount('subjects')->orderBy('nomi')->get();
+        $kattacount = [ 'kattacount' => SubjectsToSubject::count() ];
+
+        return view('subject.biriktirish', compact('subjects', 'kattacount', 'groups'));
+    }
+
+    /**
+     * AJAX qidiruv: fan nomi bo'yicha subjects qaytaradi.
+     */
+    public function biriktirishSearch(Request $request)
+    {
+        $q = $this->normalizeNomi($request->get('q', ''));
+
+        if (strlen($q) < 1) {
+            return response()->json([]);
+        }
+
+        // Bazadagi turli apostrof variantlarini ham qamrab olish uchun
+        // qidiruv so'rovini apostrofsiz holatda ham solishtiramiz.
+        $qNoApostrophe = str_replace("'", '', $q);
+
+        $subjects = subject::with(['teacher', 'category', 'oquv_yili'])
+            ->where(function ($query) use ($q, $qNoApostrophe) {
+                $query->where('nomi', 'like', "%{$q}%")
+                    ->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(REPLACE(nomi, '’', ''), '‘', ''), '`', ''), \"'\", '') LIKE ?",
+                        ["%{$qNoApostrophe}%"]
+                    );
+            })
+            ->orderBy('nomi')
+            ->limit(50)
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id'             => $s->id,
+                    'nomi'           => $s->nomi,
+                    'teacher'        => $s->teacher['To‘liq_ismi'] ?? 'Tayinlanmagan',
+                    'category'       => $s->category->nomi ?? ($s->category->guruh ?? '—'),
+                    'oquv_yili'      => $s->oquv_yili->nomi ?? '—',
+                    'semster'        => $s->semster,
+                    'already_linked' => !is_null($s->subjects_to_subject_id),
+                ];
+            });
+
+        return response()->json($subjects);
+    }
+
+    /**
+     * Tanlangan fanlarni yangi (yoki mavjud) subjects_to_subject ga biriktiradi.
+     */
+    public function biriktirishStore(Request $request)
+    {
+        $request->validate([
+            'nomi'          => 'required|string|max:255',
+            'subject_ids'   => 'required|array|min:1',
+            'subject_ids.*' => 'integer|exists:subjects,id',
+        ]);
+
+        $nomiNormalized = $this->normalizeNomi($request->input('nomi'));
+
+        // Mavjud guruhlar orasidan normalizatsiyalangan nom bo'yicha qidiramiz
+        $existingGroup = SubjectsToSubject::get()
+            ->first(fn($g) => $this->normalizeNomi($g->nomi) === $nomiNormalized);
+
+        $group = $existingGroup ?? SubjectsToSubject::create(['nomi' => $nomiNormalized]);
+
+        subject::whereIn('id', $request->input('subject_ids'))
+            ->update(['subjects_to_subject_id' => $group->id]);
+
+        $count = count($request->input('subject_ids'));
+
+        return redirect()
+            ->route('subject.biriktirish')
+            ->with('success', "{$count} ta fan \"{$group->nomi}\" guruhiga muvaffaqiyatli biriktirildi.");
+    }
+
+
+    /**
+     * Barcha bir xil nomdagi fanlarni avtomatik guruhlaydi (sinxron).
+     * Masalan: 10 ta "Falsafa" → bitta subjects_to_subject "Falsafa" ga birikadi.
+     */
+    public function biriktirishSync()
+    {
+        $subjects = subject::select('id', 'nomi')
+            ->whereNotNull('nomi')
+            ->where('nomi', '!=', '')
+            ->get();
+
+        // Normalizatsiyalangan nom bo'yicha guruhlash
+        $grouped = $subjects->groupBy(function ($s) {
+            return $this->normalizeNomi($s->nomi);
+        });
+
+        // Mavjud guruhlarni oldindan olib, normalizatsiyalangan nom bo'yicha xarita tuzamiz
+        $existingGroups = SubjectsToSubject::all();
+        $existingMap = [];
+        foreach ($existingGroups as $g) {
+            $existingMap[$this->normalizeNomi($g->nomi)] = $g;
+        }
+
+        $linked = 0;
+        $groupsCreated = 0;
+
+        foreach ($grouped as $normalizedNomi => $items) {
+            if ($normalizedNomi === '') {
+                continue;
+            }
+
+            if (isset($existingMap[$normalizedNomi])) {
+                $group = $existingMap[$normalizedNomi];
+            } else {
+                // Guruh nomi sifatida shu to'plamdagi eng ko'p uchraydigan
+                // original yozilishni olamiz (ixtiyoriy, birinchisini ham olsa bo'ladi)
+                $displayNomi = $items->first()->nomi;
+
+                $group = SubjectsToSubject::create(['nomi' => $displayNomi]);
+                $existingMap[$normalizedNomi] = $group;
+                $groupsCreated++;
+            }
+
+            $ids = $items->pluck('id');
+
+            $updated = subject::whereIn('id', $ids)
+                ->where(function ($q) use ($group) {
+                    $q->whereNull('subjects_to_subject_id')
+                        ->orWhere('subjects_to_subject_id', '!=', $group->id);
+                })
+                ->update(['subjects_to_subject_id' => $group->id]);
+
+            $linked += $updated;
+        }
+
+        return redirect()
+            ->route('subject.biriktirish')
+            ->with('success', "Sinxron yakunlandi: {$groupsCreated} ta yangi guruh, {$linked} ta fan biriktirildi.");
+    }
+
+    /**
+     * Fan nomidagi turli xil apostrof/qo'shtirnoq belgilarini
+     * bitta standart belgiga keltiradi, shuningdek ortiqcha
+     * bo'shliqlarni tozalaydi. Shu orqali "Ona ta'limi",
+     * "Ona ta'limi", "Ona ta`limi" kabi variantlar bir xil
+     * nom sifatida qaraladi.
+     */
+    private function normalizeNomi(?string $nomi): string
+    {
+        if (is_null($nomi)) {
+            return '';
+        }
+
+        // Apostrof/qo'shtirnoqning barcha ko'rinishlari -> oddiy '
+        $variants = ["’", "‘", "`", "´", "ʻ", "ʼ", "′", "‛"];
+        $nomi = str_replace($variants, "'", $nomi);
+
+        // Ortiqcha bo'shliqlarni bitta bo'shliqqa tushirish va trim qilish
+        $nomi = preg_replace('/\s+/u', ' ', $nomi);
+
+        return trim($nomi);
     }
 }

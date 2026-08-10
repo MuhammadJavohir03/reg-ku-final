@@ -1,47 +1,88 @@
 <x-layouts.sidebar>
     <x-slot:title>Fan yaratish</x-slot:title>
 
-    <div class="oz-wrap" style="max-width:680px;">
+    <div class="sf-wrap">
 
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+        <div class="sf-header">
             <a href="{{ route('subject.index') }}" class="ar-btn">
                 <i class="bx bx-arrow-back"></i>
             </a>
-            <div class="oz-title" style="margin:0;">Yangi fan qo'shish</div>
+            <div>
+                <div class="oz-title" style="margin:0;">Yangi fan qo'shish</div>
+                <div class="sf-subtitle">Fan haqida barcha ma'lumotlarni to'ldiring</div>
+            </div>
         </div>
 
         <form action="{{ route('subject.store') }}" method="POST">
             @csrf
 
-            <div
-                style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:20px; margin-bottom:12px;">
-                <p style="font-size:13px; font-weight:600; color:#333; margin:0 0 16px;">
-                    <i class="bx bx-book" style="color:#3C3489;"></i> Fan ma'lumotlari
+            <div class="sf-card">
+                <p class="sf-section-title">
+                    <i class="bx bx-user"></i> O'qituvchi
                 </p>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="sf-grid sf-grid-1" style="max-width:420px;">
+                    <div class="sf-field">
+                        <label class="sf-label">O'qituvchi</label>
+                        <div style="position:relative;">
+                            <i class="bx bx-search sf-search-icon"></i>
+                            <input type="text" id="teacher_search" class="arizalar-search sf-search-input"
+                                placeholder="ID yoki ismni yozing..." autocomplete="off">
+                        </div>
 
-                    <div style="grid-column:1/-1;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Fan nomi</label>
+                        <div id="teacher_results" class="search-dropdown" style="width:280px;">
+                            @foreach ($teachers as $teacher)
+                                <div class="search-item" data-id="{{ $teacher->id }}"
+                                    data-name="{{ $teacher['To‘liq_ismi'] }}">
+                                    <span class="sf-teacher-badge">
+                                        #{{ $teacher->id }}
+                                    </span>
+                                    <span style="font-size:13px; color:#333; font-weight:500;">
+                                        {{ $teacher['To‘liq_ismi'] }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <input type="hidden" name="teacher_id" id="hidden_teacher_id">
+                    </div>
+                </div>
+            </div>
+
+            <div class="sf-card">
+                <p class="sf-section-title">
+                    <i class="bx bx-book"></i> Fan ma'lumotlari
+                </p>
+
+                <div class="sf-grid sf-grid-2">
+                    <div>
+                        <label class="sf-label">Fan nomi</label>
                         <input type="text" name="nomi" class="arizalar-search" style="width:100%;"
                             placeholder="Masalan: Matematika..." value="{{ old('nomi') }}" required>
                     </div>
 
-                    <div style="grid-column:1/-1;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Ta'lim tili</label>
+                    <div>
+                        <label class="sf-label">Ta'lim tili</label>
                         <input type="text" name="talim_tili" class="arizalar-search" style="width:100%;"
                             placeholder="Ta'lim tilini kiriting..." value="{{ old('talim_tili') }}" required>
                     </div>
+                </div>
+            </div>
+
+            <div class="sf-card">
+                <p class="sf-section-title">
+                    <i class="bx bx-sitemap"></i> Tashkiliy ma'lumotlar
+                </p>
+
+                <div class="sf-grid sf-grid-3">
 
                     {{-- KAFEDRA: qidiruvli dropdown --}}
-                    <div style="position:relative;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Kafedra</label>
+                    <div class="sf-field">
+                        <label class="sf-label">Kafedra</label>
                         <div style="position:relative;">
-                            <i class="bx bx-search"
-                                style="position:absolute; left:10px; top:50%;
-                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
-                            <input type="text" id="kafedra_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                            <i class="bx bx-search sf-search-icon"></i>
+                            <input type="text" id="kafedra_search" class="arizalar-search sf-search-input"
+                                placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="kafedra_results" class="search-dropdown">
@@ -57,14 +98,12 @@
                     </div>
 
                     {{-- FAKULTET: qidiruvli dropdown --}}
-                    <div style="position:relative;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Fakultet</label>
+                    <div class="sf-field">
+                        <label class="sf-label">Fakultet</label>
                         <div style="position:relative;">
-                            <i class="bx bx-search"
-                                style="position:absolute; left:10px; top:50%;
-                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
-                            <input type="text" id="fakultet_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                            <i class="bx bx-search sf-search-icon"></i>
+                            <input type="text" id="fakultet_search" class="arizalar-search sf-search-input"
+                                placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="fakultet_results" class="search-dropdown">
@@ -81,14 +120,12 @@
                     </div>
 
                     {{-- O'quv yili: qidiruvli dropdown --}}
-                    <div style="position:relative;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">O'quv yili</label>
+                    <div class="sf-field">
+                        <label class="sf-label">O'quv yili</label>
                         <div style="position:relative;">
-                            <i class="bx bx-search"
-                                style="position:absolute; left:10px; top:50%;
-                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
-                            <input type="text" id="oquv_yili_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                            <i class="bx bx-search sf-search-icon"></i>
+                            <input type="text" id="oquv_yili_search" class="arizalar-search sf-search-input"
+                                placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="oquv_yili_results" class="search-dropdown">
@@ -105,14 +142,12 @@
                     </div>
 
                     {{-- category: qidiruvli dropdown --}}
-                    <div style="position:relative;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Yo'nalish</label>
+                    <div class="sf-field">
+                        <label class="sf-label">Yo'nalish</label>
                         <div style="position:relative;">
-                            <i class="bx bx-search"
-                                style="position:absolute; left:10px; top:50%;
-                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
-                            <input type="text" id="category_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                            <i class="bx bx-search sf-search-icon"></i>
+                            <input type="text" id="category_search" class="arizalar-search sf-search-input"
+                                placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="category_results" class="search-dropdown">
@@ -129,14 +164,12 @@
                     </div>
 
                     {{-- lesson type: qidiruvli dropdown --}}
-                    <div style="position:relative;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Dars turi</label>
+                    <div class="sf-field">
+                        <label class="sf-label">Dars turi</label>
                         <div style="position:relative;">
-                            <i class="bx bx-search"
-                                style="position:absolute; left:10px; top:50%;
-                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
-                            <input type="text" id="lesson_type_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="Qidirish..." autocomplete="off">
+                            <i class="bx bx-search sf-search-icon"></i>
+                            <input type="text" id="lesson_type_search" class="arizalar-search sf-search-input"
+                                placeholder="Qidirish..." autocomplete="off">
                         </div>
 
                         <div id="lesson_type_results" class="search-dropdown">
@@ -152,60 +185,172 @@
                             value="{{ old('lesson_type_id') }}">
                     </div>
 
-                    <div>
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Semestr</label>
+                    <div class="sf-field">
+                        <label class="sf-label">Semestr</label>
                         <input type="number" name="semster" class="arizalar-search" style="width:100%;"
                             placeholder="1-8" min="1" max="8" value="{{ old('semster') }}" required>
                     </div>
 
-                    <div>
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Kredit</label>
+                    <div class="sf-field">
+                        <label class="sf-label">Kredit</label>
                         <input type="number" name="kredit" class="arizalar-search" style="width:100%;"
                             placeholder="1-10" min="1" max="10" value="{{ old('kredit') }}" required>
-                    </div>
-
-                    <div style="position:relative;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">O'qituvchi</label>
-                        <div style="position:relative;">
-                            <i class="bx bx-search"
-                                style="position:absolute; left:10px; top:50%;
-                                transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
-                            <input type="text" id="teacher_search" class="arizalar-search"
-                                style="width:100%; padding-left:34px;" placeholder="ID yoki ismni yozing..."
-                                autocomplete="off">
-                        </div>
-
-                        <div id="teacher_results" class="search-dropdown" style="width:280px;">
-                            @foreach ($teachers as $teacher)
-                                <div class="search-item" data-id="{{ $teacher->id }}"
-                                    data-name="{{ $teacher['To‘liq_ismi'] }}">
-                                    <span
-                                        style="background:#EEEDFE; color:#3C3489; padding:2px 8px;
-                                        border-radius:6px; font-size:11px; font-weight:700; flex-shrink:0;">
-                                        #{{ $teacher->id }}
-                                    </span>
-                                    <span style="font-size:13px; color:#333; font-weight:500;">
-                                        {{ $teacher['To‘liq_ismi'] }}
-                                    </span>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <input type="hidden" name="teacher_id" id="hidden_teacher_id">
                     </div>
 
                 </div>
             </div>
 
-            <button type="submit" class="ar-btn ar-btn-ok"
-                style="width:100%; justify-content:center; padding:10px;">
-                <i class="bx bx-save"></i> Saqlash
-            </button>
+            <div class="sf-actions">
+                <button type="submit" class="ar-btn ar-btn-ok sf-submit-btn">
+                    <i class="bx bx-save"></i> Saqlash
+                </button>
+            </div>
 
         </form>
     </div>
 
     <style>
+        .sf-wrap {
+            width: 100%;
+            margin: 0;
+            padding: 0 4px;
+            box-sizing: border-box;
+        }
+
+        .sf-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .sf-subtitle {
+            font-size: 13px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .sf-card {
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            border-radius: 14px;
+            padding: 22px 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            transition: box-shadow 0.2s;
+        }
+
+        .sf-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .sf-section-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f2f2f2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sf-section-title i {
+            color: #3C3489;
+            font-size: 16px;
+        }
+
+        .sf-grid {
+            display: grid;
+            gap: 16px 18px;
+        }
+
+        .sf-grid-1 {
+            grid-template-columns: 1fr;
+        }
+
+        .sf-grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .sf-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 1100px) {
+            .sf-grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .sf-grid-2,
+            .sf-grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sf-field {
+            position: relative;
+        }
+
+        .sf-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .sf-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .sf-search-input {
+            width: 100%;
+            padding-left: 34px;
+        }
+
+        .sf-teacher-badge {
+            background: #EEEDFE;
+            color: #3C3489;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .sf-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+
+        .sf-submit-btn {
+            padding: 11px 32px;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .sf-actions {
+                justify-content: stretch;
+            }
+
+            .sf-submit-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         .search-dropdown {
             display: none;
             position: absolute;

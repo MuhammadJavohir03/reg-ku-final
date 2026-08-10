@@ -8,7 +8,8 @@
         {{-- HEADER --}}
         <div
             style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-            <div class="oz-title" style="margin:0;">Fanlar katalogida ({{$subjectCounts['subject']}} ta fan mavjud)</div>
+            <div class="oz-title" style="margin:0;">Fanlar katalogida ({{ $subjectCounts['subject'] }} ta fan mavjud)
+            </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <a href="{{ route('subject.create') }}" class="ar-btn ar-btn-ok">
                     <i class="bx bx-plus"></i> Yangi fan
@@ -16,7 +17,11 @@
                 <a href="{{ route('category.create') }}" class="ar-btn">
                     <i class="bx bx-plus"></i> Yangi yo'nalish
                 </a>
+                <a href="{{ route('subject.biriktirish') }}" class="ar-btn">
+                    <i class="bx bx-plus"></i> Biriktirish
+                </a>
             </div>
+            
         </div>
 
         {{-- QIDIRUV --}}
@@ -37,7 +42,7 @@
                 <option value="20" {{ request('page_size') == 20 ? 'selected' : '' }}>20 ta</option>
                 <option value="50" {{ request('page_size') == 50 ? 'selected' : '' }}>50 ta</option>
                 <option value="100" {{ request('page_size') == 100 ? 'selected' : '' }}>100 ta</option>
-                <option value="500" {{ request('page_size') == 500 ? 'selected' : '' }}>500 ta</option>
+                <option value="200" {{ request('page_size') == 200 ? 'selected' : '' }}>200 ta</option>
 
             </select>
             <button type="submit" class="ar-btn ar-btn-ok">
@@ -50,14 +55,13 @@
             <table class="arizalar-table">
                 <thead>
                     <tr>
-                        <th style="width:45px;">ID</th>
+                        <th style="width:60px;">ID</th>
                         <th style="width:300px">Fan nomi</th>
+                        <th style="width:200px;">O'qituvchi</th>
                         <th style="width:110px;">O'quv yili</th>
                         <th style="width:60px;">Yo'nalish</th>
                         <th style="width:40px;">Krediti</th>
-                        <th style="width:70px;">Semestr</th>
-                        <th style="width:60px;">Turi</th>
-                        <th style="width:200px;">O'qituvchi</th>
+                        <th style="width:80px;">Semestr</th>
                         <th style="width:80px;">Holat</th>
                         <th style="width:195px;">Amallar</th>
                     </tr>
@@ -80,36 +84,9 @@
                                         <span class="ar-badge ar-badge-ok">
                                             <i class="fas fa-circle-check"></i> Natija bor
                                         </span>
-                                    @endif
-                                </div>
+                                        @endif
+                                    </div>
                             </td>
-
-                            {{-- O'quv yili --}}
-                            <td style="font-size:13px; color:#555;">
-                                {{ $subject->oquv_yili->nomi ?? 'Ko\'rsatilmagan' }}
-                            </td>
-
-                            {{-- Yo'nalish / Kategoriya --}}
-                            <td style="font-size:13px; color:#888;">
-                                {{ $subject->category->guruh ?? 'Umumiy' }}
-                            </td>
-
-                            <td style="font-size:13px; color:#888;">
-                                {{ $subject->kredit ?? 'Umumiy' }}
-                            </td>
-
-                            {{-- Semestr --}}
-                            <td style="text-align:center;">
-                                <span class="ar-badge ar-badge-accent">
-                                    {{ $subject->semster }}-sem
-                                </span>
-                            </td>
-
-                            {{-- Dars turi --}}
-                            <td style="font-size:13px; color:#888;">
-                                {{ $subject->lesson_type->nomi ?? 'Dars' }}
-                            </td>
-
                             {{-- O'qituvchi --}}
                             <td>
                                 <div style="display:flex; align-items:center; gap:6px;">
@@ -119,6 +96,30 @@
                                     <span style="font-size:12px; color:#555;">{{ $teacher }}</span>
                                 </div>
                             </td>
+
+                            {{-- O'quv yili --}}
+                            <td style="font-size:13px; color:#555;">
+                                {{ $subject->oquv_yili->nomi ?? 'Ko\'rsatilmagan' }}
+                            </td>
+                            
+                            {{-- Yo'nalish / Kategoriya --}}
+                            <td style="text-align:center;">
+                                <span class="ar-badge ar-badge-accent">
+                                    {{ $subject->category->guruh }}
+                                </span>
+                            </td>
+
+                            <td style="font-size:13px; color:#888;">
+                                {{ $subject->kredit ?? 'Umumiy' }}
+                            </td>
+
+                            {{-- Semestr --}}
+                            <td style="text-align:center;">
+                                <span class="ar-badge ar-badge-accent">
+                                    {{ $subject->semster }}-semestr
+                                </span>
+                            </td>
+
 
                             {{-- Holat --}}
                             <td>
@@ -153,14 +154,16 @@
                                         <label class="ar-btn" title="Excel import"
                                             style="cursor:pointer; margin:0; padding:5px 8px;">
                                             <i class="bx bx-import import-icon" style="color:#217346;"></i>
-                                            <div class="row-progress" style="display:none; align-items:center; gap:4px;">
+                                            <div class="row-progress"
+                                                style="display:none; align-items:center; gap:4px;">
                                                 <div style="position:relative; width:28px; height:28px; flex-shrink:0;">
-                                                    <svg width="28" height="28" style="transform:rotate(-90deg);">
-                                                        <circle cx="14" cy="14" r="11" fill="none" stroke="#e5e7eb"
-                                                            stroke-width="2.5" />
-                                                        <circle class="circle-bar" cx="14" cy="14" r="11" fill="none"
-                                                            stroke="#217346" stroke-width="2.5" stroke-dasharray="69.1"
-                                                            stroke-dashoffset="69.1"
+                                                    <svg width="28" height="28"
+                                                        style="transform:rotate(-90deg);">
+                                                        <circle cx="14" cy="14" r="11" fill="none"
+                                                            stroke="#e5e7eb" stroke-width="2.5" />
+                                                        <circle class="circle-bar" cx="14" cy="14"
+                                                            r="11" fill="none" stroke="#217346" stroke-width="2.5"
+                                                            stroke-dasharray="69.1" stroke-dashoffset="69.1"
                                                             style="transition:stroke-dashoffset 0.3s;" />
                                                     </svg>
                                                     <span class="circle-pct"
@@ -481,6 +484,70 @@
                 e.preventDefault();
                 alert("Iltimos, avval yangi o'qituvchini tanlang.");
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('select').forEach(select => {
+                // Asl select elementini yashirish
+                select.classList.add('glass-replaced');
+
+                // Yangi custom wrapper yaratish
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-glass-select';
+
+                const trigger = document.createElement('div');
+                trigger.className = 'glass-select-trigger';
+
+                const selectedOption = select.options[select.selectedIndex];
+                trigger.innerHTML = `<span>${selectedOption ? selectedOption.text : ''}</span>`;
+
+                const menu = document.createElement('div');
+                menu.className = 'glass-select-menu';
+
+                // Option-larni o'qib custom menyuga o'tkazish
+                Array.from(select.options).forEach((opt, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'glass-select-item' + (idx === select.selectedIndex ?
+                        ' selected' : '');
+                    item.textContent = opt.text;
+                    item.dataset.value = opt.value;
+
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        // Select qiymatini almashtirish
+                        select.value = opt.value;
+                        select.dispatchEvent(new Event(
+                        'change')); // Eventni ham ishga tushirish
+
+                        // UI ni yangilash
+                        trigger.querySelector('span').textContent = opt.text;
+                        menu.querySelectorAll('.glass-select-item').forEach(i => i.classList
+                            .remove('selected'));
+                        item.classList.add('selected');
+                        wrapper.classList.remove('open');
+                    });
+
+                    menu.appendChild(item);
+                });
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.custom-glass-select').forEach(w => {
+                        if (w !== wrapper) w.classList.remove('open');
+                    });
+                    wrapper.classList.toggle('open');
+                });
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(menu);
+                select.parentNode.insertBefore(wrapper, select.nextSibling);
+            });
+
+            // Tashqariga bosganda menyuni yopish
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.custom-glass-select').forEach(w => w.classList.remove('open'));
+            });
         });
     </script>
 

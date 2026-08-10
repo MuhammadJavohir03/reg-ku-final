@@ -2,11 +2,29 @@
     <x-slot:title>Mini Semestr</x-slot:title>
 
     <div class="oz-wrap">
-        <div class="oz-title">Mini Semestr</div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+            <a href="{{ route('talaba.mini_maktab.index') }}" class="ar-btn">
+                <i class="bx bx-arrow-back"></i>
+            </a>
+            <div class="oz-title" style="margin:0;">{{ $bolim->nomi }}</div>
+        </div>
 
         @forelse ($fanlar as $ariza)
-            <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:18px; margin-bottom:10px; cursor:pointer;"
+            @php $muvaffaqiyatli = ($ariza->umumiy ?? 0) >= 60; @endphp
+
+            <div style="background:{{ $muvaffaqiyatli ? '#F3FBF0' : '#fff' }};
+                    border:1px solid {{ $muvaffaqiyatli ? '#B7E4C7' : '#f0f0f0' }};
+                    border-radius:12px; padding:18px; margin-bottom:10px; cursor:pointer; position:relative;"
                 onclick="window.location='{{ route('talaba.mini_maktab.mavzular', $ariza->id) }}'">
+
+                @if ($muvaffaqiyatli)
+                    <span style="position:absolute; top:-9px; right:14px; background:#27500A; color:#fff;
+                        font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px;
+                        display:flex; align-items:center; gap:4px;">
+                        <i class="bx bx-check-circle"></i> Muvaffaqiyatli
+                    </span>
+                @endif
+
                 <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
 
                     {{-- FAN INFO --}}

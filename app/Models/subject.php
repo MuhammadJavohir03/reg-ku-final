@@ -84,4 +84,9 @@ class subject extends Model
     {
         return $this->hasMany(free_semestr::class, 'subject_id', 'id');
     }
+
+    public function subjectsToSubject()
+    {
+        return $this->belongsTo(SubjectsToSubject::class, 'subjects_to_subject_id');
+    }
 }

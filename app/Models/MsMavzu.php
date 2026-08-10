@@ -13,6 +13,7 @@ class MsMavzu extends Model
     protected $fillable = [
         'bolim_id',
         'subject_id',
+        'teacher_id',
         'nomi',
         'tur',
         'tartib',

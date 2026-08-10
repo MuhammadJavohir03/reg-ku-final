@@ -141,7 +141,7 @@
                     </div>
                 </div>
                 <div class="oz-sub-card">
-                    <div class="oz-sub-label">D — Davomat (&gt;= 33%)</div>
+                    <div class="oz-card-label">D — Davomat (&gt;= 33%)</div>
                     <div class="oz-sub-val">{{ $davomatQizil }} ta</div>
                     <div class="oz-sub-row">
                         <span class="oz-green">Yaxshi:

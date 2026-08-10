@@ -5,6 +5,15 @@
     <title>{{ $title ?? 'Register Office' }}</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="icon" href="{{ asset('img/Logo-title.png') }}" type="image/x-icon">
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uz.js"></script>
 
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
@@ -21,15 +30,6 @@
     <link rel="stylesheet" href="{{ asset('css/jr.css') }}">
     <link rel="stylesheet" href="{{ asset('css/jadvallar.css') }}">
 
-    <link href="https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="icon" href="{{ asset('img/Logo-title.png') }}" type="image/x-icon">
-
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uz.js"></script>
 </head>
 
 <style>
@@ -117,7 +117,7 @@
         {{-- Logo --}}
         <div class="logo-area">
             <i class="bx bx-user-check"></i>
-            <img src="{{ asset('img/Logo2.png') }}" alt="Logo" class="logo-img">
+            <img src="{{ asset('img/Logo3.png') }}" alt="Logo" class="logo-img">
         </div>
 
         {{-- Nav Links --}}
@@ -248,15 +248,6 @@
                     </ul>
                 </li>
                 <li>
-                    <a href="{{ route('umumiy_natijalar') }}">
-                        <i class="bx bx-medal"></i>
-                        <span class="link_name">Umumiy Natijalar</span>
-                    </a>
-                    <ul class="sub-menu blank">
-                        <li><a class="link_name" href="{{ route('umumiy_natijalar') }}">Umumiy Natijalar</a></li>
-                    </ul>
-                </li>
-                <li>
                     <a href="{{ route('savol_bank.index') }}">
                         <i class="bx bx-question-mark"></i>
                         <span class="link_name">Savol banki</span>
@@ -339,6 +330,15 @@
                     </a>
                     <ul class="sub-menu blank">
                         <li><a class="link_name" href="{{ route('chat') }}">Chat</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="{{ route('grades.my') }}"">
+                        <i class="bx bx-bar-chart-alt-2"></i>
+                        <span class="link_name">Chat</span>
+                    </a>
+                    <ul class="sub-menu blank">
+                        <li><a class="link_name" href="{{ route('grades.my') }}">Mening natijalarim</a></li>
                     </ul>
                 </li>
             @endif
@@ -440,7 +440,7 @@
             <i class="bx bx-menu" id="mob-menu-icon"></i>
         </button>
         <a href="{{ route('index') }}" class="mn-logo">
-            <img src="{{ asset('img/Logo2.png') }}" alt="Logo">
+            <img src="{{ asset('img/Logo3.png') }}" alt="Logo">
         </a>
         <div class="mn-spacer"></div>
         @auth
@@ -514,8 +514,6 @@
                             class="link_name">Bepul Maktab</span></a></li>
                 <li><a href="{{ route('subject.index') }}"><i class="bx bx-book"></i><span
                             class="link_name">Fanlar</span></a></li>
-                <li><a href="{{ route('umumiy_natijalar') }}"><i class="bx bx-medal"></i><span
-                            class="link_name">Natijalar</span></a></li>
                 <li><a href="{{ route('savol_bank.index') }}"><i class="bx bx-question-mark"></i><span
                             class="link_name">Savol banki</span></a></li>
                 <li><a class="link_name" href="{{ route('jurnal.index') }}"><i
@@ -555,6 +553,8 @@
                 <li><a href="{{ route('talaba.mini_maktab.index') }}"><i class="bx bx-book-reader"></i><span
                             class="link_name">Mini Semestr</span></a></li>
                 <li><a href="{{ route('chat') }}"><i class="bx bx-chat"></i><span class="link_name">Chat</span></a>
+                </li>
+                <li><a href="{{ route('grades.my') }}"><i class="bx bx-bar-chart-alt-2"></i><span class="link_name">Mening natijalarim</span></a>
                 </li>
             @endif
 

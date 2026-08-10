@@ -219,6 +219,73 @@
                 });
             });
         });
+
+
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('select').forEach(select => {
+                // Asl select elementini yashirish
+                select.classList.add('glass-replaced');
+
+                // Yangi custom wrapper yaratish
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-glass-select';
+
+                const trigger = document.createElement('div');
+                trigger.className = 'glass-select-trigger';
+
+                const selectedOption = select.options[select.selectedIndex];
+                trigger.innerHTML = `<span>${selectedOption ? selectedOption.text : ''}</span>`;
+
+                const menu = document.createElement('div');
+                menu.className = 'glass-select-menu';
+
+                // Option-larni o'qib custom menyuga o'tkazish
+                Array.from(select.options).forEach((opt, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'glass-select-item' + (idx === select.selectedIndex ?
+                        ' selected' : '');
+                    item.textContent = opt.text;
+                    item.dataset.value = opt.value;
+
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        // Select qiymatini almashtirish
+                        select.value = opt.value;
+                        select.dispatchEvent(new Event(
+                        'change')); // Eventni ham ishga tushirish
+
+                        // UI ni yangilash
+                        trigger.querySelector('span').textContent = opt.text;
+                        menu.querySelectorAll('.glass-select-item').forEach(i => i.classList
+                            .remove('selected'));
+                        item.classList.add('selected');
+                        wrapper.classList.remove('open');
+                    });
+
+                    menu.appendChild(item);
+                });
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.custom-glass-select').forEach(w => {
+                        if (w !== wrapper) w.classList.remove('open');
+                    });
+                    wrapper.classList.toggle('open');
+                });
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(menu);
+                select.parentNode.insertBefore(wrapper, select.nextSibling);
+            });
+
+            // Tashqariga bosganda menyuni yopish
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.custom-glass-select').forEach(w => w.classList.remove('open'));
+            });
+        });
     </script>
 
 </x-layouts.sidebar>

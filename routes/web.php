@@ -36,37 +36,10 @@ use App\Http\Controllers\VedomostController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/free_semestr', [PageController::class, 'freeSemestr'])->name('free_semestr');
-Route::get('/mini_semestr', [PageController::class, 'miniSemestr'])->name('mini_semestr');
-
-Route::resource('subject', SubjectController::class);
-Route::post('/subject/{subject}/duplicate', [SubjectController::class, 'duplicate'])->name('subject.duplicate');
-Route::get('subject/{subject}/vedomost', [VedomostController::class, 'form'])
-    ->name('grades.vedomost.form');
-
-Route::post('subject/{subject}/vedomost', [VedomostController::class, 'exportAll'])
-    ->name('grades.vedomost.export');
-
-Route::get('/ozlashtirish', [PageController::class, 'ozlashtirish'])->name('ozlashtirish');
-Route::get('/umumiy_natijalar', [PageController::class, 'umumiyNatijalar'])->name('umumiy_natijalar');
-Route::get('/chat', [PageController::class, 'chat'])->name('chat');
-Route::get('/admin_chat', [PageController::class, 'adminChat'])->name('admin_chat');
-
 Route::get('/', [ElonController::class, 'index'])->name('index');
 Route::resource('elons', ElonController::class)->middleware('auth');;
 
-Route::resource('teacher', TeacherController::class);
-Route::get('teachers/import', [TeacherController::class, 'import'])->name('teacher.import');
-Route::post('teachers/import', [TeacherController::class, 'importStore'])->name('teacher.import.store');
-Route::resource('teachers', TeacherController::class)->names('teacher');
-Route::resource('admins', AdminController::class);
 
-Route::post('/users/import', [UserController::class, 'store'])->name('students.import');
-Route::resource('users', UserController::class);
-Route::post('/users/{id}/login-as', [UserController::class, 'loginAs'])->name('users.login_as');
-Route::post('/admin/back-to-admin', [UserController::class, 'backToAdmin'])->name('users.back_to_admin');
-
-Route::get('/teachers/search', [UserController::class, 'searchTeachers'])->name('teachers.search');
 
 Route::get('login', [AuthController::class, 'login'])->name('login');
 Route::post('authenticate', [AuthController::class, 'authenticate'])->name('authenticate');
@@ -74,13 +47,7 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::resource('free_semestr', FreeController::class);
 Route::resource('free_semestr_user', FreeuserController::class);
-
-Route::resource('mini_semestr_admin', MiniSemestrAdminController::class);
-
-Route::resource('category', CategoryController::class);
-
 Route::resource('bepul_semestr', BepulSemestrController::class);
-
 Route::resource('bepul_semestr.fanlar', BepulFanlarController::class)->names([
     'index' => 'bepul_semestr.fanlar.index',
     'create' => 'bepul_semestr.fanlar.create',
@@ -90,18 +57,70 @@ Route::resource('bepul_semestr.fanlar', BepulFanlarController::class)->names([
 Route::get('bepul_semestr/{bolim_id}/fanlar/{subject_id}', [BepulFanlarController::class, 'show'])
     ->name('bepul_semestr.fanlar.show');
 
-Route::post('/grades/import/{subject_id}', [GradeController::class, 'import'])->name('grades.import');
-Route::get('subject/{subject_id}/grades', [GradeController::class, 'index'])->name('grades.index');
-Route::delete('subject/{subject_id}/grades/clear', [GradeController::class, 'clearAll'])->name('grades.clear');
+Route::middleware('auth')->group(function () {
+    Route::get('/natijalarim', [UserController::class, 'myGrades'])->name('grades.my');
+});
 
-
-Route::get('/sidebar-boshqaruv', [SidebarController::class, 'index'])->name('sidebar_boshqaruv.index');
-Route::patch('/sidebar-boshqaruv/{key}/toggle', [SidebarController::class, 'toggle'])->name('sidebar_boshqaruv.toggle');
-Route::get('/ozlashtirish', [OzlashtirishController::class, 'index'])->name('ozlashtirish');
-Route::get('/ozlashtirish/export', [OzlashtirishController::class, 'export'])->name('ozlashtirish.export');
 // Route::resource('ozlashtirish', OzlashtirishController::class);
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth'])->prefix('admin/sections')->name('admin.sections.')->group(function () {
+    Route::get('/', [AdminSectionController::class, 'index'])->name('index');
+    Route::post('/', [AdminSectionController::class, 'store'])->name('store');
+    Route::put('/{section}', [AdminSectionController::class, 'update'])->name('update');
+    Route::delete('/{section}', [AdminSectionController::class, 'destroy'])->name('destroy');
+    Route::post('/{section}/assign', [AdminSectionController::class, 'assignAdmins'])->name('assign');
+});
+Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
+    Route::get('/mini_maktab/{bolim}/guruh/{subjectsToSubject}', [MiniMaktabController::class, 'guruhSahifa'])->name('mini_maktab.guruh');
+    Route::post('/mini_maktab/guruh/{subjectsToSubject}/teacher_qosh', [MiniMaktabController::class, 'guruhTeacherQosh'])->name('mini_maktab.guruh.teacher_qosh');
+    Route::delete('/mini_maktab/guruh_teacher/{id}', [MiniMaktabController::class, 'guruhTeacherOchir'])->name('mini_maktab.guruh.teacher_ochir');
+    Route::post('/mini_maktab/guruh/{subjectsToSubject}/avto_taqsimla', [MiniMaktabController::class, 'guruhAvtoTaqsimla'])->name('mini_maktab.guruh.avto_taqsimla');
+    Route::put('/mini_maktab/ariza/{ariza}/teacher_ozgartir', [MiniMaktabController::class, 'talabaTeacherOzgartir'])->name('mini_maktab.ariza.teacher_ozgartir');
+
+
+    Route::get('/subject/biriktirish', [SubjectController::class, 'biriktirish'])->name('subject.biriktirish');
+    Route::post('/subject/biriktirish', [SubjectController::class, 'biriktirishStore'])->name('subject.biriktirish.store');
+    Route::get('/subject/biriktirish/search', [SubjectController::class, 'biriktirishSearch'])->name('subject.biriktirish.search');
+    Route::post('/subject/biriktirish/sync', [SubjectController::class, 'biriktirishSync'])
+        ->name('subject.biriktirish.sync');
+    Route::put(
+        '/mini-maktab/{bolim_id}/{subject_id}/teacher-biriktir',
+        [MiniMaktabController::class, 'fanTeacherBiriktir']
+    )->name('mini_maktab.fan.teacher_biriktir');
+    // O'qituvchi — topshiriq baholarini saqlash
+    Route::post('/mini-maktab/topshiriq/{material_id}/baholar', [MiniMaktabController::class, 'topshiriqBaholar'])
+        ->name('mini_maktab.topshiriq.baholar');
+
+    // Talaba — topshiriq PDF yuklash
+    Route::post('/mini-maktab/topshiriq/{material_id}/yukla', [MiniMaktabController::class, 'topshiriqYukla'])
+        ->name('mini_maktab.topshiriq.yukla');
+    Route::resource('category', CategoryController::class);
+    Route::resource('mini_semestr_admin', MiniSemestrAdminController::class);
+    Route::post('/users/import', [UserController::class, 'store'])->name('students.import');
+    Route::resource('users', UserController::class);
+    Route::post('/users/{id}/login-as', [UserController::class, 'loginAs'])->name('users.login_as');
+    Route::get('/users/{user}/grades', [UserController::class, 'grades'])->name('users.grades');
+    Route::post('/admin/back-to-admin', [UserController::class, 'backToAdmin'])->name('users.back_to_admin');
+    Route::get('/teachers/search', [UserController::class, 'searchTeachers'])->name('teachers.search');
+    Route::resource('teacher', TeacherController::class);
+    Route::get('teachers/import', [TeacherController::class, 'import'])->name('teacher.import');
+    Route::post('teachers/import', [TeacherController::class, 'importStore'])->name('teacher.import.store');
+    Route::resource('teachers', TeacherController::class)->names('teacher');
+    Route::resource('admins', AdminController::class);
+    Route::post('subject/{subject}/vedomost', [VedomostController::class, 'exportAll'])
+        ->name('grades.vedomost.export');
+    Route::get('/ozlashtirish', [OzlashtirishController::class, 'index'])->name('ozlashtirish');
+    Route::patch('/sidebar-boshqaruv/{key}/toggle', [SidebarController::class, 'toggle'])->name('sidebar_boshqaruv.toggle');
+    Route::get('/ozlashtirish/export', [OzlashtirishController::class, 'export'])->name('ozlashtirish.export');
+    Route::get('/sidebar-boshqaruv', [SidebarController::class, 'index'])->name('sidebar_boshqaruv.index');
+    Route::resource('subject', SubjectController::class);
+    Route::post('/subject/{subject}/duplicate', [SubjectController::class, 'duplicate'])->name('subject.duplicate');
+    Route::get('subject/{subject}/vedomost', [VedomostController::class, 'form'])
+        ->name('grades.vedomost.form');
+    Route::post('/grades/import/{subject_id}', [GradeController::class, 'import'])->name('grades.import');
+    Route::delete('/grades/{grade}', [GradeController::class, 'destroy'])->name('grades.destroy');
+    Route::delete('subject/{subject_id}/grades/clear', [GradeController::class, 'clearAll'])->name('grades.clear');
+    Route::get('subject/{subject_id}/grades', [GradeController::class, 'index'])->name('grades.index');
     Route::resource('admins', AdminController::class);
     Route::resource('/users', UserController::class);
     Route::resource('bepul_semestr.fanlar', BepulFanlarController::class)->names([
@@ -111,25 +130,61 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     ]);
     Route::resource('bepul_semestr', BepulSemestrController::class);
     Route::resource('mini_semestr_admin', MiniSemestrAdminController::class);
+
+    Route::get('/kafedra-fakultet', [KafedraFakultetController::class, 'index'])
+        ->name('kafedra-fakultet.index');
+
+    // Kafedra uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
+    Route::post('/kafedra', [KafedraController::class, 'store'])->name('kafedra.store');
+    Route::put('/kafedra/{kafedra}', [KafedraController::class, 'update'])->name('kafedra.update');
+    Route::delete('/kafedra/{kafedra}', [KafedraController::class, 'destroy'])->name('kafedra.destroy');
+
+    // Fakultet uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
+    Route::post('/fakultet', [FakultetController::class, 'store'])->name('fakultet.store');
+    Route::put('/fakultet/{fakultet}', [FakultetController::class, 'update'])->name('fakultet.update');
+    Route::delete('/fakultet/{fakultet}', [FakultetController::class, 'destroy'])->name('fakultet.destroy');
+
+    Route::get('/oquv_yili', [OquvYiliController::class, 'index'])->name('oquv_yili.index');
+    Route::post('/oquv_yili', [OquvYiliController::class, 'store'])->name('oquv_yili.store');
+    Route::put('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'update'])->name('oquv_yili.update');
+    Route::delete('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'destroy'])->name('oquv_yili.destroy');
+    Route::get('/savol-bank', [SavolBankController::class, 'index'])->name('savol_bank.index');
+    Route::post('/savol-bank', [SavolBankController::class, 'store'])->name('savol_bank.store');
+    Route::post('/savol-bank/{bank_id}/import', [SavolBankController::class, 'import'])->name('savol_bank.import');
+    Route::delete('/savol-bank/{id}', [SavolBankController::class, 'destroy'])->name('savol_bank.destroy');
+    Route::delete('/savol-bank/question/{id}', [SavolBankController::class, 'destroyQuestion'])->name('savol_bank.question.destroy');
+    Route::get('/savol-bank/{bank_id}/savollar', [SavolBankController::class, 'show'])->name('savol_bank.show');
+    Route::delete('/savol-bank/question/{id}', [SavolBankController::class, 'destroyQuestion'])->name('savol_bank.question.destroy');
+    Route::put('/savol-bank/question/{id}', [SavolBankController::class, 'updateQuestion'])->name('savol_bank.question.update');
+    Route::prefix('bepul-maktab')->name('bepul_maktab.')->group(function () {
+        Route::get('/', [BepulMaktabController::class, 'index'])->name('index');
+        Route::get('/{bolim_id}', [BepulMaktabController::class, 'fanlar'])->name('fanlar');
+        Route::get('/{bolim_id}/{subject_id}', [BepulMaktabController::class, 'sozlamalar'])->name('sozlamalar');
+        Route::post('/{bolim_id}/{subject_id}', [BepulMaktabController::class, 'saqlash'])->name('saqlash');
+        Route::get(
+            '/{bolim_id}/{subject_id}/{user_id}/{session_id}/harakat',
+            [BepulMaktabController::class, 'harakat']
+        )
+            ->name('harakat');
+        Route::delete('/session/{id}', [BepulMaktabController::class, 'sessionDelete'])
+            ->name('session.delete');
+    });
+    Route::patch('/bepul-maktab/status/{id}', [BepulMaktabController::class, 'statusToggle'])->name('bepul_maktab.status');
+    Route::patch('/bepul-maktab/{bolim_id}/{subject_id}/all-status', [BepulMaktabController::class, 'allStatusToggle'])->name('bepul_maktab.all_status');
+    Route::prefix('ariza_admin')->name('ariza_admin.')->group(function () {
+        Route::get('/', [ArizaAdminController::class, 'index'])->name('index');
+        Route::get('/qidirish-talaba', [ArizaAdminController::class, 'searchUser'])->name('search_user');
+        Route::get('/gradesni-tekshirish', [ArizaAdminController::class, 'checkGrade'])->name('check_grade');
+        Route::post('/', [ArizaAdminController::class, 'store'])->name('store');
+        Route::get('/{ariza_admin}/edit', [ArizaAdminController::class, 'edit'])->name('edit');
+        Route::put('/{ariza_admin}', [ArizaAdminController::class, 'update'])->name('update');
+        Route::delete('/{type}/{ariza_admin}', [ArizaAdminController::class, 'destroy'])
+            ->where('type', 'mini|free')
+            ->name('destroy');
+        Route::get('ariza-admin/subjects-by-user', [ArizaAdminController::class, 'subjectsByUser'])
+            ->name('ariza_admin.subjects_by_user');
+    });
 });
-
-Route::get('/kafedra-fakultet', [KafedraFakultetController::class, 'index'])
-    ->name('kafedra-fakultet.index');
-
-// Kafedra uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
-Route::post('/kafedra', [KafedraController::class, 'store'])->name('kafedra.store');
-Route::put('/kafedra/{kafedra}', [KafedraController::class, 'update'])->name('kafedra.update');
-Route::delete('/kafedra/{kafedra}', [KafedraController::class, 'destroy'])->name('kafedra.destroy');
-
-// Fakultet uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
-Route::post('/fakultet', [FakultetController::class, 'store'])->name('fakultet.store');
-Route::put('/fakultet/{fakultet}', [FakultetController::class, 'update'])->name('fakultet.update');
-Route::delete('/fakultet/{fakultet}', [FakultetController::class, 'destroy'])->name('fakultet.destroy');
-
-Route::get('/oquv_yili', [OquvYiliController::class, 'index'])->name('oquv_yili.index');
-Route::post('/oquv_yili', [OquvYiliController::class, 'store'])->name('oquv_yili.store');
-Route::put('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'update'])->name('oquv_yili.update');
-Route::delete('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'destroy'])->name('oquv_yili.destroy');
 
 Route::resource('mini_semestr_user', MiniSemestrController::class);
 // Route::get('/bepul_maktab', [BepulMaktabController::class, 'index'])->name('bepul_maktab.index');
@@ -137,32 +192,7 @@ Route::resource('mini_semestr_user', MiniSemestrController::class);
 // Route::get('/bepul_maktab/{bolim_id}/{subject_id}', [BepulMaktabController::class, 'show'])->name('bepul_maktab.show');
 // Route::post('/bepul_maktab/{bolim_id}/{subject_id}/settings', [BepulMaktabController::class, 'settings'])->name('bepul_maktab.settings');
 // Route::patch('/bepul_maktab/toggle/{id}', [BepulMaktabController::class, 'toggle'])->name('bepul_maktab.toggle');
-//Savollar Banki
-Route::get('/savol-bank', [SavolBankController::class, 'index'])->name('savol_bank.index');
-Route::post('/savol-bank', [SavolBankController::class, 'store'])->name('savol_bank.store');
-Route::post('/savol-bank/{bank_id}/import', [SavolBankController::class, 'import'])->name('savol_bank.import');
-Route::delete('/savol-bank/{id}', [SavolBankController::class, 'destroy'])->name('savol_bank.destroy');
-Route::delete('/savol-bank/question/{id}', [SavolBankController::class, 'destroyQuestion'])->name('savol_bank.question.destroy');
-Route::get('/savol-bank/{bank_id}/savollar', [SavolBankController::class, 'show'])->name('savol_bank.show');
-Route::delete('/savol-bank/question/{id}', [SavolBankController::class, 'destroyQuestion'])->name('savol_bank.question.destroy');
-Route::put('/savol-bank/question/{id}', [SavolBankController::class, 'updateQuestion'])->name('savol_bank.question.update');
-//bepul maktab
-Route::prefix('bepul-maktab')->name('bepul_maktab.')->group(function () {
-    Route::get('/', [BepulMaktabController::class, 'index'])->name('index');
-    Route::get('/{bolim_id}', [BepulMaktabController::class, 'fanlar'])->name('fanlar');
-    Route::get('/{bolim_id}/{subject_id}', [BepulMaktabController::class, 'sozlamalar'])->name('sozlamalar');
-    Route::post('/{bolim_id}/{subject_id}', [BepulMaktabController::class, 'saqlash'])->name('saqlash');
-    Route::get(
-        '/{bolim_id}/{subject_id}/{user_id}/{session_id}/harakat',
-        [BepulMaktabController::class, 'harakat']
-    )
-        ->name('harakat');
-    Route::delete('/session/{id}', [BepulMaktabController::class, 'sessionDelete'])
-        ->name('session.delete');
-});
 
-Route::patch('/bepul-maktab/status/{id}', [BepulMaktabController::class, 'statusToggle'])->name('bepul_maktab.status');
-Route::patch('/bepul-maktab/{bolim_id}/{subject_id}/all-status', [BepulMaktabController::class, 'allStatusToggle'])->name('bepul_maktab.all_status');
 
 
 //talaba bepul maktab
@@ -176,19 +206,6 @@ Route::prefix('talaba/bepul-maktab')->name('talaba.bepul_maktab.')->group(functi
 Route::get('/talaba/bepul-maktab/{attempt_id}/natija', [TalabaBepulMaktabController::class, 'natija'])->name('talaba.bepul_maktab.natija');
 
 
-Route::prefix('ariza_admin')->name('ariza_admin.')->group(function () {
-    Route::get('/', [ArizaAdminController::class, 'index'])->name('index');
-    Route::get('/qidirish-talaba', [ArizaAdminController::class, 'searchUser'])->name('search_user');
-    Route::get('/gradesni-tekshirish', [ArizaAdminController::class, 'checkGrade'])->name('check_grade');
-    Route::post('/', [ArizaAdminController::class, 'store'])->name('store');
-    Route::get('/{ariza_admin}/edit', [ArizaAdminController::class, 'edit'])->name('edit');
-    Route::put('/{ariza_admin}', [ArizaAdminController::class, 'update'])->name('update');
-    Route::delete('/{type}/{ariza_admin}', [ArizaAdminController::class, 'destroy'])
-        ->where('type', 'mini|free')
-        ->name('destroy');
-    Route::get('ariza-admin/subjects-by-user', [ArizaAdminController::class, 'subjectsByUser'])
-        ->name('ariza_admin.subjects_by_user');
-});
 
 Route::get('ariza-admin/subjects-by-user', [ArizaAdminController::class, 'subjectsByUser'])
     ->name('ariza_admin.subjects_by_user');
@@ -309,7 +326,12 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post(
+        '/talaba/mini-maktab/{miniSemestrId}/topshiriq/{materialId}/yukla',
+        [TalabaMiniMaktabController::class, 'topshiriqYukla']
+    )->name('talaba.mini_maktab.topshiriq.yukla');
     Route::get('/mini-maktab', [TalabaMiniMaktabController::class, 'index'])->name('talaba.mini_maktab.index');
+    Route::get('/mini-maktab/bolim/{bolim_id}', [TalabaMiniMaktabController::class, 'fanlar'])->name('talaba.mini_maktab.fanlar');
     Route::get('/mini-maktab/{miniSemestr}/mavzular', [TalabaMiniMaktabController::class, 'mavzular'])->name('talaba.mini_maktab.mavzular');
     Route::get('/mini-maktab/{miniSemestr}/mavzu/{mavzu}', [TalabaMiniMaktabController::class, 'mavzuShow'])->name('talaba.mini_maktab.mavzu.show');
     Route::post('/mini-maktab/{miniSemestr}/material/{material}/boshlash', [TalabaMiniMaktabController::class, 'boshlash'])->name('talaba.mini_maktab.boshlash');
@@ -357,10 +379,3 @@ Route::middleware(['auth'])->prefix('admin_chat')->group(function () {
 | ADMIN PANEL: bo'limlar va adminlarni biriktirish
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->prefix('admin/sections')->name('admin.sections.')->group(function () {
-    Route::get('/', [AdminSectionController::class, 'index'])->name('index');
-    Route::post('/', [AdminSectionController::class, 'store'])->name('store');
-    Route::put('/{section}', [AdminSectionController::class, 'update'])->name('update');
-    Route::delete('/{section}', [AdminSectionController::class, 'destroy'])->name('destroy');
-    Route::post('/{section}/assign', [AdminSectionController::class, 'assignAdmins'])->name('assign');
-});

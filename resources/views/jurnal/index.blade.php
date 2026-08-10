@@ -742,6 +742,36 @@
                 export: "{{ route('jurnal.export') }}",
             };
 
+            // ================= UMUMIY FETCH HELPER =================
+            // Barcha AJAX so'rovlar shu orqali yuboriladi:
+            //  - Accept/X-Requested-With sarlavhalari bilan (Laravel javobni HTML emas,
+            //    doim JSON qilib qaytarishi uchun — 403/404/422/500 holatlarida ham)
+            //  - res.ok = false bo'lsa, backend xabarini (message) o'qib, tushunarli
+            //    Error tashlaydi (avvalgi "Unexpected token '<'..." xatosi o'rniga)
+            async function fetchJSON(url, options = {}) {
+                const res = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...(options.headers || {}),
+                    },
+                });
+
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    throw new Error(`Server noto'g'ri javob qaytardi (status ${res.status}). Sahifani yangilab ko'ring.`);
+                }
+
+                if (!res.ok) {
+                    throw new Error(data?.message || `Xatolik (status ${res.status})`);
+                }
+
+                return data;
+            }
+
             const TUR_STYLE = {
                 mavzu: {
                     bg: '#EEEDFE',
@@ -953,15 +983,7 @@
                 subjectSelect.setItems([]);
                 subjectSelect.reset('Yuklanmoqda...');
 
-                fetch(`${ROUTES.subjects}?bolim_id=${state.bolimId}&type=${state.type}`, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Server xatosi: ${res.status}`);
-                        return res.json();
-                    })
+                fetchJSON(`${ROUTES.subjects}?bolim_id=${state.bolimId}&type=${state.type}`)
                     .then(data => {
                         subjectsData = data;
                         subjectTeacherInfo.style.display = 'none';
@@ -979,7 +1001,10 @@
                         subjectSelect.reset('Fan qidirish...');
                         subjectSelect.enable();
                     })
-                    .catch(err => debug('Fanlarni yuklashda xato: ' + err.message));
+                    .catch(err => {
+                        debug('Fanlarni yuklashda xato: ' + err.message);
+                        subjectSelect.reset("Xatolik — qayta urinib ko'ring");
+                    });
             });
 
             // ================= 3) FAN TANLASH =================
@@ -1006,14 +1031,17 @@
                     '<tr><td colspan="10" style="text-align:center;color:#999;padding:24px;">Yuklanmoqda...</td></tr>';
 
                 if (state.type === 'mini') {
-                    fetch(`${ROUTES.topics}?bolim_id=${state.bolimId}&subject_id=${state.subjectId}`)
-                        .then(res => res.json())
+                    fetchJSON(`${ROUTES.topics}?bolim_id=${state.bolimId}&subject_id=${state.subjectId}`)
                         .then(topics => {
                             state.topics = topics;
                             renderTableHead();
                             loadStudents();
                         })
-                        .catch(err => debug('Mavzularni yuklashda xato: ' + err.message));
+                        .catch(err => {
+                            debug('Mavzularni yuklashda xato: ' + err.message);
+                            tbody.innerHTML =
+                                `<tr><td colspan="10" style="text-align:center;color:#c0392b;padding:24px;">${err.message}</td></tr>`;
+                        });
                 } else {
                     renderTableHead();
                     loadStudents();
@@ -1021,15 +1049,20 @@
             });
 
             async function loadStudents() {
-                const res = await fetch(
-                    `${ROUTES.students}?bolim_id=${state.bolimId}&type=${state.type}&subject_id=${state.subjectId}`
-                );
+                try {
+                    const data = await fetchJSON(
+                        `${ROUTES.students}?bolim_id=${state.bolimId}&type=${state.type}&subject_id=${state.subjectId}`
+                    );
 
-                const data = await res.json();
-
-                state.students = data;
-                populateGroupFilter();
-                renderStudents();
+                    state.students = data;
+                    populateGroupFilter();
+                    renderStudents();
+                } catch (err) {
+                    debug('Talabalarni yuklashda xato: ' + err.message);
+                    state.students = [];
+                    tbody.innerHTML =
+                        `<tr><td colspan="10" style="text-align:center;color:#c0392b;padding:24px;">${err.message}</td></tr>`;
+                }
             }
 
             function resetAfterBolim() {
@@ -1325,7 +1358,7 @@
                 if (!activeCellData) return;
 
                 if (activeCellData.kind === 'topic') {
-                    fetch(ROUTES.topicGradeUpdate, {
+                    fetchJSON(ROUTES.topicGradeUpdate, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1337,10 +1370,6 @@
                                 baho: value,
                             }),
                         })
-                        .then(res => {
-                            if (!res.ok) throw new Error(`Xato: ${res.status}`);
-                            return res.json();
-                        })
                         .then(() => {
                             closePop();
                             loadStudents();
@@ -1351,7 +1380,7 @@
 
                 const field = activeCellData.kind === 'free' ? 'yakuniy_baho' : activeCellData.field;
 
-                fetch(ROUTES.gradeUpdate, {
+                fetchJSON(ROUTES.gradeUpdate, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1363,10 +1392,6 @@
                             field: field,
                             value: value,
                         }),
-                    })
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Xato: ${res.status}`);
-                        return res.json();
                     })
                     .then(async () => {
                         await loadStudents();
@@ -1407,8 +1432,7 @@
                 historyBody.innerHTML = '<div style="padding:10px;color:#999;">Yuklanmoqda...</div>';
                 historyPop.classList.add('show');
 
-                fetch(`${ROUTES.gradeHistory}?${params.toString()}`)
-                    .then(res => res.json())
+                fetchJSON(`${ROUTES.gradeHistory}?${params.toString()}`)
                     .then(rows => {
                         if (!rows.length) {
                             historyBody.innerHTML =
@@ -1450,7 +1474,7 @@
                     })
                     .catch(err => {
                         historyBody.innerHTML =
-                            '<div style="padding:10px;color:#c0392b;">Xato: tarixni yuklab bo\'lmadi</div>';
+                            `<div style="padding:10px;color:#c0392b;">Xato: ${err.message}</div>`;
                     });
             };
 
@@ -1464,6 +1488,72 @@
             renderTableHead();
             renderStudents();
         })();
+
+
+
+         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('select').forEach(select => {
+                // Asl select elementini yashirish
+                select.classList.add('glass-replaced');
+
+                // Yangi custom wrapper yaratish
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-glass-select';
+
+                const trigger = document.createElement('div');
+                trigger.className = 'glass-select-trigger';
+
+                const selectedOption = select.options[select.selectedIndex];
+                trigger.innerHTML = `<span>${selectedOption ? selectedOption.text : ''}</span>`;
+
+                const menu = document.createElement('div');
+                menu.className = 'glass-select-menu';
+
+                // Option-larni o'qib custom menyuga o'tkazish
+                Array.from(select.options).forEach((opt, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'glass-select-item' + (idx === select.selectedIndex ?
+                        ' selected' : '');
+                    item.textContent = opt.text;
+                    item.dataset.value = opt.value;
+
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        // Select qiymatini almashtirish
+                        select.value = opt.value;
+                        select.dispatchEvent(new Event(
+                        'change')); // Eventni ham ishga tushirish
+
+                        // UI ni yangilash
+                        trigger.querySelector('span').textContent = opt.text;
+                        menu.querySelectorAll('.glass-select-item').forEach(i => i.classList
+                            .remove('selected'));
+                        item.classList.add('selected');
+                        wrapper.classList.remove('open');
+                    });
+
+                    menu.appendChild(item);
+                });
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.custom-glass-select').forEach(w => {
+                        if (w !== wrapper) w.classList.remove('open');
+                    });
+                    wrapper.classList.toggle('open');
+                });
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(menu);
+                select.parentNode.insertBefore(wrapper, select.nextSibling);
+            });
+
+            // Tashqariga bosganda menyuni yopish
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.custom-glass-select').forEach(w => w.classList.remove('open'));
+            });
+        });
     </script>
 
 </x-layouts.sidebar>

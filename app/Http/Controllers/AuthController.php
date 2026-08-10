@@ -24,14 +24,19 @@ class AuthController extends Controller
     public function authenticate(Request $request)
     {
         $credentials = $request->validate([
-            'email'=> ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required']
         ]);
 
-        if(Auth::attempt($credentials)){
+        // Formadan 'remember' belgisi kelgan-kelmaganini tekshiramiz (true/false)
+        $remember = $request->has('remember');
+
+        // attempt() metodiga 2-argument sifatida $remember ni uzatamiz
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             return redirect('/');
         }
+
         return back()->withErrors([
             'email' => 'Tizimga kirishda xatolik yuz berdi.',
         ])->onlyInput('email');

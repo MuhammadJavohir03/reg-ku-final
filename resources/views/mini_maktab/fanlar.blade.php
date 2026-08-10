@@ -16,7 +16,8 @@
                     <tr>
                         <th style="width:60px;">№</th>
                         <th>Fan nomi</th>
-                        <th style="width:120px;">Arizalar</th>
+
+                        <th style="width:80px;">Arizalar</th>
                         <th style="width:140px;">Mavzular</th>
                         <th style="width:100px;">Amal</th>
                     </tr>

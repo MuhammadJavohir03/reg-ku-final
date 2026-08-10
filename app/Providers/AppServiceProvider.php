@@ -11,9 +11,17 @@ use Carbon\Carbon;
 class AppServiceProvider extends ServiceProvider
 {
 
+    // app/Providers/AppServiceProvider.php
+
     public function boot(): void
     {
         Carbon::setLocale('uz_Latn');
+
+        if ($this->app->environment('local')) {
+            \Illuminate\Support\Facades\URL::forceRootUrl(
+                request()->getSchemeAndHttpHost()
+            );
+        }
     }
     /**
      * Register any application services.

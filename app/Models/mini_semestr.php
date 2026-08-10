@@ -15,10 +15,11 @@ class mini_semestr extends Model
         'joriy_oraliq',
         'yakuniy_baho',
         'umumiy',
-        'status'
+        'status',
+        'teacher_id'
 
     ];
-    
+
     public function subject()
     {
         return $this->belongsTo(subject::class);
@@ -34,4 +35,8 @@ class mini_semestr extends Model
         return $this->belongsTo(bolim::class);
     }
 
+    public function teacher()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'teacher_id');
+    }
 }

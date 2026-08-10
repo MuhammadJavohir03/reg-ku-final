@@ -1,5 +1,6 @@
 <x-layouts.sidebar>
     <x-slot:title>{{ $mavzu->nomi }}</x-slot:title>
+
     @if (session('natija'))
         @php $n = session('natija'); @endphp
         <div class="natija-overlay" id="natija-modal"
@@ -28,8 +29,8 @@
             </div>
         </div>
     @endif
-    <div class="oz-wrap">
 
+    <div class="oz-wrap">
 
         {{-- HEADER --}}
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
@@ -54,7 +55,7 @@
                     <div class="oz-title" style="margin:0;">{{ $mavzu->nomi }}</div>
                 </div>
                 <div style="font-size:12px; color:#888; margin-top:2px;">
-                    {{ $miniSemestr->subject->nomi }} · {{ $miniSemestr->bolims->nomi ?? '' }}
+                    {{ $miniSemestr->subject->nomi }} · {{ $miniSemestr->bolims->nomi ?? ($miniSemestr->bolim->nomi ?? '') }}
                 </div>
             </div>
         </div>
@@ -70,6 +71,7 @@
         @else
             <div style="display:flex; flex-direction:column; gap:14px;">
                 @foreach ($materiallar as $m)
+
                     {{-- ============= TEST ============= --}}
                     @if ($m->tur === 'test')
                         @php $h = $testHolatlari[$m->id] ?? []; @endphp
@@ -132,6 +134,7 @@
                                     </button>
                                 </form>
                             @endif
+
                             @if (($h['urinishlar'] ?? collect())->isNotEmpty())
                                 <div style="margin-top:14px; padding-top:14px; border-top:1px solid #f5f5f5;">
                                     <div style="font-size:12px; color:#888; margin-bottom:8px;">
@@ -166,7 +169,7 @@
                             @endif
                         </div>
 
-                        {{-- ============= VIDEO ============= --}}
+                    {{-- ============= VIDEO ============= --}}
                     @elseif ($m->tur === 'video')
                         <div style="background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden;">
                             <div onclick="toggleAcc('acc-{{ $m->id }}')"
@@ -190,11 +193,16 @@
                                 <i class="bx bx-chevron-down acc-icon" id="icon-acc-{{ $m->id }}"></i>
                             </div>
                             <div id="acc-{{ $m->id }}" style="display:none; padding:0 16px 16px;">
-                                @if ($m->videoUrl())
+                                @if (method_exists($m, 'videoUrl') && $m->videoUrl())
                                     <video controls preload="metadata"
                                         style="width:100%; border-radius:8px; background:#000;">
                                         <source src="{{ $m->videoUrl() }}" type="{{ $m->video_mime ?? 'video/mp4' }}">
                                         Brauzeringiz videoni qo'llab-quvvatlamaydi.
+                                    </video>
+                                @elseif ($m->video_path)
+                                    <video controls preload="metadata"
+                                        style="width:100%; border-radius:8px; background:#000;">
+                                        <source src="{{ asset('storage/' . $m->video_path) }}" type="{{ $m->video_mime ?? 'video/mp4' }}">
                                     </video>
                                 @else
                                     <span style="color:#aaa; font-size:13px;">Video fayl topilmadi.</span>
@@ -202,7 +210,7 @@
                             </div>
                         </div>
 
-                        {{-- ============= PDF (accordion) ============= --}}
+                    {{-- ============= PDF ============= --}}
                     @elseif ($m->tur === 'pdf')
                         <div style="background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden;">
                             <div onclick="toggleAcc('acc-{{ $m->id }}')"
@@ -228,8 +236,13 @@
                                     </div>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                    @if ($m->pdfUrl())
-                                        <a href="{{ $m->pdfUrl() }}" download onclick="event.stopPropagation()"
+                                    @php
+                                        $pdfLink = method_exists($m, 'pdfUrl') && $m->pdfUrl()
+                                            ? $m->pdfUrl()
+                                            : ($m->pdf_path ? asset('storage/' . $m->pdf_path) : null);
+                                    @endphp
+                                    @if ($pdfLink)
+                                        <a href="{{ $pdfLink }}" download onclick="event.stopPropagation()"
                                             class="ar-btn" style="font-size:12px;">
                                             <i class="bx bx-download"></i> Yuklab olish
                                         </a>
@@ -238,15 +251,125 @@
                                 </div>
                             </div>
                             <div id="acc-{{ $m->id }}" style="display:none; padding:0 16px 16px;">
-                                @if ($m->pdfUrl())
-                                    <iframe src="{{ $m->pdfUrl() }}"
+                                @if ($pdfLink)
+                                    <iframe src="{{ $pdfLink }}"
                                         style="width:100%; height:520px; border:1px solid #eee; border-radius:8px;"></iframe>
                                 @else
                                     <span style="color:#aaa; font-size:13px;">PDF fayl topilmadi.</span>
                                 @endif
                             </div>
                         </div>
+
+                    {{-- ============= TOPSHIRIQ ============= --}}
+                    @elseif ($m->tur === 'topshiriq')
+                        @php
+                            $t = $topshiriqlarMap[$m->id] ?? null;
+                            $topshiriqPdf = null;
+                            if ($m->pdf_path) {
+                                $topshiriqPdf = method_exists($m, 'pdfUrl') && $m->pdfUrl()
+                                    ? $m->pdfUrl()
+                                    : asset('storage/' . $m->pdf_path);
+                            }
+                            $javobPdf = null;
+                            if ($t && $t->pdf_path) {
+                                $javobPdf = method_exists($t, 'pdfUrl') && $t->pdfUrl()
+                                    ? $t->pdfUrl()
+                                    : asset('storage/' . $t->pdf_path);
+                            }
+                        @endphp
+
+                        <div style="background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden;">
+                            {{-- Sarlavha --}}
+                            <div style="display:flex; align-items:center; justify-content:space-between;
+                                 padding:14px 16px; border-bottom:1px solid #f5f5f5;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div
+                                        style="width:36px; height:36px; border-radius:8px; background:#EEEDFE;
+                                         display:flex; align-items:center; justify-content:center;">
+                                        <i class="bx bx-task" style="font-size:17px; color:#3C3489;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:14px; font-weight:600;">{{ $m->nomi }}</div>
+                                        <div style="font-size:11px; font-weight:600; color:#3C3489;">
+                                            TOPSHIRIQ
+                                            @if ($m->pdf_size)
+                                                · {{ $m->pdf_size }}
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    @if ($t && $t->pdf_path)
+                                        <span class="ar-badge ar-badge-ok">Topshirilgan</span>
+                                    @else
+                                        <span class="ar-badge" style="background:#fff3cd; color:#856404;">Topshirilmagan</span>
+                                    @endif
+                                    @if ($t && $t->ball !== null)
+                                        <span style="font-size:13px; font-weight:700; color:#27500A;">
+                                            {{ $t->ball }} ball
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div style="padding:16px;">
+                                {{-- Topshiriq PDF (o'qituvchi yuklagan) --}}
+                                @if ($topshiriqPdf)
+                                    <div style="margin-bottom:14px;">
+                                        <div style="font-size:12px; color:#888; margin-bottom:6px;">Topshiriq fayli:</div>
+                                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                            <a href="{{ $topshiriqPdf }}" target="_blank" class="ar-btn" style="font-size:12px;">
+                                                <i class="bx bx-show"></i> Ko'rish
+                                            </a>
+                                            <a href="{{ $topshiriqPdf }}" download class="ar-btn" style="font-size:12px;">
+                                                <i class="bx bx-download"></i> Yuklab olish
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Talaba javobi --}}
+                                @if ($javobPdf)
+                                    <div style="margin-bottom:14px; padding:12px; background:#f8f7ff; border-radius:10px; border:1px solid #eee;">
+                                        <div style="font-size:12px; color:#888; margin-bottom:6px;">Sizning javobingiz:</div>
+                                        <a href="{{ $javobPdf }}" target="_blank" class="ar-btn" style="font-size:12px;">
+                                            <i class="bx bx-file-pdf"></i> PDF ni ko'rish
+                                        </a>
+                                        @if ($t && $t->ball !== null)
+                                            <div style="margin-top:8px; font-size:13px;">
+                                                Baholangan: <strong style="color:#27500A;">{{ $t->ball }}</strong> ball
+                                            </div>
+                                        @else
+                                            <div style="margin-top:8px; font-size:12px; color:#856404;">
+                                                Hali baholanmagan
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                {{-- Yuklash / qayta yuklash forma --}}
+                                <form action="{{ route('talaba.mini_maktab.topshiriq.yukla', [$miniSemestr->id, $m->id]) }}"
+                                    method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div style="margin-bottom:10px;">
+                                        <label style="font-size:12px; font-weight:500; color:#666; display:block; margin-bottom:6px;">
+                                            {{ $javobPdf ? 'Javobni qayta yuklash (PDF)' : 'Javob PDF yuklash' }}
+                                        </label>
+                                        <input type="file" name="pdf" accept="application/pdf" required
+                                            style="width:100%; padding:8px; border:1px dashed #c4b5fd; border-radius:8px;
+                                                   background:#fafbff; font-size:13px; cursor:pointer;">
+                                        <div style="font-size:11px; color:#aaa; margin-top:4px;">Faqat PDF · max 50MB</div>
+                                    </div>
+                                    <button type="submit" class="ar-btn ar-btn-ok" style="font-size:13px;">
+                                        <i class="bx bx-upload"></i>
+                                        {{ $javobPdf ? 'Qayta yuklash' : 'Topshiriqni yuborish' }}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     @endif
+
                 @endforeach
             </div>
         @endif
@@ -258,7 +381,6 @@
             transition: transform 0.2s;
             color: #aaa;
         }
-
         .acc-icon.rotated {
             transform: rotate(180deg);
         }

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
 use App\Imports\StudentsImport;
+use App\Models\free_semestr;
+use App\Models\grade;
+use App\Models\mini_semestr;
 use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
@@ -186,6 +189,107 @@ class UserController extends Controller
         return view('users.edit', compact('user'));
     }
 
+
+/**
+ * Talabaning o'zi o'z natijalarini ko'rishi (auth user_id orqali)
+ */
+public function myGrades()
+{
+    $user = Auth::user();
+    $grades = $this->resolveStudentGrades($user->id);
+
+    return view('users.my', compact('user', 'grades'));
+}
+
+public function grades(User $user)
+{
+    $grades = $this->resolveStudentGrades($user->id);
+
+    return view('users.grades', compact('user', 'grades'));
+}
+
+/**
+ * Talaba baholari:
+ * 1) mini_semestrs
+ * 2) free_semestrs
+ * 3) grades
+ * Bir fan + semestr uchun faqat bitta yozuv (prioritet bo'yicha).
+ */
+private function resolveStudentGrades(int $userId)
+{
+    // 1. mini_semestrs
+    $mini = mini_semestr::with(['subject.teacher'])
+        ->where('user_id', $userId)
+        ->get()
+        ->map(function ($row) {
+            return (object) [
+                'source'       => 'mini',
+                'subject_id'   => $row->subject_id,
+                'subject'      => $row->subject,
+                'joriy_baho'   => $row->joriy_baho ?? 0,
+                'oraliq_baho'  => $row->oraliq_baho ?? 0,
+                'joriy_oraliq' => $row->joriy_oraliq ?? 0,
+                'yakuniy_baho' => $row->yakuniy_baho ?? 0,
+                'umumiy'       => $row->umumiy ?? 0,
+                'davomat'      => $row->davomat ?? null,
+                'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
+                'id'           => $row->id,
+            ];
+        });
+
+    // 2. free_semestrs
+    $free = free_semestr::with(['subject.teacher'])
+        ->where('user_id', $userId)
+        ->get()
+        ->map(function ($row) {
+            return (object) [
+                'source'       => 'free',
+                'subject_id'   => $row->subject_id,
+                'subject'      => $row->subject,
+                'joriy_baho'   => $row->joriy_baho ?? 0,
+                'oraliq_baho'  => $row->oraliq_baho ?? 0,
+                'joriy_oraliq' => $row->joriy_oraliq ?? 0,
+                'yakuniy_baho' => $row->yakuniy_baho ?? 0,
+                'umumiy'       => $row->umumiy ?? 0,
+                'davomat'      => $row->davomat ?? null,
+                'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
+                'id'           => $row->id,
+            ];
+        });
+
+    // 3. grades
+    $gradeRows = grade::with(['subject.teacher'])
+        ->where('user_id', $userId)
+        ->orderByDesc('id')
+        ->get()
+        ->map(function ($row) {
+            return (object) [
+                'source'       => 'grade',
+                'subject_id'   => $row->subject_id,
+                'subject'      => $row->subject,
+                'joriy_baho'   => $row->joriy_baho ?? 0,
+                'oraliq_baho'  => $row->oraliq_baho ?? 0,
+                'joriy_oraliq' => $row->joriy_oraliq ?? 0,
+                'yakuniy_baho' => $row->yakuniy_baho ?? 0,
+                'umumiy'       => $row->umumiy ?? 0,
+                'davomat'      => $row->davomat ?? null,
+                'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
+                'id'           => $row->id,
+            ];
+        });
+
+    // Prioritet: mini > free > grade
+    $map = collect();
+
+    foreach ([$gradeRows, $free, $mini] as $collection) {
+        foreach ($collection as $item) {
+            $key = ($item->subject->nomi ?? $item->subject_id) . '|' . ($item->semestr ?? '');
+            $map[$key] = $item;
+        }
+    }
+
+    return $map->values();
+}
     /**
      * Update the specified resource in storage.
      */

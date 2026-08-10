@@ -4,7 +4,8 @@
     <div class="oz-wrap">
 
         {{-- HEADER --}}
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div
+            style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
                 <div style="font-size:11px; color:#aaa; margin-bottom:2px;">
                     {{ $grades->first()?->subject?->category?->nomi ?? 'Yo\'nalish topilmadi' }}
@@ -17,24 +18,23 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
 
                 {{-- QIDIRUV --}}
-                <form action="{{ url()->current() }}" method="GET"
-                    style="display:flex; align-items:center; gap:6px;">
+                <form action="{{ url()->current() }}" method="GET" style="display:flex; align-items:center; gap:6px;">
                     <div style="position:relative;">
-                        <i class="bx bx-search" style="position:absolute; left:10px; top:50%;
+                        <i class="bx bx-search"
+                            style="position:absolute; left:10px; top:50%;
                             transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
                         <input type="text" name="search" class="arizalar-search"
-                            style="padding-left:34px; width:200px;"
-                            placeholder="Talaba ismi..."
+                            style="padding-left:34px; width:200px;" placeholder="Talaba ismi..."
                             value="{{ request('search') }}">
                     </div>
-                    @if(request('search'))
+                    @if (request('search'))
                         <a href="{{ url()->current() }}" class="ar-btn ar-btn-rej">✕</a>
                     @endif
                 </form>
 
                 {{-- TOZALASH --}}
-                <form action="{{ route('grades.clear', $grades->first()?->subject_id ?? 0) }}"
-                    method="POST" style="display:inline;">
+                <form action="{{ route('grades.clear', $grades->first()?->subject_id ?? 0) }}" method="POST"
+                    style="display:inline;">
                     @csrf @method('DELETE')
                     <button type="submit" class="ar-btn ar-btn-rej"
                         onclick="return confirm('Barcha baholar ochirisinmi?')">
@@ -55,7 +55,7 @@
             <table class="arizalar-table">
                 <thead>
                     <tr>
-                        <th style="width:50px;">№</th>
+                        <th style="width:10px;">№</th>
                         <th>Talaba</th>
                         <th style="width:100px;">Guruh</th>
                         <th style="width:80px; text-align:center;">Joriy</th>
@@ -64,6 +64,9 @@
                         <th style="width:80px; text-align:center;">Yakuniy</th>
                         <th style="width:110px; text-align:center;">Umumiy ball</th>
                         <th style="width:140px;">Davomat</th>
+                        @if (in_array(auth()->user()?->email, ['javohir8386@gmail.com', 'paulwalker3637@gmail.com']))
+                            <th style="width:80px;">Amallar</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -85,7 +88,8 @@
                             </td>
 
                             <td>
-                                <span style="background:#f5f5f5; color:#555; padding:3px 10px;
+                                <span
+                                    style="background:#f5f5f5; color:#555; padding:3px 10px;
                                     border-radius:6px; font-size:12px; font-weight:600;">
                                     {{ $grade->user->Guruh ?? '—' }}
                                 </span>
@@ -99,7 +103,8 @@
                                 {{ $grade->oraliq_baho }}
                             </td>
 
-                            <td style="text-align:center; font-size:13px; font-weight:600;
+                            <td
+                                style="text-align:center; font-size:13px; font-weight:600;
                                 color: {{ $grade->joriy_oraliq >= 20 ? '#27500A' : '#ff0000' }}">
                                 {{ $grade->joriy_oraliq }}
                             </td>
@@ -109,9 +114,8 @@
                             </td>
 
                             <td style="text-align:center;">
-                                @if($grade->umumiy > 70)
-                                    <span class="ar-badge ar-badge-ok"
-                                        style="font-size:13px; font-weight:700;">
+                                @if ($grade->umumiy > 70)
+                                    <span class="ar-badge ar-badge-ok" style="font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @elseif($grade->umumiy >= 60)
@@ -120,8 +124,7 @@
                                         {{ $grade->umumiy }}
                                     </span>
                                 @else
-                                    <span class="ar-badge ar-badge-rej"
-                                        style="font-size:13px; font-weight:700;">
+                                    <span class="ar-badge ar-badge-rej" style="font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @endif
@@ -129,12 +132,15 @@
 
                             <td>
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <span style="font-size:12px; font-weight:600; min-width:36px;
+                                    <span
+                                        style="font-size:12px; font-weight:600; min-width:36px;
                                         color: {{ $grade->davomat > 33 ? '#791F1F' : ($grade->davomat > 15 ? '#856404' : '#27500A') }}">
                                         {{ $grade->davomat }}%
                                     </span>
-                                    <div style="flex:1; height:6px; background:#f0f0f0; border-radius:4px; overflow:hidden;">
-                                        <div style="height:100%; border-radius:4px;
+                                    <div
+                                        style="flex:1; height:6px; background:#f0f0f0; border-radius:4px; overflow:hidden;">
+                                        <div
+                                            style="height:100%; border-radius:4px;
                                             width:{{ min($grade->davomat, 100) }}%;
                                             background:{{ $grade->davomat > 33 ? '#ef4444' : ($grade->davomat > 15 ? '#f59e0b' : '#10b981') }};
                                             transition:width 0.3s;">
@@ -142,6 +148,18 @@
                                     </div>
                                 </div>
                             </td>
+                            @if (in_array(auth()->user()?->email, ['javohir8386@gmail.com', 'paulwalker3637@gmail.com']))
+                                <td>
+                                    <form action="{{ route('grades.destroy', $grade->id) }}" method="POST">
+                                        @csrf @method('DELETE')
+
+                                        <button type="submit" class="ar-btn ar-btn-rej"
+                                            onclick="return confirm('Barcha baholar ochirisinmi?')">
+                                            <i class="bx bx-trash"></i> O'chirish
+                                        </button>
+                                    </form>
+                                </td>
+                            @endif
 
                         </tr>
                     @empty

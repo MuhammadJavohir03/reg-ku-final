@@ -42,21 +42,55 @@ class JurnalController extends Controller
 
         $model = $request->type === 'free' ? free_semestr::class : mini_semestr::class;
 
-        $subjectIds = $model::where('bolim_id', $request->bolim_id)
-            ->distinct()
-            ->pluck('subject_id');
+        $subjectIdsQuery = $model::where('bolim_id', $request->bolim_id);
+
+        // MINI uchun: oqituvchi faqat mini_semestrs.teacher_id orqali
+        // ozi biriktirilgan fanlarning subject_id larini koradi
+        if ($request->type === 'mini' && auth()->user()?->role === 'teacher') {
+            $subjectIdsQuery->where('teacher_id', auth()->id());
+        }
+
+        $subjectIds = $subjectIdsQuery->distinct()->pluck('subject_id');
 
         $subjectsQuery = subject::whereIn('id', $subjectIds);
 
-        // Teacher bo'lsa faqat o'ziga tegishli fanlar, admin/boshqalar uchun cheklovsiz
-        if (auth()->user()?->role === 'teacher') {
+        // FREE uchun eski mantiq saqlanadi: subject.teacher_id orqali cheklov
+        if ($request->type === 'free' && auth()->user()?->role === 'teacher') {
             $subjectsQuery->where('teacher_id', auth()->id());
         }
 
-        $subjects = $subjectsQuery->with('teacher')->orderBy('nomi')->get(['id', 'nomi', 'teacher_id']);
+        $subjects = $subjectsQuery->orderBy('nomi')->get(['id', 'nomi', 'teacher_id']);
 
-        // Frontendda fan tanlanganda o'qituvchi nomini ham ko'rsatish uchun
-        // 'teacher_name' ni alohida qo'shib qaytaramiz (subject.teacher_id orqali).
+        // ---------- MINI: o'qituvchi nomini mini_semestrs.teacher_id orqali olamiz ----------
+        if ($request->type === 'mini') {
+            $miniTeacherMap = mini_semestr::where('bolim_id', $request->bolim_id)
+                ->whereIn('subject_id', $subjects->pluck('id'))
+                ->select('subject_id', \DB::raw('MAX(teacher_id) as teacher_id'))
+                ->groupBy('subject_id')
+                ->pluck('teacher_id', 'subject_id');
+
+            $teachers = \App\Models\User::whereIn('id', $miniTeacherMap->filter()->unique()->values())
+                ->get()
+                ->keyBy('id');
+
+            $result = $subjects->map(function ($s) use ($miniTeacherMap, $teachers) {
+                $tid     = $miniTeacherMap->get($s->id);
+                $teacher = $tid ? $teachers->get($tid) : null;
+
+                return [
+                    'id'           => $s->id,
+                    'nomi'         => $s->nomi,
+                    'teacher_id'   => $tid,
+                    'teacher_name' => optional($teacher)->{'To‘liq_ismi'} ?? null,
+                ];
+            });
+
+            return response()->json($result);
+        }
+
+        // ---------- FREE: eski mantiq (subject.teacher_id) ----------
+        $subjects->load('teacher');
+
         $result = $subjects->map(function ($s) {
             return [
                 'id'           => $s->id,
@@ -85,7 +119,7 @@ class JurnalController extends Controller
             'subject_id' => 'required|integer',
         ]);
 
-        $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
+        $this->ensureSubjectAccessOrAbort((int) $request->subject_id, (int) $request->bolim_id, 'mini');
 
         $mavzular = MsMavzu::where('bolim_id', $request->bolim_id)
             ->where('subject_id', $request->subject_id)
@@ -113,7 +147,7 @@ class JurnalController extends Controller
             'subject_id' => 'required|integer',
         ]);
 
-        $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
+        $this->ensureSubjectAccessOrAbort((int) $request->subject_id, (int) $request->bolim_id, $request->type);
 
         if ($request->type === 'free') {
             $records = free_semestr::with('user')
@@ -265,7 +299,7 @@ class JurnalController extends Controller
             'guruh'      => 'nullable|string|max:255',
         ]);
 
-        $this->ensureSubjectAccessOrAbort((int) $request->subject_id);
+        $this->ensureSubjectAccessOrAbort((int) $request->subject_id, (int) $request->bolim_id, $request->type);
 
         $bolimModel   = bolim::findOrFail($request->bolim_id);
         $subjectModel = subject::findOrFail($request->subject_id);
@@ -525,12 +559,15 @@ class JurnalController extends Controller
     }
 
     /**
-     * Teacher rolidagi foydalanuvchi faqat o'ziga biriktirilgan (subject.teacher_id)
-     * fanlarga kira oladi. Admin va boshqa rollar uchun cheklov yo'q.
+     * Teacher rolidagi foydalanuvchi:
+     *  - MINI uchun: faqat mini_semestrs.teacher_id orqali ozi biriktirilgan
+     *    (bolim_id + subject_id) kombinatsiyasiga kira oladi.
+     *  - FREE uchun: eski mantiq (subject.teacher_id) saqlanadi.
+     * Admin va boshqa rollar uchun cheklov yo'q.
      * Ruxsat bo'lmasa 403 bilan to'xtatadi (frontend dropdown'dan tashqari,
      * to'g'ridan-to'g'ri AJAX so'rov yuborilgan holatlar uchun ham himoya).
      */
-    private function ensureSubjectAccessOrAbort(int $subjectId): void
+    private function ensureSubjectAccessOrAbort(int $subjectId, ?int $bolimId = null, string $type = 'mini'): void
     {
         $user = auth()->user();
 
@@ -538,9 +575,16 @@ class JurnalController extends Controller
             return;
         }
 
-        $belongsToTeacher = subject::where('id', $subjectId)
-            ->where('teacher_id', $user->id)
-            ->exists();
+        if ($type === 'free') {
+            $belongsToTeacher = subject::where('id', $subjectId)
+                ->where('teacher_id', $user->id)
+                ->exists();
+        } else {
+            $belongsToTeacher = mini_semestr::where('subject_id', $subjectId)
+                ->when($bolimId, fn($q) => $q->where('bolim_id', $bolimId))
+                ->where('teacher_id', $user->id)
+                ->exists();
+        }
 
         if (!$belongsToTeacher) {
             abort(403, 'Bu fanga kirish huquqingiz yo\'q.');

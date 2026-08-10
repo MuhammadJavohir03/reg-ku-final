@@ -5,212 +5,148 @@
 
     <style>
         :root {
-            --lg-accent: #7C6CF5;
-            --lg-accent-2: #5B4FE0;
+            --lg-accent: #8B7CF6;
+            --lg-accent-2: #6C5CE7;
             --lg-ink: #1b1830;
-            --lg-muted: #8b87a8;
-            --lg-bg-1: #14122a;
-            --lg-bg-2: #1e1a3d;
+            --lg-muted: #857fa8;
+            --lg-glass: rgba(255, 255, 255, 0.5);
+            --lg-glass-strong: rgba(255, 255, 255, 0.7);
+            --lg-glass-soft: rgba(255, 255, 255, 0.3);
+            --lg-glass-border: rgba(255, 255, 255, 0.6);
         }
 
-        .lg-wrap {
-            min-height: calc(100vh - 32px);
-            display: grid;
-            grid-template-columns: 1.05fr 460px;
-            gap: 0;
-            border-radius: 24px;
+        /* ============ FON — to'liq ekran, harakatlanuvchi rangli tuman ============ */
+        .lg-scene {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
             overflow: hidden;
-            box-shadow: 0 30px 70px rgba(20, 18, 42, 0.16);
-            font-family: 'Poppins', sans-serif;
+            background: #ffffff80;
         }
 
-        /* ============ LEFT / HERO ============ */
-        .lg-hero {
-            position: relative;
-            background: linear-gradient(160deg, var(--lg-bg-1) 0%, var(--lg-bg-2) 55%, var(--lg-accent-2) 140%);
-            color: #fff;
-            padding: 52px 48px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-        }
-
-        .lg-orb {
+        .lg-blob {
             position: absolute;
             border-radius: 50%;
-            filter: blur(2px);
-            opacity: 0.5;
+            filter: blur(60px);
+            opacity: 0.55;
         }
 
-        .lg-orb-1 {
-            width: 280px;
-            height: 280px;
-            background: radial-gradient(circle at 30% 30%, rgba(124, 108, 245, 0.55), transparent 70%);
-            top: -90px;
-            right: -70px;
-            animation: lg-float 7s ease-in-out infinite;
+        .lg-blob-1 {
+            width: 46vw;
+            height: 46vw;
+            background: radial-gradient(circle, #8B7CF6, transparent 70%);
+            top: -12%;
+            left: -8%;
+            animation: lg-drift 16s ease-in-out infinite;
         }
 
-        .lg-orb-2 {
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.12), transparent 70%);
-            bottom: -60px;
-            left: -50px;
-            animation: lg-float 9s ease-in-out infinite reverse;
+        .lg-blob-2 {
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, #6C5CE7, transparent 70%);
+            bottom: -14%;
+            right: -6%;
+            animation: lg-drift 20s ease-in-out infinite reverse;
+        }
+
+        .lg-blob-3 {
+            width: 30vw;
+            height: 30vw;
+            background: radial-gradient(circle, #10b981, transparent 70%);
+            bottom: 10%;
+            left: 18%;
+            opacity: 0.28;
+            animation: lg-drift 24s ease-in-out infinite;
         }
 
         .lg-grid-dots {
             position: absolute;
             inset: 0;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-            background-size: 22px 22px;
-            mask-image: radial-gradient(circle at 30% 20%, black, transparent 70%);
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 26px 26px;
         }
 
-        @keyframes lg-float {
-
-            0%,
-            100% {
-                transform: translateY(0) translateX(0);
-            }
-
-            50% {
-                transform: translateY(-18px) translateX(10px);
-            }
+        @keyframes lg-drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(4%, -6%) scale(1.08); }
         }
 
-        .lg-hero-top {
-            position: relative;
-            z-index: 2;
-        }
-
-        .lg-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 500;
-            color: #d8d5f5;
-            margin-bottom: 22px;
-        }
-
-        .lg-badge i {
-            color: #a9f5c7;
-            font-size: 14px;
-        }
-
-        .lg-hero h1 {
-            font-size: 32px;
-            font-weight: 700;
-            line-height: 1.25;
-            max-width: 420px;
-            margin-bottom: 14px;
-        }
-
-        .lg-hero p {
-            color: #b7b3dd;
-            max-width: 380px;
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .lg-stats {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            gap: 12px;
-            margin: 34px 0 26px;
-        }
-
-        .lg-stat {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 16px 12px;
-            text-align: center;
-            backdrop-filter: blur(6px);
-        }
-
-        .lg-stat h4 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 2px;
-            background: linear-gradient(135deg, #fff, #d8d5f5);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .lg-stat span {
-            font-size: 11.5px;
-            color: #a29ecf;
-        }
-
-        .lg-quote-wrap {
-            position: relative;
-            z-index: 2;
-            min-height: 22px;
-        }
-
-        .lg-quote {
-            font-size: 13.5px;
-            color: #cfccec;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        /* ============ RIGHT / FORM ============ */
-        .lg-card {
-            background: #fff;
-            padding: 52px 44px;
+        /* ============ MARKAZIY JOYLASHUV ============ */
+        .lg-stage {
+            min-height: calc(100vh - 32px);
             display: flex;
             flex-direction: column;
+            align-items: center;
             justify-content: center;
+            padding: 40px 16px;
+            font-family: 'Poppins', sans-serif;
         }
 
-        .lg-card-icon {
-            width: 54px;
-            height: 54px;
-            border-radius: 16px;
+        .lg-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 26px;
+        }
+
+        .lg-brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
             background: linear-gradient(135deg, var(--lg-accent), var(--lg-accent-2));
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 24px rgba(124, 108, 245, 0.32);
-            margin-bottom: 18px;
+            box-shadow: 0 10px 24px rgba(108, 92, 231, 0.4);
         }
 
-        .lg-card-icon i {
-            font-size: 26px;
+        .lg-brand-icon i {
+            font-size: 22px;
             color: #fff;
         }
 
+        .lg-brand span {
+            font-size: 15px;
+            font-weight: 700;
+            color: #000000;
+            letter-spacing: 0.01em;
+        }
+
+        /* ============ SUZUVCHI SHISHA KARTA ============ */
+        .lg-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--lg-glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--lg-glass-border);
+            border-radius: 26px;
+            box-shadow: 0 30px 70px rgba(16, 14, 36, 0.35);
+            padding: 40px 34px;
+        }
+
         .lg-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--lg-ink);
             margin-bottom: 4px;
+            text-align: center;
         }
 
         .lg-sub {
-            color: var(--lg-muted);
-            font-size: 13.5px;
-            margin-bottom: 28px;
+            color: rgb(0, 0, 0);
+            font-size: 13px;
+            margin-bottom: 26px;
+            text-align: center;
         }
 
         .lg-field {
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .lg-field label {
             display: block;
-            font-size: 12.5px;
+            font-size: 12px;
             font-weight: 600;
             color: #59567a;
             margin-bottom: 6px;
@@ -225,17 +161,19 @@
             left: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: #b7b3d6;
-            font-size: 17px;
+            color: #9b97bd;
+            font-size: 16px;
         }
 
         .lg-input {
             width: 100%;
-            border: 1.5px solid #ece9f7;
-            background: #fbfaff;
+            border: 1.5px solid rgba(0, 0, 0, 0.137);
+            background: var(--lg-glass-soft);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-radius: 12px;
-            padding: 12px 15px 12px 42px;
-            font-size: 13.5px;
+            padding: 11px 14px 11px 40px;
+            font-size: 13px;
             font-family: 'Poppins', sans-serif;
             color: var(--lg-ink);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -244,32 +182,31 @@
         .lg-input:focus {
             outline: none;
             border-color: var(--lg-accent);
-            background: #fff;
-            box-shadow: 0 0 0 4px rgba(124, 108, 245, 0.12);
+            background: var(--lg-glass-strong);
+            box-shadow: 0 0 0 4px rgba(139, 124, 246, 0.16);
         }
 
         .lg-input-box .lg-eye {
             position: absolute;
-            right: 14px;
+            right: 13px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
             color: #9b97bd;
-            font-size: 18px;
+            font-size: 17px;
         }
 
         .lg-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 26px;
+            margin-bottom: 22px;
         }
 
-        /* Toggle switch — "Eslab qolish" */
         .lg-toggle {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 9px;
             cursor: pointer;
             user-select: none;
         }
@@ -279,10 +216,11 @@
         }
 
         .lg-toggle .track {
-            width: 40px;
-            height: 22px;
+            width: 36px;
+            height: 20px;
             border-radius: 999px;
-            background: #e6e4f5;
+            background: rgba(139, 124, 246, 0.18);
+            border: 1px solid var(--lg-glass-border);
             position: relative;
             transition: background 0.25s ease;
             flex-shrink: 0;
@@ -291,32 +229,32 @@
         .lg-toggle .track::after {
             content: '';
             position: absolute;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background: #fff;
-            top: 3px;
-            left: 3px;
+            top: 2px;
+            left: 2px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
             transition: transform 0.25s ease;
         }
 
-        .lg-toggle input:checked+.track {
+        .lg-toggle input:checked + .track {
             background: linear-gradient(135deg, var(--lg-accent), var(--lg-accent-2));
         }
 
-        .lg-toggle input:checked+.track::after {
-            transform: translateX(18px);
+        .lg-toggle input:checked + .track::after {
+            transform: translateX(16px);
         }
 
         .lg-toggle span.lbl {
-            font-size: 13px;
+            font-size: 12.5px;
             color: #59567a;
             font-weight: 500;
         }
 
         .lg-forgot {
-            font-size: 12.5px;
+            font-size: 12px;
             color: var(--lg-accent-2);
             font-weight: 600;
             text-decoration: none;
@@ -324,25 +262,25 @@
 
         .lg-submit {
             width: 100%;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             cursor: pointer;
             background: linear-gradient(135deg, var(--lg-accent), var(--lg-accent-2));
             color: #fff;
-            font-size: 15px;
+            font-size: 14.5px;
             font-weight: 600;
-            padding: 14px;
+            padding: 13px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            box-shadow: 0 12px 26px rgba(124, 108, 245, 0.32);
+            gap: 9px;
+            box-shadow: 0 12px 26px rgba(108, 92, 231, 0.35);
             transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
         }
 
         .lg-submit:hover {
             transform: translateY(-2px);
-            filter: brightness(1.05);
+            filter: brightness(1.06);
         }
 
         .lg-submit:active {
@@ -350,69 +288,83 @@
         }
 
         .lg-submit i {
-            font-size: 19px;
+            font-size: 18px;
         }
 
-        @media (max-width: 992px) {
-            .lg-wrap {
-                grid-template-columns: 1fr;
-                border-radius: 20px;
-            }
+        /* ============ STATISTIKA CHIPLARI (karta ostida) ============ */
+        .lg-chips {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+            width: 100%;
+            max-width: 420px;
+        }
 
-            .lg-hero {
-                display: none;
-            }
+        .lg-chip {
+            flex: 1;
+            text-align: center;
+            padding: 12px 8px;
+            background: rgba(255, 255, 255, 0.452);
+            box-shadow: 0 15px 35px rgba(16, 14, 36, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
 
+        .lg-chip strong {
+            color: #00000085;
+            display: block;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #d8d5f5);
+            background-clip: text;
+        }
+
+        .lg-chip span {
+            font-size: 10.5px;
+            color: #00000085;
+        }
+
+        /* ============ AYLANUVCHI IQTIBOS ============ */
+        .lg-quote-wrap {
+            margin-top: 20px;
+            min-height: 20px;
+        }
+
+        .lg-quote {
+            font-size: 12.5px;
+            color: #cfccec;
+            text-align: center;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        @media (max-width: 480px) {
             .lg-card {
-                padding: 40px 26px;
+                padding: 32px 22px;
+            }
+
+            .lg-chips {
+                flex-wrap: wrap;
             }
         }
     </style>
 
-    <div class="lg-wrap">
+    <div class="lg-scene">
+        <div class="lg-grid-dots"></div>
+        <div class="lg-blob lg-blob-1"></div>
+        <div class="lg-blob lg-blob-2"></div>
+        <div class="lg-blob lg-blob-3"></div>
+    </div>
 
-        <div class="lg-hero">
-            <div class="lg-grid-dots"></div>
-            <div class="lg-orb lg-orb-1"></div>
-            <div class="lg-orb lg-orb-2"></div>
+    <div class="lg-stage">
 
-            <div class="lg-hero-top">
-                <div class="lg-badge"><i class='bx bxs-check-circle'></i> Yagona axborot tizimi</div>
-                <h1>Registrator Ofisi bilan hammasi bir joyda</h1>
-                <p>
-                    Fanlar, testlar va arizalarni boshqaring, natijalarni real vaqtda kuzating —
-                    talabalar va o'qituvchilar uchun yagona platforma.
-                </p>
-            </div>
-
-            <div>
-                <div class="lg-stats">
-                    <div class="lg-stat">
-                        <h4>{{ $subjectCounts['subject'] }}</h4>
-                        <span>Fan</span>
-                    </div>
-                    <div class="lg-stat">
-                        <h4>{{ $userCounts['talaba'] }}</h4>
-                        <span>Talaba</span>
-                    </div>
-                    <div class="lg-stat">
-                        <h4>{{ $userCounts['teacher'] }}</h4>
-                        <span>O'qituvchi</span>
-                    </div>
-                </div>
-
-                <div class="lg-quote-wrap">
-                    <div class="lg-quote" id="quote">📚 Bilim — kelajak poydevori.</div>
-                </div>
-            </div>
+        <div class="lg-brand">
+            <div class="lg-brand-icon"><i class='bx bxs-graduation'></i></div>
+            <span>Registrator Ofisi</span>
         </div>
 
         <div class="lg-card">
-
-            <div class="lg-card-icon">
-                <i class='bx bxs-graduation'></i>
-            </div>
-
             <div class="lg-title">Xush kelibsiz</div>
             <div class="lg-sub">Davom etish uchun hisobingizga kiring</div>
 
@@ -453,7 +405,25 @@
                 </button>
 
             </form>
+        </div>
 
+        <div class="lg-chips">
+            <div class="lg-chip">
+                <strong>{{ $subjectCounts['subject'] }}</strong>
+                <span>Fan</span>
+            </div>
+            <div class="lg-chip">
+                <strong>{{ $userCounts['talaba'] }}</strong>
+                <span>Talaba</span>
+            </div>
+            <div class="lg-chip">
+                <strong>{{ $userCounts['teacher'] }}</strong>
+                <span>O'qituvchi</span>
+            </div>
+        </div>
+
+        <div class="lg-quote-wrap">
+            <div class="lg-quote" id="quote">📚 Bilim — kelajak poydevori.</div>
         </div>
 
     </div>

@@ -70,16 +70,17 @@ class CategoryController extends Controller
             'nomi' => $request->input('nomi'),
             'guruh' => $request->input('guruh')
         ]);
+        return redirect()->route('category.create')->with('success', 'Yo\'nalish yangilandi.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(category $category)
-{
-    $category->delete();
+    {
+        $category->delete();
 
-    // route() funksiyasini qo'shing va index sahifasiga qaytaring
-    return redirect()->route('category.index')->with('success', "Yo'nalish o'chirildi");
-}
+        // route() funksiyasini qo'shing va index sahifasiga qaytaring
+        return redirect()->route('category.create')->with('success', "Yo'nalish o'chirildi");
+    }
 }
