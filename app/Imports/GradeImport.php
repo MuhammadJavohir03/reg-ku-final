@@ -11,6 +11,11 @@ class GradeImport implements ToModel
 {
     private $subject_id;
 
+    // Statistika uchun sanoqchilar
+    public $yangiQoshildi = 0;   // Yangi baho qo'shildi
+    public $yangilandi = 0;      // Mavjud baho yangilandi (takrorlanish)
+    public $talabaTopilmadi = 0; // Baza bo'yicha talaba topilmagan qatorlar
+
     public function __construct($subject_id)
     {
         $this->subject_id = $subject_id;
@@ -36,6 +41,7 @@ class GradeImport implements ToModel
 
         if (!$user) {
             Log::warning("Talaba bazadan topilmadi: Ism: '{$talabaIsmi}' - Guruh: '{$talabaGuruh}'");
+            $this->talabaTopilmadi++;
             return null; 
         }
 
@@ -54,15 +60,36 @@ class GradeImport implements ToModel
             $umumiy = $joriy + $oraliq + $yakuniy;
         }
 
-        return new grade([
-            'user_id'       => $user->id,
-            'subject_id'    => $this->subject_id,
-            'joriy_baho'    => $joriy,
-            'oraliq_baho'   => $oraliq,
-            'joriy_oraliq'  => $reyting,
-            'yakuniy_baho'  => $yakuniy,
-            'umumiy'        => $umumiy,
-            'davomat'       => $davomat, 
-        ]);
+        // --- TAKRORLANISHNI OLDINI OLISH ---
+        // Bitta talaba (user_id) + bitta fan (subject_id) uchun faqat bitta yozuv bo'lishi kerak.
+        // Agar avval yuklangan bo'lsa - yangilaymiz, yo'q bo'lsa - yangi qo'shamiz.
+        $mavjudBaho = grade::where('user_id', $user->id)
+                            ->where('subject_id', $this->subject_id)
+                            ->first();
+
+        if ($mavjudBaho) {
+            $this->yangilandi++;
+        } else {
+            $this->yangiQoshildi++;
+        }
+
+        grade::updateOrCreate(
+            [
+                'user_id'    => $user->id,
+                'subject_id' => $this->subject_id,
+            ],
+            [
+                'joriy_baho'   => $joriy,
+                'oraliq_baho'  => $oraliq,
+                'joriy_oraliq' => $reyting,
+                'yakuniy_baho' => $yakuniy,
+                'umumiy'       => $umumiy,
+                'davomat'      => $davomat,
+            ]
+        );
+
+        // Saqlashni o'zimiz updateOrCreate orqali qilganimiz uchun
+        // ToModel'ga qayta insert qildirmaslik uchun null qaytaramiz.
+        return null;
     }
 }

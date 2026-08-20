@@ -85,16 +85,17 @@ class VedomostController extends Controller
         $groups  = array_keys($grouped);
 
         $defaults = [
-            'fakultet'      => optional($subject->fakultet)->nomi ?? '',
-            'kafedra'       => optional($subject->kafedra)->nomi ?? '',
-            'oquv_yili'     => optional($subject->oquv_yili)->nomi ?? '',
-            'fan_krediti'   => $subject->kredit ?? '',
-            'fan_oqituvchi' => optional($subject->teacher)->{"To‘liq_ismi"}
+            'fakultet'       => optional($subject->fakultet)->nomi ?? '',
+            'kafedra'        => optional($subject->kafedra)->nomi ?? '',
+            'oquv_yili'      => optional($subject->oquv_yili)->nomi ?? '',
+            'fan_krediti'    => $subject->kredit ?? '',
+            'fan_oqituvchi'  => optional($subject->teacher)->{"To‘liq_ismi"}
                 ?? optional($subject->teacher)['To‘liq_ismi']
                 ?? optional($subject->teacher)['To‘liq_ismi']
                 ?? '',
-            'talim_tili'    => $subject->talim_tili,
-            'semestr'       => $subject->semster ? $subject->semster . '-semestr' : '',
+            'talim_tili'     => $subject->talim_tili,
+            'semestr'        => $subject->semster ? $subject->semster . '-semestr' : '',
+            'kafedra_mudiri' => $this->mudirFor($subject),
 
         ];
 
@@ -112,17 +113,18 @@ class VedomostController extends Controller
     private function buildSheetForGroup(subject $subject, string $guruh, array $students, array $data): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
-        $spreadsheet->getDefaultStyle()->getFont()->setName('Times New Roman')->setSize(17);
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Times New Roman')->setSize(20);
         $sheet = $spreadsheet->getActiveSheet();
 
         $safeTitle = mb_substr(preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh), 0, 31);
         $sheet->setTitle($safeTitle ?: 'Guruh');
 
-        // Faqat "Talaba" va "Talaba ID" ustunlari matn uzunligiga qarab dinamik kengayadi.
-        // Qolgan (raqamli/qisqa) ustunlar kichik va qat'iy kenglikda qoladi - shunda
-        // jadval umumiy A4 sahifasiga yaxshi sig'adi.
+        // "Talaba" ustuni (B) qat'iy 45 birlik kenglikda, matn sig'masa pastga
+        // o'tadi (wrap text). "Talaba ID" (C) esa matn uzunligiga qarab dinamik
+        // kengayadi. Qolgan (raqamli/qisqa) ustunlar kichik va qat'iy kenglikda
+        // qoladi - shunda jadval umumiy A4 sahifasiga yaxshi sig'adi.
         $sheet->getColumnDimension('A')->setWidth(6);
-        $sheet->getColumnDimension('B')->setAutoSize(true);
+        $sheet->getColumnDimension('B')->setAutoSize(false)->setWidth(45);
         $sheet->getColumnDimension('C')->setAutoSize(true);
         $sheet->getColumnDimension('D')->setWidth(9);
         $sheet->getColumnDimension('E')->setWidth(9);
@@ -151,7 +153,7 @@ class VedomostController extends Controller
 
         $sheet->mergeCells('A2:K2');
         $sheet->setCellValue('A2', 'BAHOLASH QAYDNOMASI' . ($subject->semster ? " ({$subject->semster}-semestr)" : ''));
-        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(17);
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(20);
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // 1-qator: Fakultet, Kafedra, Guruh
@@ -216,8 +218,8 @@ class VedomostController extends Controller
             ->setWrapText(true);
         $sheet->getStyle("A{$headerRow}:K{$headerRow2}")->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getRowDimension($headerRow)->setRowHeight(34);
-        $sheet->getRowDimension($headerRow2)->setRowHeight(34);
+        $sheet->getRowDimension($headerRow)->setRowHeight(60);
+        $sheet->getRowDimension($headerRow2)->setRowHeight(60);
 
         // --- MA'LUMOTLAR QATORLARI ---
         $row = $headerRow2 + 1;
@@ -256,8 +258,11 @@ class VedomostController extends Controller
             $sheet->getStyle("A{$row}:K{$row}")->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                 ->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle("B{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
-            $sheet->getRowDimension($row)->setRowHeight(34);
+            $sheet->getStyle("B{$row}")->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setVertical(Alignment::VERTICAL_CENTER)
+                ->setWrapText(true);
+            $sheet->getRowDimension($row)->setRowHeight(60);
 
             $row++;
         }
@@ -295,10 +300,109 @@ class VedomostController extends Controller
         $sheet->getStyle("D{$row}")->getFont()->setSize(9)->setItalic(true);
         $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
+        // --- IMZO: Kafedra mudiri (registrator ofisi boshlig'i tagida) ---
+        // Fanning kafedrasi va o'quv yiliga mos mudir "mudirlar" jadvalidan avtomatik olinadi.
+        $row += 2;
+        $sheet->mergeCells("A{$row}:C{$row}");
+        $sheet->setCellValue("A{$row}", "Kafedra mudiri:");
+        $sheet->getStyle("A{$row}")->getFont()->setBold(true);
+
+        $sheet->mergeCells("D{$row}:H{$row}");
+        $sheet->getStyle("D{$row}:H{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
+
+        $sheet->mergeCells("I{$row}:K{$row}");
+        $sheet->setCellValue("I{$row}", $this->mudirFor($subject));
+        $sheet->getStyle("I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $row += 1;
+        $sheet->mergeCells("D{$row}:H{$row}");
+        $sheet->setCellValue("D{$row}", "(imzo)");
+        $sheet->getStyle("D{$row}")->getFont()->setSize(9)->setItalic(true);
+        $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
         $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd($headerRow, $headerRow2);
         $sheet->getPageSetup()->setPrintArea("A1:K{$row}");
 
         return $spreadsheet;
+    }
+
+    /**
+     * Fanning kafedrasi va o'quv yiliga mos "mudirlar" jadvalidagi mudir F.I.Sh.ni qaytaradi.
+     * Mos yozuv topilmasa - bo'sh satr (imzo joyi bo'sh qoladi, xato bermaydi).
+     */
+    private function mudirFor(subject $subject): string
+    {
+        if (!$subject->kafedra_id || !$subject->oquv_yili_id) {
+            return '';
+        }
+
+        $fullName = \App\Models\Mudir::where('kafedra_id', $subject->kafedra_id)
+            ->where('oquv_yili_id', $subject->oquv_yili_id)
+            ->value('mudir');
+
+        return \App\Models\Mudir::formatSignature($fullName);
+    }
+
+    /**
+     * Fan uchun har bir guruhga alohida xlsx fayl yozadi va yozilgan fayl
+     * yo'llarini qaytaradi. Fan/guruh uchun ma'lumot topilmasa bo'sh massiv qaytadi.
+     * ($subject, $data, $dir) - VedomostController ichida bir marta yozilgan,
+     * bitta fan uchun ham, bulk (hammasi) eksport uchun ham ishlatiladi.
+     */
+    private function writeGroupExcelFiles(subject $subject, array $grouped, array $data, string $dir): array
+    {
+        $files = [];
+
+        foreach ($grouped as $guruh => $students) {
+            $spreadsheet = $this->buildSheetForGroup($subject, $guruh, $students, $data);
+            $writer = new Xlsx($spreadsheet);
+
+            $safeGuruh = preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh);
+            $filename  = "{$safeGuruh}.xlsx";
+            $path      = $dir . DIRECTORY_SEPARATOR . $filename;
+
+            $writer->save($path);
+            $files[] = $path;
+
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet, $writer);
+        }
+
+        return $files;
+    }
+
+    /**
+     * Berilgan fayllarni ko'rsatilgan yo'ldagi ZIP arxiviga yig'adi.
+     */
+    private function zipFiles(array $files, string $zipPath): void
+    {
+        $zip = new ZipArchive();
+        $openResult = $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        if ($openResult !== true) {
+            throw new \RuntimeException("ZIP faylni yaratib bo'lmadi (kod: {$openResult})");
+        }
+        foreach ($files as $file) {
+            $zip->addFile($file, basename($file));
+        }
+        $zip->close();
+    }
+
+    /**
+     * Bitta fan uchun standart (subject'ning o'zidan olingan) ma'lumotlar
+     * to'plamini quradi - form() dagi $defaults bilan bir xil mantiq.
+     * Bulk (hammasini) eksport qilishda foydalanuvchi har bir fan uchun
+     * qo'lda maydon to'ldirmaydi, shuning uchun subject'ning o'z
+     * bog'lanishlaridan (teacher/talim_tili/oquv_yili) foydalaniladi.
+     */
+    private function defaultDataForSubject(subject $subject): array
+    {
+        return [
+            'fan_oqituvchi' => optional($subject->teacher)->{"To‘liq_ismi"}
+                ?? optional($subject->teacher)['To‘liq_ismi']
+                ?? '',
+            'talim_tili' => $subject->talim_tili ?? '',
+            'oquv_yili'  => optional($subject->oquv_yili)->nomi ?? '',
+        ];
     }
 
     /**
@@ -330,33 +434,12 @@ class VedomostController extends Controller
         $files = [];
 
         try {
-            foreach ($grouped as $guruh => $students) {
-                $spreadsheet = $this->buildSheetForGroup($subject, $guruh, $students, $data);
-                $writer = new Xlsx($spreadsheet);
+            $files = $this->writeGroupExcelFiles($subject, $grouped, $data, $tmpDir);
 
-                $safeGuruh = preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh);
-                $filename  = "{$safeGuruh}.xlsx";
-                $path      = $tmpDir . DIRECTORY_SEPARATOR . $filename;
-
-                $writer->save($path);
-                $files[] = $path;
-
-                $spreadsheet->disconnectWorksheets();
-                unset($spreadsheet, $writer);
-            }
-
-            $zipName =\Illuminate\Support\Str::slug($subject->nomi) . '.zip';
+            $zipName = \Illuminate\Support\Str::slug($subject->nomi) . '.zip';
             $zipPath = $tmpDir . DIRECTORY_SEPARATOR . $zipName;
 
-            $zip = new ZipArchive();
-            $openResult = $zip->open($zipPath, ZipArchive::CREATE);
-            if ($openResult !== true) {
-                throw new \RuntimeException("ZIP faylni yaratib bo'lmadi (kod: {$openResult})");
-            }
-            foreach ($files as $file) {
-                $zip->addFile($file, basename($file));
-            }
-            $zip->close();
+            $this->zipFiles($files, $zipPath);
         } catch (\Throwable $e) {
             // Xatolik bo'lsa vaqtinchalik fayllarni tozalab, xatoni loglaymiz va foydalanuvchiga aniq xabar qaytaramiz
             foreach ($files as $file) {
@@ -385,5 +468,205 @@ class VedomostController extends Controller
         });
 
         return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * index() dagi bilan bir xil filterlarni qo'llab, baholari mavjud fanlar
+     * ro'yxatini qaytaradi. Bulk (hammasini) eksportning barcha bosqichlarida
+     * (start/step) shu bitta joydan foydalaniladi - filterlar ikki joyda
+     * turlicha yozilib, chalkashib ketmasligi uchun.
+     */
+    private function filteredSubjectsForBulkExport(Request $request)
+    {
+        $search     = $request->get('search');
+        $categoryId = $request->get('category_id');
+        $kurs       = $request->get('kurs');
+        $semester   = $request->get('semster');
+
+        return subject::select('id', 'nomi')
+            ->whereHas('grades')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nomi', 'like', "%{$search}%")
+                        ->orWhere('semster', 'like', "%{$search}%")
+                        ->orWhereHas('category', function ($q3) use ($search) {
+                            $q3->where('guruh', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('teacher', function ($q2) use ($search) {
+                            $q2->where('To‘liq_ismi', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($categoryId, fn($query, $categoryId) => $query->where('category_id', $categoryId))
+            ->when($semester, fn($query, $semester) => $query->where('semster', $semester))
+            ->when($kurs, function ($query, $kurs) {
+                $startSem = ($kurs - 1) * 2 + 1;
+                $endSem = $kurs * 2;
+                $query->whereBetween('semster', [$startSem, $endSem]);
+            })
+            ->orderBy('nomi')
+            ->get();
+    }
+
+    /**
+     * Bulk-eksport uchun batch papka yo'lini quradi. $batch faqat harf/raqamdan
+     * iborat bo'lishi shart (route'da regex bilan ham cheklangan) - shu orqali
+     * path traversal xavfsizligi ta'minlanadi.
+     */
+    private function batchDir(string $batch): string
+    {
+        return storage_path('app' . DIRECTORY_SEPARATOR . 'tmp_qaydnoma_batch_' . $batch);
+    }
+
+    /**
+     * 1-BOSQICH: BARCHA FANLAR uchun bulk eksportni boshlaydi.
+     * Filterlarga mos, baholari mavjud fanlar ro'yxatini va yangi batch_id'ni qaytaradi.
+     * Frontend keyin har bir fan uchun alohida "step" so'rovi yuboradi -
+     * shu orqali haqiqiy progress (X / N) ko'rsatish mumkin bo'ladi.
+     */
+    public function exportAllStart(Request $request)
+    {
+        $subjects = $this->filteredSubjectsForBulkExport($request);
+
+        if ($subjects->isEmpty()) {
+            return response()->json(['message' => "Baholari mavjud fanlar topilmadi"], 404);
+        }
+
+        $batch = \Illuminate\Support\Str::random(24);
+        $dir = $this->batchDir($batch);
+        mkdir($dir, 0777, true);
+        mkdir($dir . DIRECTORY_SEPARATOR . 'ziplar', 0777, true);
+
+        // Ruxsat etilgan fan id'lari shu faylga yoziladi - "step" bosqichida
+        // faqat shu ro'yxatdagi id'lar bilan ishlash mumkin (xavfsizlik uchun).
+        file_put_contents(
+            $dir . DIRECTORY_SEPARATOR . 'manifest.json',
+            json_encode(['subject_ids' => $subjects->pluck('id')->values()->all()])
+        );
+
+        return response()->json([
+            'batch'    => $batch,
+            'subjects' => $subjects->map(fn($s) => ['id' => $s->id, 'nomi' => $s->nomi])->values(),
+            'total'    => $subjects->count(),
+        ]);
+    }
+
+    /**
+     * 2-BOSQICH: bitta fan uchun guruhlar bo'yicha xlsx fayllarni tayyorlab,
+     * shu fan-zip'ini batch papkasiga yozadi. Frontend har bir fan uchun
+     * shu endpointni ketma-ket chaqiradi va javobga qarab progressni yangilaydi.
+     */
+    public function exportAllStep(Request $request, string $batch, subject $subject)
+    {
+        $dir = $this->batchDir($batch);
+        $manifestPath = $dir . DIRECTORY_SEPARATOR . 'manifest.json';
+
+        if (!is_dir($dir) || !is_file($manifestPath)) {
+            return response()->json(['message' => "Sessiya topilmadi yoki muddati tugagan. Iltimos, eksportni qaytadan boshlang."], 404);
+        }
+
+        $manifest = json_decode(file_get_contents($manifestPath), true) ?: [];
+        $allowedIds = $manifest['subject_ids'] ?? [];
+
+        if (!in_array($subject->id, $allowedIds, true)) {
+            return response()->json(['message' => "Bu fan ushbu eksport sessiyasiga tegishli emas"], 403);
+        }
+
+        try {
+            $grouped = $this->getStudentsByGroup($subject);
+
+            if (empty($grouped)) {
+                return response()->json(['exported' => false, 'nomi' => $subject->nomi]);
+            }
+
+            $subjectTmpDir = $dir . DIRECTORY_SEPARATOR . 'fan_' . $subject->id;
+            mkdir($subjectTmpDir, 0777, true);
+
+            $data = $this->defaultDataForSubject($subject);
+            $groupFiles = $this->writeGroupExcelFiles($subject, $grouped, $data, $subjectTmpDir);
+
+            $safeName = (\Illuminate\Support\Str::slug($subject->nomi) ?: 'fan') . '-' . $subject->id;
+            $subjectZipPath = $dir . DIRECTORY_SEPARATOR . 'ziplar' . DIRECTORY_SEPARATOR . $safeName . '.zip';
+            $this->zipFiles($groupFiles, $subjectZipPath);
+
+            foreach ($groupFiles as $f) {
+                @unlink($f);
+            }
+            @rmdir($subjectTmpDir);
+
+            return response()->json([
+                'exported'    => true,
+                'nomi'        => $subject->nomi,
+                'guruh_soni'  => count($grouped),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Vedomost bulk-export step xatosi: ' . $e->getMessage(), [
+                'batch'      => $batch,
+                'subject_id' => $subject->id,
+                'trace'      => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => "\"{$subject->nomi}\" fani uchun xatolik: " . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 3-BOSQICH: barcha "step"lar tugagach chaqiriladi. Batch papkasidagi
+     * fan-ziplarni bitta umumiy ZIP ichiga yig'ib, yuklab beradi
+     * (zip -> ziplar -> excellar tuzilishi) va vaqtinchalik papkani tozalaydi.
+     */
+    public function exportAllFinish(Request $request, string $batch)
+    {
+        $dir = $this->batchDir($batch);
+        $zipsDir = $dir . DIRECTORY_SEPARATOR . 'ziplar';
+
+        if (!is_dir($zipsDir)) {
+            return response()->json(['message' => "Sessiya topilmadi yoki muddati tugagan"], 404);
+        }
+
+        $subjectZipPaths = glob($zipsDir . DIRECTORY_SEPARATOR . '*.zip') ?: [];
+
+        if (empty($subjectZipPaths)) {
+            $this->cleanupBatchDir($dir);
+            return response()->json(['message' => "Hech bir fan uchun baholar topilmadi"], 404);
+        }
+
+        $masterZipName = 'Barcha_vedomostlar_' . now()->format('Y-m-d_His') . '.zip';
+        $masterZipPath = $dir . DIRECTORY_SEPARATOR . $masterZipName;
+
+        try {
+            $this->zipFiles($subjectZipPaths, $masterZipPath);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Vedomost bulk-export finish xatosi: ' . $e->getMessage(), [
+                'batch' => $batch,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['message' => "Umumiy ZIP yaratishda xatolik: " . $e->getMessage()], 500);
+        }
+
+        foreach ($subjectZipPaths as $f) {
+            @unlink($f);
+        }
+        @rmdir($zipsDir);
+        @unlink($dir . DIRECTORY_SEPARATOR . 'manifest.json');
+
+        app()->terminating(function () use ($dir) {
+            @rmdir($dir);
+        });
+
+        return response()->download($masterZipPath, $masterZipName)->deleteFileAfterSend(true);
+    }
+
+    private function cleanupBatchDir(string $dir): void
+    {
+        $zipsDir = $dir . DIRECTORY_SEPARATOR . 'ziplar';
+        foreach (glob($zipsDir . DIRECTORY_SEPARATOR . '*.zip') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($zipsDir);
+        @unlink($dir . DIRECTORY_SEPARATOR . 'manifest.json');
+        @rmdir($dir);
     }
 }

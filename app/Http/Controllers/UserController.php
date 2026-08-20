@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
 use App\Imports\StudentsImport;
+use App\Exports\MismatchNamesExport;
 use App\Models\free_semestr;
 use App\Models\grade;
 use App\Models\mini_semestr;
@@ -170,6 +171,103 @@ class UserController extends Controller
                 'message' => 'Xatolik: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Yuklangan fayl bilan bazadagi talabalarni solishtirish.
+     * Talaba_ID bo'yicha moslashtiradi, To‘liq_ismi boshqacha bo'lsa
+     * ro'yxatni Excel qilib qaytaradi. Bazadagi ma'lumot o'zgartirilmaydi.
+     */
+    public function checkImport(Request $request)
+    {
+        $request->validate([
+            'check_file' => 'required|mimes:xlsx,xls,csv',
+        ]);
+
+        $sheet = Excel::toArray(new \stdClass(), $request->file('check_file'))[0] ?? [];
+
+        if (empty($sheet)) {
+            return back()->with('error', 'Fayl bo\'sh yoki noto\'g\'ri formatda.');
+        }
+
+        $rawHeader = array_shift($sheet);
+
+        $header = array_map(function ($h) {
+            $h = mb_strtolower((string) $h);
+            return preg_replace('/[^a-z0-9]/u', '', $h);
+        }, $rawHeader);
+
+        $idCol   = null;
+        $nameCol = null;
+        $gur = null;
+
+        foreach ($header as $i => $h) {
+            if ($idCol === null && str_contains($h, 'talabaid')) {
+                $idCol = $i;
+            }
+            if ($nameCol === null && (str_contains($h, 'toliqismi') || str_contains($h, 'toliqism'))) {
+                $nameCol = $i;
+            }
+            if ($gur === null && (str_contains($h, 'guruh') || str_contains($h, 'guruh'))) {
+                $gur = $i;
+            }
+        }
+
+        if ($idCol === null || $nameCol === null) {
+            return back()->with(
+                'error',
+                'Faylda "Talaba ID" yoki "To\'liq ismi" ustuni topilmadi. '
+                . 'Faylingizdagi ustun sarlavhalari: ' . implode(' | ', array_filter($rawHeader, fn ($v) => $v !== null && $v !== ''))
+            );
+        }
+
+        $mismatches = [];
+
+        foreach ($sheet as $row) {
+            $talabaId = trim((string) ($row[$idCol] ?? ''));
+            $fileName = trim((string) ($row[$nameCol] ?? ''));
+            $guruhi = trim((string) ($row[$gur] ?? ''));
+
+            if ($talabaId === '') {
+                continue;
+            }
+
+            $dbUser = User::where('Talaba_ID', $talabaId)->first();
+
+            if (!$dbUser) {
+                continue;
+            }
+
+            $dbName = trim((string) $dbUser->{"To‘liq_ismi"});
+
+            if ($this->normalizeName($dbName) !== $this->normalizeName($fileName)) {
+                $mismatches[] = [
+                    'Talaba_ID'           => $talabaId,
+                    'Bazadagi_Toliq_ismi' => $dbName,
+                    'Fayldagi_Toliq_ismi' => $fileName,
+                    'Guruhi' => $guruhi
+                ];
+            }
+        }
+
+        if (empty($mismatches)) {
+            return back()->with('success', 'Farq topilmadi, barcha ismlar mos keladi.');
+        }
+
+        return Excel::download(new MismatchNamesExport($mismatches), 'ism_farqlari_' . date('Y-m-d_His') . '.xlsx');
+    }
+
+    /**
+     * Ism solishtirish uchun matnni normallashtirish
+     * (apostrof variantlari va ortiqcha bo'shliqlarni bir xillashtiradi).
+     */
+    private function normalizeName(string $name): string
+    {
+        $name = mb_strtoupper($name);
+        $name = str_replace(["'", '’', '`'], '‘', $name);
+        $name = preg_replace('/\s+/', ' ', $name);
+
+        return trim($name);
     }
 
     /**

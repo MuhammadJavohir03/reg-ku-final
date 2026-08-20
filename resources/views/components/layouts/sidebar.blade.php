@@ -593,10 +593,10 @@
                     <a href="{{ route('login') }}"
                         style="display:flex; align-items:center; color:#fff; text-decoration:none;">
 
-                        <i class="bx bx-log-in"
+                        <i class="bx  text-success bx-log-in"
                             style="font-size:20px; min-width:60px; height:48px; line-height:48px; text-align:center;"></i>
 
-                        <span style="font-size:14px;">Kirish</span>
+                        <span class="text-success" style="font-size:14px;">Kirish</span>
                     </a>
                 </li>
             @endguest

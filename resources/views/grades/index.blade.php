@@ -71,7 +71,7 @@
                 </thead>
                 <tbody>
                     @forelse ($grades as $index => $grade)
-                        <tr>
+                        <tr data-grade-id="{{ $grade->id }}">
                             <td class="ar-id">
                                 {{ $grades->firstItem() + $index }}
                             </td>
@@ -96,35 +96,54 @@
                             </td>
 
                             <td style="text-align:center; font-size:13px; font-weight:600; color:#333;">
-                                {{ $grade->joriy_baho }}
+                                @if (auth()->user()?->email === 'javohir8386@gmail.com')
+                                    <input type="number" step="0.01" min="0" class="grade-input" data-field="joriy_baho"
+                                        value="{{ $grade->joriy_baho }}"
+                                        style="width:60px; text-align:center; border:1px solid #ddd; border-radius:6px; padding:3px 4px; font-weight:600; font-size:13px;">
+                                @else
+                                    {{ $grade->joriy_baho }}
+                                @endif
                             </td>
 
                             <td style="text-align:center; font-size:13px; font-weight:600; color:#333;">
-                                {{ $grade->oraliq_baho }}
+                                @if (auth()->user()?->email === 'javohir8386@gmail.com')
+                                    <input type="number" step="0.01" min="0" class="grade-input" data-field="oraliq_baho"
+                                        value="{{ $grade->oraliq_baho }}"
+                                        style="width:60px; text-align:center; border:1px solid #ddd; border-radius:6px; padding:3px 4px; font-weight:600; font-size:13px;">
+                                @else
+                                    {{ $grade->oraliq_baho }}
+                                @endif
                             </td>
 
-                            <td
-                                style="text-align:center; font-size:13px; font-weight:600;
-                                color: {{ $grade->joriy_oraliq >= 20 ? '#27500A' : '#ff0000' }}">
-                                {{ $grade->joriy_oraliq }}
+                            <td style="text-align:center; font-size:13px; font-weight:600;">
+                                <span class="js-reyting"
+                                    style="color: {{ $grade->joriy_oraliq >= 20 ? '#27500A' : '#ff0000' }}">
+                                    {{ $grade->joriy_oraliq }}
+                                </span>
                             </td>
 
                             <td style="text-align:center; font-size:13px; font-weight:600; color:#333;">
-                                {{ $grade->yakuniy_baho }}
+                                @if (auth()->user()?->email === 'javohir8386@gmail.com')
+                                    <input type="number" step="0.01" min="0" class="grade-input" data-field="yakuniy_baho"
+                                        value="{{ $grade->yakuniy_baho }}"
+                                        style="width:60px; text-align:center; border:1px solid #ddd; border-radius:6px; padding:3px 4px; font-weight:600; font-size:13px;">
+                                @else
+                                    {{ $grade->yakuniy_baho }}
+                                @endif
                             </td>
 
                             <td style="text-align:center;">
                                 @if ($grade->umumiy > 70)
-                                    <span class="ar-badge ar-badge-ok" style="font-size:13px; font-weight:700;">
+                                    <span class="ar-badge ar-badge-ok js-umumiy" style="font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @elseif($grade->umumiy >= 60)
-                                    <span class="ar-badge"
+                                    <span class="ar-badge js-umumiy"
                                         style="background:#fff3cd; color:#ff0000; font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @else
-                                    <span class="ar-badge ar-badge-rej" style="font-size:13px; font-weight:700;">
+                                    <span class="ar-badge ar-badge-rej js-umumiy" style="font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @endif
@@ -179,4 +198,90 @@
         </div>
 
     </div>
+
+    @if (auth()->user()?->email === 'javohir8386@gmail.com')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const csrfToken = '{{ csrf_token() }}';
+                const urlTemplate = "{{ route('grades.update', ['grade' => '__ID__']) }}";
+
+                function num(row, field) {
+                    return parseFloat(row.querySelector(`[data-field="${field}"]`).value) || 0;
+                }
+
+                function paintReyting(row, reyting) {
+                    const el = row.querySelector('.js-reyting');
+                    el.textContent = reyting;
+                    el.style.color = reyting >= 20 ? '#27500A' : '#ff0000';
+                }
+
+                function paintUmumiy(row, umumiy) {
+                    const el = row.querySelector('.js-umumiy');
+                    el.textContent = umumiy;
+                    el.className = 'ar-badge js-umumiy';
+                    el.style.background = '';
+                    el.style.color = '';
+                    if (umumiy > 70) {
+                        el.classList.add('ar-badge-ok');
+                    } else if (umumiy >= 60) {
+                        el.style.background = '#fff3cd';
+                        el.style.color = '#ff0000';
+                    } else {
+                        el.classList.add('ar-badge-rej');
+                    }
+                }
+
+                function recalcRow(row) {
+                    const joriy = num(row, 'joriy_baho');
+                    const oraliq = num(row, 'oraliq_baho');
+                    const yakuniy = num(row, 'yakuniy_baho');
+
+                    paintReyting(row, joriy + oraliq);
+                    paintUmumiy(row, joriy + oraliq + yakuniy);
+                }
+
+                function saveRow(row) {
+                    const id = row.dataset.gradeId;
+                    const url = urlTemplate.replace('__ID__', id);
+
+                    fetch(url, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            joriy_baho: num(row, 'joriy_baho'),
+                            oraliq_baho: num(row, 'oraliq_baho'),
+                            yakuniy_baho: num(row, 'yakuniy_baho'),
+                        }),
+                    })
+                        .then(function (res) {
+                            if (!res.ok) throw new Error('Saqlashda xatolik: ' + res.status);
+                            return res.json();
+                        })
+                        .then(function (data) {
+                            if (data.success) {
+                                paintReyting(row, data.joriy_oraliq);
+                                paintUmumiy(row, data.umumiy);
+                            }
+                        })
+                        .catch(function (err) {
+                            console.error(err);
+                            alert('Saqlashda xatolik yuz berdi. Sahifani yangilab, qayta urinib ko\'ring.');
+                        });
+                }
+
+                document.querySelectorAll('.grade-input').forEach(function (input) {
+                    input.addEventListener('input', function () {
+                        recalcRow(this.closest('tr'));
+                    });
+                    input.addEventListener('change', function () {
+                        saveRow(this.closest('tr'));
+                    });
+                });
+            });
+        </script>
+    @endif
 </x-layouts.sidebar>

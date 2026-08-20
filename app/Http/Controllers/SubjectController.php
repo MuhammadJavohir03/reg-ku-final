@@ -22,7 +22,12 @@ class SubjectController extends Controller
     public function index()
     {
         $search = request('search');
-        $pageSize = request('page_size', 10);
+        $pageSize = request('page_size', 100);
+
+        // Alohida filterlar: Yo'nalish (category), Kursi, Semestr
+        $categoryId = request('category_id');
+        $kurs = request('kurs');
+        $semester = request('semster');
 
         $subjects = subject::with(['category', 'teacher', 'kafedra', 'lesson_type'])
             ->withExists('grades')
@@ -39,6 +44,19 @@ class SubjectController extends Controller
                         });
                 });
             })
+            // Yo'nalish (category) bo'yicha filter
+            ->when($categoryId, function ($query, $categoryId) {
+                $query->where('category_id', $categoryId);
+            })
+            // Aniq semestr bo'yicha filter
+            ->when($semester, function ($query, $semester) {
+                $query->where('semster', $semester);
+            })
+            ->when($kurs, function ($query, $kurs) {
+                $startSem = ($kurs - 1) * 2 + 1;
+                $endSem = $kurs * 2;
+                $query->whereBetween('semster', [$startSem, $endSem]);
+            })
             ->latest()
             ->paginate($pageSize)
             ->withQueryString();
@@ -50,7 +68,10 @@ class SubjectController extends Controller
         // Nusxalash oynasidagi "Yangi o'qituvchi" qidiruvli dropdown uchun
         $teachers = User::where('role', 'teacher')->get();
 
-        return view('subject.index', compact('subjects', 'subjectCounts', 'teachers'));
+        // "Yo'nalish" filter dropdown uchun barcha kategoriyalar
+        $categories = category::all();
+
+        return view('subject.index', compact('subjects', 'subjectCounts', 'teachers', 'categories'));
     }
 
     /**

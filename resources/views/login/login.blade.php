@@ -375,7 +375,7 @@
                     <label>Email</label>
                     <div class="lg-input-box">
                         <i class='bx bx-envelope lg-input-icon'></i>
-                        <input class="lg-input" type="email" name="email" placeholder="example@mail.com" required>
+                        <input class="lg-input" type="email" name="email" required>
                     </div>
                 </div>
 

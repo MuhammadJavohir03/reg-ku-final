@@ -20,8 +20,29 @@
                 <a href="{{ route('subject.biriktirish') }}" class="ar-btn">
                     <i class="bx bx-plus"></i> Biriktirish
                 </a>
+                <button type="button" id="exportAllVedomostBtn" class="ar-btn ar-btn-ok">
+                    <i class="bx bx-archive"></i> Vedomostga export
+                </button>
+                <a href="{{ route('mudir.index') }}" class="ar-btn">
+                    <i class="bx bx-id-card"></i> Mudirlar
+                </a>
             </div>
-            
+
+        </div>
+
+        {{-- BARCHA FANLARNI VEDOMOSTGA EXPORT QILISH: progress ko'rsatkichi --}}
+        <div id="exportAllProgressWrap" style="display:none; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="position:relative; width:36px; height:36px; flex-shrink:0;">
+                <svg width="36" height="36" style="transform:rotate(-90deg);">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="#e5e7eb" stroke-width="3" />
+                    <circle id="exportAllProgressCircle" cx="18" cy="18" r="15" fill="none" stroke="#217346"
+                        stroke-width="3" stroke-dasharray="94.2" stroke-dashoffset="94.2"
+                        style="transition:stroke-dashoffset 0.2s;" />
+                </svg>
+                <span id="exportAllProgressPct" style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%); font-size:9px;font-weight:700;color:#217346;">0%</span>
+            </div>
+            <span id="exportAllProgressText" style="font-size:13px; color:#555;">Tayyorlanmoqda...</span>
         </div>
 
         {{-- QIDIRUV --}}
@@ -37,17 +58,65 @@
             @if (request('search'))
                 <a href="{{ route('subject.index') }}" class="ar-btn ar-btn-rej">✕</a>
             @endif
+
+            {{-- Yo'nalish (category) bo'yicha filter: yozib qidiradigan dropdown --}}
+            <div style="position:relative; width:220px;">
+                <i class="bx bx-search"
+                    style="position:absolute; left:10px; top:50%;
+                    transform:translateY(-50%); color:#aaa; font-size:16px;"></i>
+                <input type="text" id="filter_category_search" class="arizalar-search"
+                    style="width:100%; padding-left:34px;" placeholder="Yo'nalish bo'yicha qidirish..."
+                    autocomplete="off"
+                    value="{{ optional($categories->firstWhere('id', request('category_id')))->nomi ?? optional($categories->firstWhere('id', request('category_id')))->guruh }}">
+
+                <div id="filter_category_results" class="search-dropdown">
+                    <div class="search-item" data-id="" data-name="Barcha yo'nalishlar">
+                        Barcha yo'nalishlar
+                    </div>
+                    @foreach ($categories as $cat)
+                        <div class="search-item" data-id="{{ $cat->id }}"
+                            data-name="{{ $cat->nomi ?? $cat->guruh }}">
+                            {{ $cat->nomi ?? $cat->guruh }}
+                        </div>
+                    @endforeach
+                </div>
+
+                <input type="hidden" name="category_id" id="filter_hidden_category_id"
+                    value="{{ request('category_id') }}">
+            </div>
+
+            {{-- Kursi bo'yicha filter --}}
+            <select name="kurs" class="arizalar-search" style="width:120px;" onchange="this.form.submit()">
+                <option value="">Barcha kurslar</option>
+                @for ($k = 1; $k <= 4; $k++)
+                    <option value="{{ $k }}" {{ request('kurs') == $k ? 'selected' : '' }}>{{ $k }}-kurs</option>
+                @endfor
+            </select>
+
+            {{-- Semestr bo'yicha filter --}}
+            <select name="semster" class="arizalar-search" style="width:130px;" onchange="this.form.submit()">
+                <option value="">Barcha semestrlar</option>
+                @for ($s = 1; $s <= 8; $s++)
+                    <option value="{{ $s }}" {{ request('semster') == $s ? 'selected' : '' }}>{{ $s }}-semestr</option>
+                @endfor
+            </select>
+
             <select name="page_size" class="arizalar-search" style="width:130px;" onchange="this.form.submit()">
-                <option value="10" {{ request('page_size') == 10 ? 'selected' : '' }}>10 ta</option>
-                <option value="20" {{ request('page_size') == 20 ? 'selected' : '' }}>20 ta</option>
-                <option value="50" {{ request('page_size') == 50 ? 'selected' : '' }}>50 ta</option>
                 <option value="100" {{ request('page_size') == 100 ? 'selected' : '' }}>100 ta</option>
                 <option value="200" {{ request('page_size') == 200 ? 'selected' : '' }}>200 ta</option>
+                <option value="500" {{ request('page_size') == 500 ? 'selected' : '' }}>500 ta</option>
+                <option value="600" {{ request('page_size') == 600 ? 'selected' : '' }}>600 ta</option>
+                <option value="1000" {{ request('page_size') == 1000 ? 'selected' : '' }}>1000 ta</option>
 
             </select>
             <button type="submit" class="ar-btn ar-btn-ok">
                 <i class="bx bx-search"></i> Qidirish
             </button>
+            @if (request('category_id') || request('kurs') || request('semster'))
+                <a href="{{ route('subject.index') }}" class="ar-btn ar-btn-rej" title="Filterlarni tozalash">
+                    <i class="bx bx-filter-alt"></i> Filterni tozalash
+                </a>
+            @endif
         </form>
 
         {{-- FANLAR JADVALI --}}
@@ -177,32 +246,32 @@
                                         </label>
                                     </form>
 
-                                    {{-- TOZALASH --}}
-                                    @if ($subject->grades_exists)
-                                        <form action="{{ route('grades.clear', $subject->id) }}" method="POST"
-                                            style="display:inline;">
-                                            @csrf @method('DELETE')
-                                            <button class="ar-btn ar-btn-rej" style="padding:5px 8px;"
-                                                title="Baholarni tozalash"
-                                                onclick="return confirm('Barcha baholar ochirisinmi?')">
-                                                <i class="bx bx-eraser"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-
+                                    
                                     {{-- NUSXALASH --}}
                                     <button type="button" class="ar-btn" style="padding:5px 8px;"
-                                        title="Fanni nusxalash (yangi o'qituvchi bilan)"
-                                        onclick="openDuplicateModal({{ $subject->id }}, {{ \Illuminate\Support\Js::from($subject->nomi) }})">
-                                        <i class="bx bx-copy-alt" style="color:#f59e0b;"></i>
-                                    </button>
-
-                                    {{-- TAHRIRLASH --}}
-                                    <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
-                                        style="padding:5px 8px;" title="Tahrirlash">
-                                        <i class="bx bx-edit"></i>
-                                    </a>
-
+                                    title="Fanni nusxalash (yangi o'qituvchi bilan)"
+                                    onclick="openDuplicateModal({{ $subject->id }}, {{ \Illuminate\Support\Js::from($subject->nomi) }})">
+                                    <i class="bx bx-copy-alt" style="color:#f59e0b;"></i>
+                                </button>
+                                
+                                {{-- TAHRIRLASH --}}
+                                <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
+                                    style="padding:5px 8px;" title="Tahrirlash">
+                                    <i class="bx bx-edit"></i>
+                                </a>
+                                
+                                {{-- TOZALASH --}}
+                                @if ($subject->grades_exists)
+                                    <form action="{{ route('grades.clear', $subject->id) }}" method="POST"
+                                        style="display:inline;">
+                                        @csrf @method('DELETE')
+                                        <button class="ar-btn ar-btn-rej" style="padding:5px 8px;"
+                                            title="Baholarni tozalash"
+                                            onclick="return confirm('Barcha baholar ochirisinmi?')">
+                                            <i class="bx bx-eraser"></i>
+                                        </button>
+                                    </form>
+                                @endif
                                     {{-- O'CHIRISH --}}
                                     <form action="{{ route('subject.destroy', $subject->id) }}" method="POST"
                                         style="display:inline;">
@@ -485,7 +554,57 @@
                 alert("Iltimos, avval yangi o'qituvchini tanlang.");
             }
         });
+    </script>
 
+    {{-- Yo'nalish (category) bo'yicha yozib-qidiradigan filter --}}
+    <script>
+        (function() {
+            const catSearchForm = document.getElementById('filter_category_search').closest('form');
+            const catSearch = document.getElementById('filter_category_search');
+            const catResults = document.getElementById('filter_category_results');
+            const catHidden = document.getElementById('filter_hidden_category_id');
+            const catItems = catResults.querySelectorAll('.search-item');
+
+            catSearch.addEventListener('input', function() {
+                const val = this.value.toLowerCase().trim();
+                let found = 0;
+
+                catResults.style.display = 'block';
+                catItems.forEach(item => {
+                    if (item.dataset.id === '') return; // "Barcha yo'nalishlar" doim ko'rinadi
+                    const name = item.getAttribute('data-name').toLowerCase();
+                    const show = val.length === 0 || name.includes(val);
+                    item.style.display = show ? 'flex' : 'none';
+                    if (show) found++;
+                });
+
+                if (val.length > 0 && found === 0) {
+                    catResults.style.display = 'none';
+                }
+            });
+
+            catSearch.addEventListener('focus', function() {
+                catResults.style.display = 'block';
+            });
+
+            catItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    catSearch.value = this.dataset.id === '' ? '' : this.dataset.name;
+                    catHidden.value = this.dataset.id;
+                    catResults.style.display = 'none';
+                    catSearchForm.submit();
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!catSearch.contains(e.target) && !catResults.contains(e.target)) {
+                    catResults.style.display = 'none';
+                }
+            });
+        })();
+    </script>
+
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('select').forEach(select => {
                 // Asl select elementini yashirish
@@ -549,6 +668,132 @@
                 document.querySelectorAll('.custom-glass-select').forEach(w => w.classList.remove('open'));
             });
         });
+    </script>
+
+    {{-- BARCHA FANLARNI VEDOMOSTGA EXPORT QILISH (haqiqiy progress bilan) --}}
+    <script>
+        (function() {
+            const exportAllBtn = document.getElementById('exportAllVedomostBtn');
+            const progressWrap = document.getElementById('exportAllProgressWrap');
+            const progressCircle = document.getElementById('exportAllProgressCircle');
+            const progressPct = document.getElementById('exportAllProgressPct');
+            const progressText = document.getElementById('exportAllProgressText');
+            const circumference = 94.2;
+            const csrfToken = '{{ csrf_token() }}';
+
+            if (!exportAllBtn) return;
+
+            function setProgress(done, total, label) {
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                const offset = circumference - (pct / 100) * circumference;
+                progressCircle.setAttribute('stroke-dashoffset', offset);
+                progressPct.textContent = pct + '%';
+                progressText.textContent = `${done} / ${total} fan tekshirildi` + (label ? ` \u2014 ${label}` : '');
+            }
+
+            exportAllBtn.addEventListener('click', async function() {
+                const filtered = {{ (request('search') || request('category_id') || request('kurs') || request('semster')) ? 'true' : 'false' }};
+                const confirmMsg = filtered
+                    ? "Joriy filterga mos fanlar bo'yicha vedomostlar bitta ZIP qilib eksport qilinadi. Davom etasizmi?"
+                    : "Baholari mavjud BARCHA fanlar bo'yicha vedomostlar bitta ZIP qilib eksport qilinadi. Bu bir necha daqiqa vaqt olishi mumkin. Davom etasizmi?";
+
+                if (!confirm(confirmMsg)) return;
+
+                exportAllBtn.disabled = true;
+                progressWrap.style.display = 'flex';
+                setProgress(0, 1, "Fanlar ro'yxati olinmoqda...");
+
+                try {
+                    // 1-BOSQICH: filterga mos fanlar ro'yxatini va batch_id ni olamiz
+                    const startParams = new URLSearchParams(window.location.search);
+                    const startResp = await fetch("{{ route('vedomost.exportAll.start') }}?" + startParams.toString(), {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!startResp.ok) {
+                        const err = await startResp.json().catch(() => ({}));
+                        throw new Error(err.message || ('Server xatosi (kod: ' + startResp.status + ')'));
+                    }
+
+                    const startData = await startResp.json();
+                    const batch = startData.batch;
+                    const subjects = startData.subjects;
+                    const total = startData.total;
+
+                    let done = 0;
+                    let exportedCount = 0;
+
+                    setProgress(0, total, 'Boshlanmoqda...');
+
+                    // 2-BOSQICH: har bir fan ketma-ket ishlanadi - shu orqali haqiqiy progress ko'rinadi
+                    for (const subj of subjects) {
+                        setProgress(done, total, subj.nomi);
+
+                        const stepUrl = "{{ url('/vedomost/export-all') }}/" + batch + "/step/" + subj.id;
+                        const stepResp = await fetch(stepUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        if (!stepResp.ok) {
+                            const err = await stepResp.json().catch(() => ({}));
+                            throw new Error(err.message || (`"${subj.nomi}" fanida xatolik (kod: ${stepResp.status})`));
+                        }
+
+                        const stepData = await stepResp.json();
+                        if (stepData.exported) exportedCount++;
+
+                        done++;
+                        setProgress(done, total, subj.nomi);
+                    }
+
+                    // 3-BOSQICH: barcha fan-ziplarni bitta umumiy ZIP qilib yuklab olamiz
+                    progressText.textContent = `${done} / ${total} fan tayyor. Umumiy ZIP yig'ilmoqda...`;
+
+                    const finishResp = await fetch("{{ url('/vedomost/export-all') }}/" + batch + "/finish", {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!finishResp.ok) {
+                        const err = await finishResp.json().catch(() => ({}));
+                        throw new Error(err.message || ('Server xatosi (kod: ' + finishResp.status + ')'));
+                    }
+
+                    const blob = await finishResp.blob();
+                    progressCircle.setAttribute('stroke-dashoffset', 0);
+                    progressPct.textContent = '100%';
+                    progressText.textContent = `Tayyor: ${exportedCount} ta fan eksport qilindi. Yuklab olinmoqda...`;
+
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = 'Barcha_vedomostlar.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(blobUrl);
+
+                    setTimeout(function() {
+                        progressWrap.style.display = 'none';
+                    }, 2000);
+                } catch (err) {
+                    progressText.textContent = 'Xatolik yuz berdi!';
+                    alert('Xatolik: ' + err.message);
+                } finally {
+                    exportAllBtn.disabled = false;
+                }
+            });
+        })();
     </script>
 
 </x-layouts.sidebar>

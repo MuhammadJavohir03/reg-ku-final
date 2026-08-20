@@ -18,9 +18,18 @@ class GradeController extends Controller
 
         try {
             // Import klasiga subject_id ni berib yuboramiz
-            Excel::import(new GradeImport($subject_id), $request->file('excel_file'));
+            $import = new GradeImport($subject_id);
+            Excel::import($import, $request->file('excel_file'));
 
-            return redirect()->back()->with('success', 'Baholar muvaffaqiyatli import qilindi!');
+            // Import natijalari bo'yicha xabar tayyorlaymiz
+            $xabar = "Yangi qo'shildi: {$import->yangiQoshildi} ta, "
+                   . "Yangilandi (takroriy): {$import->yangilandi} ta";
+
+            if ($import->talabaTopilmadi > 0) {
+                $xabar .= ", Talaba topilmadi: {$import->talabaTopilmadi} ta";
+            }
+
+            return redirect()->back()->with('success', $xabar);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Xatolik yuz berdi: ' . $e->getMessage());
         }
@@ -55,5 +64,48 @@ class GradeController extends Controller
     public function destroy(grade $grade){
         $grade->delete();
         return redirect()->back()->with('success', 'Natija muvaffaqiyatli o\'chirildi.');
+    }
+
+    /**
+     * Baholarni dinamik (AJAX orqali) tahrirlash.
+     * Faqat javohir8386@gmail.com ushbu amalni bajara oladi.
+     *
+     * Reyting  = joriy_baho + oraliq_baho
+     * Umumiy   = joriy_baho + oraliq_baho + yakuniy_baho
+     */
+    public function update(Request $request, grade $grade)
+    {
+        if (auth()->user()?->email !== 'javohir8386@gmail.com') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sizda baholarni tahrirlash uchun ruxsat yo\'q.',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'joriy_baho'   => 'required|numeric|min:0',
+            'oraliq_baho'  => 'required|numeric|min:0',
+            'yakuniy_baho' => 'required|numeric|min:0',
+        ]);
+
+        $joriy   = (float) $validated['joriy_baho'];
+        $oraliq  = (float) $validated['oraliq_baho'];
+        $yakuniy = (float) $validated['yakuniy_baho'];
+
+        $grade->joriy_baho   = $joriy;
+        $grade->oraliq_baho  = $oraliq;
+        $grade->yakuniy_baho = $yakuniy;
+        $grade->joriy_oraliq = $joriy + $oraliq;            // Reyting — doim yig'indi
+        $grade->umumiy       = $joriy + $oraliq + $yakuniy; // Umumiy ball — doim yig'indi
+        $grade->save();
+
+        return response()->json([
+            'success'      => true,
+            'joriy_baho'   => $grade->joriy_baho,
+            'oraliq_baho'  => $grade->oraliq_baho,
+            'yakuniy_baho' => $grade->yakuniy_baho,
+            'joriy_oraliq' => $grade->joriy_oraliq,
+            'umumiy'       => $grade->umumiy,
+        ]);
     }
 }

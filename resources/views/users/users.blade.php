@@ -53,6 +53,15 @@
                         style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:700;color:#5B4FE0;">0%</span>
                 </div>
             </form>
+
+            <form action="{{ route('users.check') }}" method="POST" enctype="multipart/form-data"
+                style="display:flex; align-items:center; gap:8px;">
+                @csrf
+                <input type="file" name="check_file" class="arizalar-search" style="width:220px;" required>
+                <button type="submit" class="ar-btn ar-btn-accent">
+                    <i class="bx bx-check-double"></i> Tekshirish
+                </button>
+            </form>
         </div>
 
         <div class="arizalar-table-wrap">

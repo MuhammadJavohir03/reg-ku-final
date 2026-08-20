@@ -10,6 +10,9 @@
             <a href="{{ route('grades.index', $subject->id) }}" class="ar-btn">
                 <i class="bx bx-arrow-back"></i> Orqaga
             </a>
+            <a href="{{ route('mudir.index') }}" class="ar-btn">
+                <i class="bx bx-id-card"></i> Mudirlar
+            </a>
         </div>
 
         <p style="color:#888; font-size:13px; margin-bottom:20px;">
@@ -49,6 +52,12 @@
                         <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Fan krediti</label>
                         <input type="text" class="arizalar-search" style="width:100%;"
                             value="{{ $defaults['fan_krediti'] ?: '—' }}" disabled>
+                    </div>
+
+                    <div>
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">Kafedra mudiri <span style="color:#aaa; font-weight:400;">(vedomostga avtomatik qo'yiladi)</span></label>
+                        <input type="text" class="arizalar-search" style="width:100%;"
+                            value="{{ $defaults['kafedra_mudiri'] ?: "Bu kafedra/o'quv yili uchun mudir kiritilmagan" }}" disabled>
                     </div>
 
                     <div>

@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\ElonController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArizaAdminController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\FreeController;
 use App\Http\Controllers\FreeuserController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\MudirController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
@@ -35,16 +35,11 @@ use App\Http\Controllers\Student\ChatController as StudentChatController;
 use App\Http\Controllers\VedomostController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
-
 Route::get('/', [ElonController::class, 'index'])->name('index');
 Route::resource('elons', ElonController::class)->middleware('auth');;
-
-
-
 Route::get('login', [AuthController::class, 'login'])->name('login');
 Route::post('authenticate', [AuthController::class, 'authenticate'])->name('authenticate');
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
-
 Route::resource('free_semestr', FreeController::class);
 Route::resource('free_semestr_user', FreeuserController::class);
 Route::resource('bepul_semestr', BepulSemestrController::class);
@@ -53,16 +48,13 @@ Route::resource('bepul_semestr.fanlar', BepulFanlarController::class)->names([
     'create' => 'bepul_semestr.fanlar.create',
     'show' => 'bepul_semestr.fanlar.show',
 ]);
-
 Route::get('bepul_semestr/{bolim_id}/fanlar/{subject_id}', [BepulFanlarController::class, 'show'])
     ->name('bepul_semestr.fanlar.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/natijalarim', [UserController::class, 'myGrades'])->name('grades.my');
 });
-
 // Route::resource('ozlashtirish', OzlashtirishController::class);
-
 Route::middleware(['auth'])->prefix('admin/sections')->name('admin.sections.')->group(function () {
     Route::get('/', [AdminSectionController::class, 'index'])->name('index');
     Route::post('/', [AdminSectionController::class, 'store'])->name('store');
@@ -71,13 +63,12 @@ Route::middleware(['auth'])->prefix('admin/sections')->name('admin.sections.')->
     Route::post('/{section}/assign', [AdminSectionController::class, 'assignAdmins'])->name('assign');
 });
 Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
+    Route::post('/users/check', [App\Http\Controllers\UserController::class, 'checkImport'])->name('users.check');
     Route::get('/mini_maktab/{bolim}/guruh/{subjectsToSubject}', [MiniMaktabController::class, 'guruhSahifa'])->name('mini_maktab.guruh');
     Route::post('/mini_maktab/guruh/{subjectsToSubject}/teacher_qosh', [MiniMaktabController::class, 'guruhTeacherQosh'])->name('mini_maktab.guruh.teacher_qosh');
     Route::delete('/mini_maktab/guruh_teacher/{id}', [MiniMaktabController::class, 'guruhTeacherOchir'])->name('mini_maktab.guruh.teacher_ochir');
     Route::post('/mini_maktab/guruh/{subjectsToSubject}/avto_taqsimla', [MiniMaktabController::class, 'guruhAvtoTaqsimla'])->name('mini_maktab.guruh.avto_taqsimla');
     Route::put('/mini_maktab/ariza/{ariza}/teacher_ozgartir', [MiniMaktabController::class, 'talabaTeacherOzgartir'])->name('mini_maktab.ariza.teacher_ozgartir');
-
-
     Route::get('/subject/biriktirish', [SubjectController::class, 'biriktirish'])->name('subject.biriktirish');
     Route::post('/subject/biriktirish', [SubjectController::class, 'biriktirishStore'])->name('subject.biriktirish.store');
     Route::get('/subject/biriktirish/search', [SubjectController::class, 'biriktirishSearch'])->name('subject.biriktirish.search');
@@ -90,7 +81,6 @@ Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
     // O'qituvchi — topshiriq baholarini saqlash
     Route::post('/mini-maktab/topshiriq/{material_id}/baholar', [MiniMaktabController::class, 'topshiriqBaholar'])
         ->name('mini_maktab.topshiriq.baholar');
-
     // Talaba — topshiriq PDF yuklash
     Route::post('/mini-maktab/topshiriq/{material_id}/yukla', [MiniMaktabController::class, 'topshiriqYukla'])
         ->name('mini_maktab.topshiriq.yukla');
@@ -114,11 +104,21 @@ Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
     Route::get('/ozlashtirish/export', [OzlashtirishController::class, 'export'])->name('ozlashtirish.export');
     Route::get('/sidebar-boshqaruv', [SidebarController::class, 'index'])->name('sidebar_boshqaruv.index');
     Route::resource('subject', SubjectController::class);
+    Route::resource('mudir', MudirController::class)->except(['show']);
     Route::post('/subject/{subject}/duplicate', [SubjectController::class, 'duplicate'])->name('subject.duplicate');
     Route::get('subject/{subject}/vedomost', [VedomostController::class, 'form'])
         ->name('grades.vedomost.form');
+    Route::post('/vedomost/export-all/start', [VedomostController::class, 'exportAllStart'])
+        ->name('vedomost.exportAll.start');
+    Route::post('/vedomost/export-all/{batch}/step/{subject}', [VedomostController::class, 'exportAllStep'])
+        ->where('batch', '[A-Za-z0-9]+')
+        ->name('vedomost.exportAll.step');
+    Route::get('/vedomost/export-all/{batch}/finish', [VedomostController::class, 'exportAllFinish'])
+        ->where('batch', '[A-Za-z0-9]+')
+        ->name('vedomost.exportAll.finish');
     Route::post('/grades/import/{subject_id}', [GradeController::class, 'import'])->name('grades.import');
     Route::delete('/grades/{grade}', [GradeController::class, 'destroy'])->name('grades.destroy');
+    Route::patch('/grades/{grade}', [GradeController::class, 'update'])->name('grades.update');
     Route::delete('subject/{subject_id}/grades/clear', [GradeController::class, 'clearAll'])->name('grades.clear');
     Route::get('subject/{subject_id}/grades', [GradeController::class, 'index'])->name('grades.index');
     Route::resource('admins', AdminController::class);
@@ -133,17 +133,12 @@ Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
 
     Route::get('/kafedra-fakultet', [KafedraFakultetController::class, 'index'])
         ->name('kafedra-fakultet.index');
-
-    // Kafedra uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
     Route::post('/kafedra', [KafedraController::class, 'store'])->name('kafedra.store');
     Route::put('/kafedra/{kafedra}', [KafedraController::class, 'update'])->name('kafedra.update');
     Route::delete('/kafedra/{kafedra}', [KafedraController::class, 'destroy'])->name('kafedra.destroy');
-
-    // Fakultet uchun CRUD (index/create/edit sahifalari yo'q, hammasi modal orqali)
     Route::post('/fakultet', [FakultetController::class, 'store'])->name('fakultet.store');
     Route::put('/fakultet/{fakultet}', [FakultetController::class, 'update'])->name('fakultet.update');
     Route::delete('/fakultet/{fakultet}', [FakultetController::class, 'destroy'])->name('fakultet.destroy');
-
     Route::get('/oquv_yili', [OquvYiliController::class, 'index'])->name('oquv_yili.index');
     Route::post('/oquv_yili', [OquvYiliController::class, 'store'])->name('oquv_yili.store');
     Route::put('/oquv_yili/{oquv_yili}', [OquvYiliController::class, 'update'])->name('oquv_yili.update');
@@ -185,16 +180,12 @@ Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
             ->name('ariza_admin.subjects_by_user');
     });
 });
-
 Route::resource('mini_semestr_user', MiniSemestrController::class);
 // Route::get('/bepul_maktab', [BepulMaktabController::class, 'index'])->name('bepul_maktab.index');
 // Route::get('/bepul_maktab/{bolim_id}', [BepulMaktabController::class, 'fanlar'])->name('bepul_maktab.fanlar');
 // Route::get('/bepul_maktab/{bolim_id}/{subject_id}', [BepulMaktabController::class, 'show'])->name('bepul_maktab.show');
 // Route::post('/bepul_maktab/{bolim_id}/{subject_id}/settings', [BepulMaktabController::class, 'settings'])->name('bepul_maktab.settings');
 // Route::patch('/bepul_maktab/toggle/{id}', [BepulMaktabController::class, 'toggle'])->name('bepul_maktab.toggle');
-
-
-
 //talaba bepul maktab
 Route::prefix('talaba/bepul-maktab')->name('talaba.bepul_maktab.')->group(function () {
     Route::get('/', [TalabaBepulMaktabController::class, 'index'])->name('index');
@@ -204,13 +195,8 @@ Route::prefix('talaba/bepul-maktab')->name('talaba.bepul_maktab.')->group(functi
     Route::post('/{attempt_id}/chiqish', [TalabaBepulMaktabController::class, 'chiqish'])->name('chiqish');
 });
 Route::get('/talaba/bepul-maktab/{attempt_id}/natija', [TalabaBepulMaktabController::class, 'natija'])->name('talaba.bepul_maktab.natija');
-
-
-
 Route::get('ariza-admin/subjects-by-user', [ArizaAdminController::class, 'subjectsByUser'])
     ->name('ariza_admin.subjects_by_user');
-
-
 Route::prefix('mini_maktab')->name('mini_maktab.')->group(function () {
     // Asosiy sahifalar
     Route::get('/', [MiniMaktabController::class, 'index'])->name('index');
@@ -255,36 +241,26 @@ Route::prefix('mini_maktab')->name('mini_maktab.')->group(function () {
         [MiniMaktabController::class, 'sessionDelete']
     )
         ->name('session.delete');
-
-
     Route::prefix('mini-maktab')->name('mini_maktab.')->group(function () {
-
         // 1. Bo'limlar ro'yxati
         Route::get('/', [MiniMaktabController::class, 'index'])->name('index');
-
         // 2. Bo'lim ichidagi fanlar
         Route::get('/{bolim_id}', [MiniMaktabController::class, 'fanlar'])->name('fanlar');
-
         // 3. Fan ichidagi mavzular (asosiy sahifa)
         Route::get('/{bolim_id}/{subject_id}', [MiniMaktabController::class, 'mavzular'])->name('mavzular');
-
         // 4. Mavzu yaratish / o'chirish
         Route::post('/{bolim_id}/{subject_id}/mavzu', [MiniMaktabController::class, 'mavzuYarat'])->name('mavzu.yarat');
         Route::delete('/mavzu/{id}', [MiniMaktabController::class, 'mavzuOchir'])->name('mavzu.ochir');
-
         // 5. Mavzu ichidagi materiallar
         Route::get('/{bolim_id}/{subject_id}/mavzu/{mavzu_id}', [MiniMaktabController::class, 'mavzuShow'])->name('mavzu.show');
-
         // 6. Material qo'shish / o'chirish / sozlash / status
         Route::post('/mavzu/{mavzu_id}/material', [MiniMaktabController::class, 'materialQosh'])->name('material.qosh');
         Route::delete('/material/{id}', [MiniMaktabController::class, 'materialOchir'])->name('material.ochir');
         Route::put('/material/{id}/test-sozlama', [MiniMaktabController::class, 'testSozlama'])->name('material.test_sozlama');
         Route::patch('/material/{id}/status', [MiniMaktabController::class, 'materialStatusToggle'])->name('material.status.toggle');
-
         // 7. Talaba status (faqat shu fan uchun — status=0 bo'lsa yakuniy yashiriladi)
         Route::post('/status/{id}', [MiniMaktabController::class, 'statusToggle'])->name('status.toggle');
         Route::post('/{bolim_id}/{subject_id}/status-all', [MiniMaktabController::class, 'allStatusToggle'])->name('status.all');
-
         // 8. Talaba urinishlari, javoblar tahlili, urinishni o'chirish
         Route::get('/{bolim_id}/{subject_id}/talaba/{user_id}/sessions/{material_id}', [MiniMaktabController::class, 'talabaSessions'])
             ->name('talaba.sessions');
@@ -293,9 +269,6 @@ Route::prefix('mini_maktab')->name('mini_maktab.')->group(function () {
         Route::delete('/session/{id}', [MiniMaktabController::class, 'sessionDelete'])->name('session.delete');
     });
 });
-
-
-
 Route::prefix('bepul-maktab')->name('bepul_maktab.')->group(function () {
     Route::get('/', [BepulMaktabController::class, 'index'])->name('index');
     Route::get('/{bolim_id}/fanlar', [BepulMaktabController::class, 'fanlar'])->name('fanlar');
@@ -312,7 +285,6 @@ Route::prefix('bepul-maktab')->name('bepul_maktab.')->group(function () {
         ->name('harakat');
     Route::delete('/session/{id}', [BepulMaktabController::class, 'sessionDelete'])->name('session.delete');
 });
-
 Route::middleware(['auth'])->group(function () {
     Route::get('/jurnal', [JurnalController::class, 'index'])->name('jurnal.index');
     Route::get('/jurnal/subjects', [JurnalController::class, 'subjectsByType'])->name('jurnal.subjects');
@@ -324,7 +296,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('jurnal.grade.history');
     Route::get('/jurnal/export', [JurnalController::class, 'export'])->name('jurnal.export');
 });
-
 Route::middleware('auth')->group(function () {
     Route::post(
         '/talaba/mini-maktab/{miniSemestrId}/topshiriq/{materialId}/yukla',
@@ -339,29 +310,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/mini-maktab/test/{attempt}/yuborish', [TalabaMiniMaktabController::class, 'yuborish'])->name('talaba.mini_maktab.yuborish');
     Route::get('/mini-maktab/natija/{attempt}', [TalabaMiniMaktabController::class, 'natija'])->name('talaba.mini_maktab.natija');
 });
-
 Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/', [StudentChatController::class, 'index'])->name('chat');
     Route::get('/qidiruv', [StudentChatController::class, 'searchUsers'])->name('chat.search');
     Route::get('/overview-poll', [StudentChatController::class, 'pollOverview'])->name('chat.poll.overview');
-
     // Bo'lim (admin) bilan chat
     Route::get('/bolim/{section}', [StudentChatController::class, 'section'])->name('chat.section');
     Route::post('/bolim/{section}/send', [StudentChatController::class, 'sendToSection'])->name('chat.section.send');
     Route::get('/bolim/{section}/poll', [StudentChatController::class, 'pollSection'])->name('chat.section.poll');
-
     // Talaba <-> talaba chat
     Route::get('/foydalanuvchi/{user}', [StudentChatController::class, 'userChat'])->name('chat.user');
     Route::post('/foydalanuvchi/{user}/send', [StudentChatController::class, 'sendToUser'])->name('chat.user.send');
     Route::post('/foydalanuvchi/{user}/accept', [StudentChatController::class, 'acceptUser'])->name('chat.user.accept');
     Route::get('/foydalanuvchi/{user}/poll', [StudentChatController::class, 'pollUser'])->name('chat.user.poll');
 });
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN CHAT (eski /admin_chat route'i o'rniga to'liq funksional versiya)
-|--------------------------------------------------------------------------
-*/
 Route::middleware(['auth'])->prefix('admin_chat')->group(function () {
     Route::get('/', [AdminChatController::class, 'index'])->name('admin_chat');
 
@@ -373,9 +335,3 @@ Route::middleware(['auth'])->prefix('admin_chat')->group(function () {
     Route::post('/bolim/{section}/talaba/{student}/send', [AdminChatController::class, 'send'])->name('admin_chat.send');
     Route::get('/bolim/{section}/talaba/{student}/poll', [AdminChatController::class, 'poll'])->name('admin_chat.poll');
 });
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN PANEL: bo'limlar va adminlarni biriktirish
-|--------------------------------------------------------------------------
-*/

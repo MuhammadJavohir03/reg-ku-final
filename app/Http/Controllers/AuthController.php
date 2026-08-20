@@ -16,7 +16,7 @@ class AuthController extends Controller
         ];
 
         $subjectCounts = [
-            'subject' => \App\Models\Subject::count(),
+            'subject' => \App\Models\SubjectsToSubject::count(),
         ];
         return view('login.login', compact('userCounts', 'subjectCounts'));
     }
