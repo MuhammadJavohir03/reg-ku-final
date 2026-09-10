@@ -3,7 +3,6 @@
 
     <div class="oz-wrap">
 
-        {{-- HEADER --}}
         <div
             style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
@@ -17,7 +16,6 @@
 
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
 
-                {{-- QIDIRUV --}}
                 <form action="{{ url()->current() }}" method="GET" style="display:flex; align-items:center; gap:6px;">
                     <div style="position:relative;">
                         <i class="bx bx-search"
@@ -32,7 +30,6 @@
                     @endif
                 </form>
 
-                {{-- TOZALASH --}}
                 <form action="{{ route('grades.clear', $grades->first()?->subject_id ?? 0) }}" method="POST"
                     style="display:inline;">
                     @csrf @method('DELETE')
@@ -42,7 +39,6 @@
                     </button>
                 </form>
 
-                {{-- ORQAGA --}}
                 <a href="{{ route('subject.index') }}" class="ar-btn">
                     <i class="bx bx-arrow-back"></i> Orqaga
                 </a>
@@ -50,7 +46,6 @@
             </div>
         </div>
 
-        {{-- JADVAL --}}
         <div class="arizalar-table-wrap">
             <table class="arizalar-table">
                 <thead>
@@ -64,6 +59,7 @@
                         <th style="width:80px; text-align:center;">Yakuniy</th>
                         <th style="width:110px; text-align:center;">Umumiy ball</th>
                         <th style="width:140px;">Davomat</th>
+                        <th style="width:140px;">Bepul bormi ?</th>
                         @if (in_array(auth()->user()?->email, ['javohir8386@gmail.com', 'paulwalker3637@gmail.com']))
                             <th style="width:80px;">Amallar</th>
                         @endif
@@ -97,8 +93,8 @@
 
                             <td style="text-align:center; font-size:13px; font-weight:600; color:#333;">
                                 @if (auth()->user()?->email === 'javohir8386@gmail.com')
-                                    <input type="number" step="0.01" min="0" class="grade-input" data-field="joriy_baho"
-                                        value="{{ $grade->joriy_baho }}"
+                                    <input type="number" step="0.01" min="0" class="grade-input"
+                                        data-field="joriy_baho" value="{{ $grade->joriy_baho }}"
                                         style="width:60px; text-align:center; border:1px solid #ddd; border-radius:6px; padding:3px 4px; font-weight:600; font-size:13px;">
                                 @else
                                     {{ $grade->joriy_baho }}
@@ -107,8 +103,8 @@
 
                             <td style="text-align:center; font-size:13px; font-weight:600; color:#333;">
                                 @if (auth()->user()?->email === 'javohir8386@gmail.com')
-                                    <input type="number" step="0.01" min="0" class="grade-input" data-field="oraliq_baho"
-                                        value="{{ $grade->oraliq_baho }}"
+                                    <input type="number" step="0.01" min="0" class="grade-input"
+                                        data-field="oraliq_baho" value="{{ $grade->oraliq_baho }}"
                                         style="width:60px; text-align:center; border:1px solid #ddd; border-radius:6px; padding:3px 4px; font-weight:600; font-size:13px;">
                                 @else
                                     {{ $grade->oraliq_baho }}
@@ -124,8 +120,8 @@
 
                             <td style="text-align:center; font-size:13px; font-weight:600; color:#333;">
                                 @if (auth()->user()?->email === 'javohir8386@gmail.com')
-                                    <input type="number" step="0.01" min="0" class="grade-input" data-field="yakuniy_baho"
-                                        value="{{ $grade->yakuniy_baho }}"
+                                    <input type="number" step="0.01" min="0" class="grade-input"
+                                        data-field="yakuniy_baho" value="{{ $grade->yakuniy_baho }}"
                                         style="width:60px; text-align:center; border:1px solid #ddd; border-radius:6px; padding:3px 4px; font-weight:600; font-size:13px;">
                                 @else
                                     {{ $grade->yakuniy_baho }}
@@ -134,7 +130,8 @@
 
                             <td style="text-align:center;">
                                 @if ($grade->umumiy > 70)
-                                    <span class="ar-badge ar-badge-ok js-umumiy" style="font-size:13px; font-weight:700;">
+                                    <span class="ar-badge ar-badge-ok js-umumiy"
+                                        style="font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @elseif($grade->umumiy >= 60)
@@ -143,7 +140,8 @@
                                         {{ $grade->umumiy }}
                                     </span>
                                 @else
-                                    <span class="ar-badge ar-badge-rej js-umumiy" style="font-size:13px; font-weight:700;">
+                                    <span class="ar-badge ar-badge-rej js-umumiy"
+                                        style="font-size:13px; font-weight:700;">
                                         {{ $grade->umumiy }}
                                     </span>
                                 @endif
@@ -166,6 +164,12 @@
                                         </div>
                                     </div>
                                 </div>
+                            </td>
+                            <td>
+                                <span class="ar-badge js-umumiy"
+                                    style="background:#ffffff; color:#000000; font-size:13px; font-weight:700;">
+                                    {{ $grade->bepul ? 'Ha' : 'Yo‘q' }}
+                                </span>
                             </td>
                             @if (in_array(auth()->user()?->email, ['javohir8386@gmail.com', 'paulwalker3637@gmail.com']))
                                 <td>
@@ -201,7 +205,7 @@
 
     @if (auth()->user()?->email === 'javohir8386@gmail.com')
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
                 const csrfToken = '{{ csrf_token() }}';
                 const urlTemplate = "{{ route('grades.update', ['grade' => '__ID__']) }}";
 
@@ -245,39 +249,39 @@
                     const url = urlTemplate.replace('__ID__', id);
 
                     fetch(url, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                        body: JSON.stringify({
-                            joriy_baho: num(row, 'joriy_baho'),
-                            oraliq_baho: num(row, 'oraliq_baho'),
-                            yakuniy_baho: num(row, 'yakuniy_baho'),
-                        }),
-                    })
-                        .then(function (res) {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify({
+                                joriy_baho: num(row, 'joriy_baho'),
+                                oraliq_baho: num(row, 'oraliq_baho'),
+                                yakuniy_baho: num(row, 'yakuniy_baho'),
+                            }),
+                        })
+                        .then(function(res) {
                             if (!res.ok) throw new Error('Saqlashda xatolik: ' + res.status);
                             return res.json();
                         })
-                        .then(function (data) {
+                        .then(function(data) {
                             if (data.success) {
                                 paintReyting(row, data.joriy_oraliq);
                                 paintUmumiy(row, data.umumiy);
                             }
                         })
-                        .catch(function (err) {
+                        .catch(function(err) {
                             console.error(err);
                             alert('Saqlashda xatolik yuz berdi. Sahifani yangilab, qayta urinib ko\'ring.');
                         });
                 }
 
-                document.querySelectorAll('.grade-input').forEach(function (input) {
-                    input.addEventListener('input', function () {
+                document.querySelectorAll('.grade-input').forEach(function(input) {
+                    input.addEventListener('input', function() {
                         recalcRow(this.closest('tr'));
                     });
-                    input.addEventListener('change', function () {
+                    input.addEventListener('change', function() {
                         saveRow(this.closest('tr'));
                     });
                 });

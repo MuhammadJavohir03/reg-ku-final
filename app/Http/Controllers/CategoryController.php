@@ -70,6 +70,11 @@ class CategoryController extends Controller
             'nomi' => $request->input('nomi'),
             'guruh' => $request->input('guruh')
         ]);
+
+        // Guruh harfiga mos foydalanuvchilarni topib, shu yo'nalishga bog'laymiz
+        \App\Models\User::where('Guruh', 'LIKE', $request->guruh . '-%')
+            ->update(['category_id' => $category->id]);
+
         return redirect()->route('category.create')->with('success', 'Yo\'nalish yangilandi.');
     }
 

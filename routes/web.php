@@ -1,4 +1,5 @@
 <?php
+
 use App\Http\Controllers\ElonController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArizaAdminController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\Student\ChatController as StudentChatController;
 use App\Http\Controllers\VedomostController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+
 Route::get('/', [ElonController::class, 'index'])->name('index');
 Route::resource('elons', ElonController::class)->middleware('auth');;
 Route::get('login', [AuthController::class, 'login'])->name('login');
@@ -74,6 +76,9 @@ Route::middleware(['auth', 'role:admin, teacher'])->group(function () {
     Route::get('/subject/biriktirish/search', [SubjectController::class, 'biriktirishSearch'])->name('subject.biriktirish.search');
     Route::post('/subject/biriktirish/sync', [SubjectController::class, 'biriktirishSync'])
         ->name('subject.biriktirish.sync');
+    Route::post('/grades/bepul-import', [GradeController::class, 'importBepul'])
+        ->name('grades.bepul.import');
+    Route::post('/grades/{subject_id}/hemis-import', [GradeController::class, 'importHemis'])->name('grades.hemis.import');
     Route::put(
         '/mini-maktab/{bolim_id}/{subject_id}/teacher-biriktir',
         [MiniMaktabController::class, 'fanTeacherBiriktir']

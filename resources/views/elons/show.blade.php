@@ -37,12 +37,6 @@
 
     <div class="oz-wrap">
 
-        @if (session('success'))
-            <div class="oz-alert oz-alert-success">
-                <i class="bx bx-check-circle"></i> {{ session('success') }}
-            </div>
-        @endif
-
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
             <a href="{{ route('elons.index') }}" class="ar-btn">
                 <i class="bx bx-arrow-back"></i> Orqaga
@@ -74,8 +68,8 @@
             <div>
                 <div style="border-radius:12px; overflow:hidden; border:1px solid #f0f0f0; position:relative;">
                     <div style="aspect-ratio:4/3; background:#f5f5f5;">
-                        <img src="{{ asset('storage/' . ($elon->photo ?? 'elons/default.png')) }}"
-                            alt="E'lon rasmi" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        <img src="{{ asset('storage/' . ($elon->photo ?? 'elons/default.png')) }}" alt="E'lon rasmi"
+                            style="width:100%; height:100%; object-fit:cover; display:block;">
                     </div>
 
                     <div style="position:absolute; top:12px; right:12px;">
@@ -88,28 +82,48 @@
                 @php
                     $wordCount = str_word_count(strip_tags($elon->full_content));
                     $readMinutes = max(1, (int) ceil($wordCount / 200));
+
+                    // Kimlar ko'ra olishi (agar hammaga bo'lsa - ko'rsatilmaydi)
+$visibility = null;
+if ($elon->category_id && $elon->kurs) {
+    $visibility =
+        ($elon->category->nomi ?? 'Noma\'lum yo\'nalish') .
+                            ' yo\'nalishi, ' .
+                            $elon->kurs .
+                            '-kurs uchun';
+                    } elseif ($elon->category_id) {
+                        $visibility =
+                            ($elon->category->nomi ?? 'Noma\'lum yo\'nalish') .
+                            ' yo\'nalishining barcha kurslari uchun';
+                    } elseif ($elon->kurs) {
+                        $visibility = $elon->kurs . '-kursning barcha yo\'nalishlari uchun';
+                    }
                 @endphp
 
                 <div class="elon-show-stats">
-                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div
+                        style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-id-card" style="font-size:20px; color:#3C3489;"></i>
                         <div style="font-weight:700; margin-top:4px;">{{ $elon->id }}</div>
                         <small style="color:#888;">E'lon ID</small>
                     </div>
 
-                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div
+                        style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-calendar-event" style="font-size:20px; color:#10b981;"></i>
                         <div style="font-weight:700; margin-top:4px;">{{ $elon->created_at->format('d.m.Y') }}</div>
                         <small style="color:#888;">Sana</small>
                     </div>
 
-                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div
+                        style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-map" style="font-size:20px; color:#ef4444;"></i>
                         <div style="font-weight:700; margin-top:4px;">{{ $elon->kurs ?? 'Barcha' }} - Kurs</div>
                         <small style="color:#888;">{{ $elon->category->nomi ?? 'Umumiy' }}</small>
                     </div>
 
-                    <div style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
+                    <div
+                        style="background:#fff; border:1px solid #f0f0f0; border-radius:12px; padding:14px; text-align:center;">
                         <i class="bx bx-time-five" style="font-size:20px; color:#f5a623;"></i>
                         <div style="font-weight:700; margin-top:4px;">{{ $readMinutes }} daqiqa</div>
                         <small style="color:#888;">O'qish vaqti</small>
@@ -129,7 +143,9 @@
                     {{ $elon->title }}
                 </h1>
 
-                <div style="background:#EEEDFE; border-left:4px solid #3C3489; padding:16px; border-radius:10px; margin-bottom:20px;">
+
+                <div
+                    style="background:#EEEDFE; border-left:4px solid #3C3489; padding:16px; border-radius:10px; margin-bottom:20px;">
                     <div style="color:#3C3489; font-weight:700; font-size:15px;">
                         Yo'nalish: {{ $elon->category->nomi ?? 'Umumiy' }}
                     </div>
@@ -140,13 +156,48 @@
                 </div>
 
                 <div>
-                    <h5 style="font-weight:700; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f0f0f0;">
+                    <h5
+                        style="font-weight:700; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f0f0f0;">
                         E'lon tavsifi:
                     </h5>
                     <p style="color:#666; line-height:1.8;">
                         {{ $elon->full_content }}
                     </p>
                 </div>
+                @if ($visibility && auth()->check() && auth()->user()->role === 'admin')
+                    <div
+                        style="display:inline-flex; align-items:center; gap:6px; background:#fff4e5; color:#b45309; border:1px solid #fde3b3; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; margin-bottom:12px;">
+                        <i class="bx bx-lock-alt"></i>
+                        Faqat: {{ $visibility }}
+                    </div>
+        
+                    <div
+                        style="background:#fff; border:1px solid #f0f0f0; border-radius:10px; padding:14px 16px; margin-bottom:20px;">
+                        <div
+                            style="font-weight:700; font-size:14px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="bx bx-group"></i> Ko'ra oladigan talabalar</span>
+                            <span class="ar-badge" style="background:#EEEDFE; color:#3C3489;">{{ $students->count() }}
+                                ta</span>
+                        </div>
+        
+                        @if ($students->isEmpty())
+                            <p style="color:#888; font-size:13px; margin:0;">Ushbu shartlarga mos talaba topilmadi.</p>
+                        @else
+                            <div style="max-height:220px; overflow-y:auto;">
+                                <ul style="margin:0; padding:0; list-style:none;">
+                                    @foreach ($students as $student)
+                                        <li
+                                            style="padding:8px 0; border-bottom:1px solid #f5f5f5; font-size:13px; color:#444; display:flex; justify-content:space-between; gap:8px;">
+                                            <span>{{ $student['To‘liq_ismi'] ?? '—' }}</span>
+                                            <span>{{ $student->Guruh }}</span>
+                                            <span style="color:#999;">{{ $student->Kurs ?? '-' }}-kurs</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
 
         </div>

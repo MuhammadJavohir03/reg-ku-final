@@ -26,6 +26,29 @@
             $ozlashtirgan = $grades->where('umumiy', '>=', 60)->count();
         @endphp
 
+        <!-- O'QUV YILI FILTERI -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <form method="GET" action="{{ route('users.grades', $user->id) }}"
+                style="display: flex; gap: 10px; align-items: center;">
+                <select name="oquv_yili_id" onchange="this.form.submit()" class="form-select"
+                    style="padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background-color: #fff; font-size: 14px; cursor: pointer;">
+                    <option value="">-- Barcha o'quv yillari --</option>
+                    @foreach ($oquvYillari as $oquvYili)
+                        <option value="{{ $oquvYili->id }}" {{ $selectedOquvYili == $oquvYili->id ? 'selected' : '' }}>
+                            {{ $oquvYili->nomi }}
+                        </option>
+                    @endforeach
+                </select>
+
+                @if ($selectedOquvYili)
+                    <a href="{{ route('users.grades', $user->id) }}"
+                        style="padding: 8px 12px; background: #ff7c7c; color: #ffffff; border-radius: 8px; text-decoration: none; font-size: 13px;">
+                        ✕ Tozalash
+                    </a>
+                @endif
+            </form>
+        </div>
+
         <div class="grades-summary">
             <div class="grades-summary-item">
                 <span class="grades-summary-value">{{ $grades->count() }}</span>
@@ -113,6 +136,10 @@
                                 <span class="grade-metric-value" style="font-size:13px;">{{ $grade->davomat }}</span>
                                 <span class="grade-metric-label">Davomat</span>
                             </div>
+                            <div class="grade-metric">
+                                <span class="grade-metric-value" style="font-size:13px;">{{ $grade->bepul ? 'Ha' : 'Yo‘q' }}</span>
+                                <span class="grade-metric-label">Bepul</span>
+                            </div>
                         </div>
 
                         <hr class="grade-divider">
@@ -136,4 +163,70 @@
         @endif
 
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('select').forEach(select => {
+                // Asl select elementini yashirish
+                select.classList.add('glass-replaced');
+
+                // Yangi custom wrapper yaratish
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-glass-select';
+
+                const trigger = document.createElement('div');
+                trigger.className = 'glass-select-trigger';
+
+                const selectedOption = select.options[select.selectedIndex];
+                trigger.innerHTML = `<span>${selectedOption ? selectedOption.text : ''}</span>`;
+
+                const menu = document.createElement('div');
+                menu.className = 'glass-select-menu';
+
+                // Option-larni o'qib custom menyuga o'tkazish
+                Array.from(select.options).forEach((opt, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'glass-select-item' + (idx === select.selectedIndex ?
+                        ' selected' : '');
+                    item.textContent = opt.text;
+                    item.dataset.value = opt.value;
+
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        // Select qiymatini almashtirish
+                        select.value = opt.value;
+                        select.dispatchEvent(new Event(
+                            'change')); // Eventni ham ishga tushirish
+
+                        // UI ni yangilash
+                        trigger.querySelector('span').textContent = opt.text;
+                        menu.querySelectorAll('.glass-select-item').forEach(i => i.classList
+                            .remove('selected'));
+                        item.classList.add('selected');
+                        wrapper.classList.remove('open');
+                    });
+
+                    menu.appendChild(item);
+                });
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.custom-glass-select').forEach(w => {
+                        if (w !== wrapper) w.classList.remove('open');
+                    });
+                    wrapper.classList.toggle('open');
+                });
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(menu);
+                select.parentNode.insertBefore(wrapper, select.nextSibling);
+            });
+
+            // Tashqariga bosganda menyuni yopish
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.custom-glass-select').forEach(w => w.classList.remove('open'));
+            });
+        });
+    </script>
 </x-layouts.sidebar>

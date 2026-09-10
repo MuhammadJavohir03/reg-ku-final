@@ -24,7 +24,6 @@ class UserController extends Controller
         $search   = $request->input('search');
         $joriyYil = (int) date('y');
         $bugun    = date('m-d');
-
         $students = User::where('Bitiruvchi', '!=', 'Ha')->get();
 
         foreach ($students as $user) {
@@ -161,7 +160,7 @@ class UserController extends Controller
 
             return response()->json([
                 'status'  => 'success',
-                'message' => '12,350 ta talaba muvaffaqiyatli bazaga yuklandi!',
+                'message' => 'Talabalar muvaffaqiyatli bazaga yuklandi!',
             ]);
         } catch (\Exception $e) {
             Log::error("Import Xatosi: " . $e->getMessage());
@@ -202,13 +201,23 @@ class UserController extends Controller
         $gur = null;
 
         foreach ($header as $i => $h) {
-            if ($idCol === null && str_contains($h, 'talabaid')) {
+            // Yangi format: "ID raqam" → idraqam | eski: talabaid
+            if ($idCol === null && (
+                str_contains($h, 'idraqam') ||
+                str_contains($h, 'talabaid') ||
+                $h === 'id'
+            )) {
                 $idCol = $i;
             }
-            if ($nameCol === null && (str_contains($h, 'toliqismi') || str_contains($h, 'toliqism'))) {
+            // "To‘liq ismi" → toliqismi
+            if ($nameCol === null && (
+                str_contains($h, 'toliqismi') ||
+                str_contains($h, 'toliqism') ||
+                str_contains($h, 'fio')
+            )) {
                 $nameCol = $i;
             }
-            if ($gur === null && (str_contains($h, 'guruh') || str_contains($h, 'guruh'))) {
+            if ($gur === null && str_contains($h, 'guruh')) {
                 $gur = $i;
             }
         }
@@ -216,8 +225,8 @@ class UserController extends Controller
         if ($idCol === null || $nameCol === null) {
             return back()->with(
                 'error',
-                'Faylda "Talaba ID" yoki "To\'liq ismi" ustuni topilmadi. '
-                . 'Faylingizdagi ustun sarlavhalari: ' . implode(' | ', array_filter($rawHeader, fn ($v) => $v !== null && $v !== ''))
+                'Faylda "ID raqam" (yoki Talaba ID) yoki "To‘liq ismi" ustuni topilmadi. '
+                    . 'Faylingizdagi ustun sarlavhalari: ' . implode(' | ', array_filter($rawHeader, fn($v) => $v !== null && $v !== ''))
             );
         }
 
@@ -288,106 +297,109 @@ class UserController extends Controller
     }
 
 
-/**
- * Talabaning o'zi o'z natijalarini ko'rishi (auth user_id orqali)
- */
-public function myGrades()
-{
-    $user = Auth::user();
-    $grades = $this->resolveStudentGrades($user->id);
+    public function myGrades()
+    {
+        $user = Auth::user();
+        $grades = $this->resolveStudentGrades($user->id);
 
-    return view('users.my', compact('user', 'grades'));
-}
-
-public function grades(User $user)
-{
-    $grades = $this->resolveStudentGrades($user->id);
-
-    return view('users.grades', compact('user', 'grades'));
-}
-
-/**
- * Talaba baholari:
- * 1) mini_semestrs
- * 2) free_semestrs
- * 3) grades
- * Bir fan + semestr uchun faqat bitta yozuv (prioritet bo'yicha).
- */
-private function resolveStudentGrades(int $userId)
-{
-    // 1. mini_semestrs
-    $mini = mini_semestr::with(['subject.teacher'])
-        ->where('user_id', $userId)
-        ->get()
-        ->map(function ($row) {
-            return (object) [
-                'source'       => 'mini',
-                'subject_id'   => $row->subject_id,
-                'subject'      => $row->subject,
-                'joriy_baho'   => $row->joriy_baho ?? 0,
-                'oraliq_baho'  => $row->oraliq_baho ?? 0,
-                'joriy_oraliq' => $row->joriy_oraliq ?? 0,
-                'yakuniy_baho' => $row->yakuniy_baho ?? 0,
-                'umumiy'       => $row->umumiy ?? 0,
-                'davomat'      => $row->davomat ?? null,
-                'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
-                'id'           => $row->id,
-            ];
-        });
-
-    // 2. free_semestrs
-    $free = free_semestr::with(['subject.teacher'])
-        ->where('user_id', $userId)
-        ->get()
-        ->map(function ($row) {
-            return (object) [
-                'source'       => 'free',
-                'subject_id'   => $row->subject_id,
-                'subject'      => $row->subject,
-                'joriy_baho'   => $row->joriy_baho ?? 0,
-                'oraliq_baho'  => $row->oraliq_baho ?? 0,
-                'joriy_oraliq' => $row->joriy_oraliq ?? 0,
-                'yakuniy_baho' => $row->yakuniy_baho ?? 0,
-                'umumiy'       => $row->umumiy ?? 0,
-                'davomat'      => $row->davomat ?? null,
-                'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
-                'id'           => $row->id,
-            ];
-        });
-
-    // 3. grades
-    $gradeRows = grade::with(['subject.teacher'])
-        ->where('user_id', $userId)
-        ->orderByDesc('id')
-        ->get()
-        ->map(function ($row) {
-            return (object) [
-                'source'       => 'grade',
-                'subject_id'   => $row->subject_id,
-                'subject'      => $row->subject,
-                'joriy_baho'   => $row->joriy_baho ?? 0,
-                'oraliq_baho'  => $row->oraliq_baho ?? 0,
-                'joriy_oraliq' => $row->joriy_oraliq ?? 0,
-                'yakuniy_baho' => $row->yakuniy_baho ?? 0,
-                'umumiy'       => $row->umumiy ?? 0,
-                'davomat'      => $row->davomat ?? null,
-                'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
-                'id'           => $row->id,
-            ];
-        });
-
-    // Prioritet: mini > free > grade
-    $map = collect();
-
-    foreach ([$gradeRows, $free, $mini] as $collection) {
-        foreach ($collection as $item) {
-            $key = ($item->subject->nomi ?? $item->subject_id) . '|' . ($item->semestr ?? '');
-            $map[$key] = $item;
-        }
+        return view('users.my', compact('user', 'grades'));
     }
 
-    return $map->values();
+    public function grades(User $user, Request $request)
+{
+    $grades = $this->resolveStudentGrades($user->id);
+
+    // Baholardagi fanlardan o'quv yili obyektlarini ajratib olish (takrorlanmas va bo'sh bo'lmagan)
+    $oquvYillari = $grades->pluck('subject.oquv_yili')
+        ->filter()
+        ->unique('id')
+        ->values();
+
+    $selectedOquvYili = $request->input('oquv_yili_id');
+
+    if ($selectedOquvYili) {
+        $grades = $grades->filter(function ($item) use ($selectedOquvYili) {
+            return isset($item->subject->oquv_yili_id) && $item->subject->oquv_yili_id == $selectedOquvYili;
+        });
+    }
+
+    return view('users.grades', compact('user', 'grades', 'oquvYillari', 'selectedOquvYili'));
 }
+
+    private function resolveStudentGrades(int $userId)
+    {
+        // 1. mini_semestrs
+        $mini = mini_semestr::with(['subject.teacher'])
+            ->where('user_id', $userId)
+            ->get()
+            ->map(function ($row) {
+                return (object) [
+                    'source'       => 'mini',
+                    'subject_id'   => $row->subject_id,
+                    'subject'      => $row->subject,
+                    'joriy_baho'   => $row->joriy_baho ?? 0,
+                    'oraliq_baho'  => $row->oraliq_baho ?? 0,
+                    'joriy_oraliq' => $row->joriy_oraliq ?? 0,
+                    'yakuniy_baho' => $row->yakuniy_baho ?? 0,
+                    'umumiy'       => $row->umumiy ?? 0,
+                    'davomat'      => $row->davomat ?? null,
+                    'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
+                    'id'           => $row->id,
+                ];
+            });
+
+        $free = free_semestr::with(['subject.teacher'])
+            ->where('user_id', $userId)
+            ->get()
+            ->map(function ($row) {
+                return (object) [
+                    'source'       => 'free',
+                    'subject_id'   => $row->subject_id,
+                    'subject'      => $row->subject,
+                    'joriy_baho'   => $row->joriy_baho ?? 0,
+                    'oraliq_baho'  => $row->oraliq_baho ?? 0,
+                    'joriy_oraliq' => $row->joriy_oraliq ?? 0,
+                    'yakuniy_baho' => $row->yakuniy_baho ?? 0,
+                    'umumiy'       => $row->umumiy ?? 0,
+                    'davomat'      => $row->davomat ?? null,
+                    'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
+                    'id'           => $row->id,
+                ];
+            });
+
+        $gradeRows = grade::with(['subject.teacher'])
+            ->where('user_id', $userId)
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($row) {
+                return (object) [
+                    'source'       => 'grade',
+                    'subject_id'   => $row->subject_id,
+                    'subject'      => $row->subject,
+                    'joriy_baho'   => $row->joriy_baho ?? 0,
+                    'oraliq_baho'  => $row->oraliq_baho ?? 0,
+                    'joriy_oraliq' => $row->joriy_oraliq ?? 0,
+                    'yakuniy_baho' => $row->yakuniy_baho ?? 0,
+                    'umumiy'       => $row->umumiy ?? 0,
+                    'davomat'      => $row->davomat ?? null,
+                    'bepul'        => $row->bepul ?? null,
+                    'semestr'      => $row->subject->semster ?? $row->subject->semestr ?? null,
+                    'id'           => $row->id,
+                ];
+            });
+
+        // Prioritet: mini > free > grade
+        $map = collect();
+
+        foreach ([$gradeRows, $free, $mini] as $collection) {
+            foreach ($collection as $item) {
+                $key = ($item->subject->nomi ?? $item->subject_id) . '|' . ($item->semestr ?? '');
+                $map[$key] = $item;
+            }
+        }
+
+        return $map->values();
+    }
     /**
      * Update the specified resource in storage.
      */

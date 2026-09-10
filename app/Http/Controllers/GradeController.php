@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\BepulImport;
 use Illuminate\Http\Request;
 use App\Imports\GradeImport;
+use App\Imports\HemisImport;
+use App\Services\HemisPdfParser;
 use App\Models\grade;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -23,7 +26,7 @@ class GradeController extends Controller
 
             // Import natijalari bo'yicha xabar tayyorlaymiz
             $xabar = "Yangi qo'shildi: {$import->yangiQoshildi} ta, "
-                   . "Yangilandi (takroriy): {$import->yangilandi} ta";
+                . "Yangilandi (takroriy): {$import->yangilandi} ta";
 
             if ($import->talabaTopilmadi > 0) {
                 $xabar .= ", Talaba topilmadi: {$import->talabaTopilmadi} ta";
@@ -31,6 +34,91 @@ class GradeController extends Controller
 
             return redirect()->back()->with('success', $xabar);
         } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Xatolik yuz berdi: ' . $e->getMessage());
+        }
+    }
+
+
+    public function importBepul(Request $request)
+    {
+        $request->validate([
+            'bepul_excel' => 'required|mimes:xlsx,xls',
+        ]);
+
+        // Katta Excel fayllar uchun vaqt va xotira zaxirasi
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        $import = new \App\Imports\BepulImport();
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($import, $request) {
+                $import->import($request->file('bepul_excel')->getRealPath());
+            });
+
+            $xabar = "Jami yangilandi: {$import->yangilandi} ta "
+                . "(bepul: {$import->bepulYangilandi}, ball: {$import->ballYangilandi}), "
+                . "Grade topilmadi: {$import->topilmadiGrade}, "
+                . "Talaba topilmadi: {$import->talabaTopilmadi}, "
+                . "Fan topilmadi: {$import->fanTopilmadi}";
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => $xabar]);
+            }
+
+            return redirect()->back()->with('success', $xabar);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[Bepul import] ' . $e->getMessage(), [
+                'exception' => $e,
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ]);
+
+            $xabar = 'Import vaqtida xatolik yuz berdi: ' . $e->getMessage();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $xabar], 500);
+            }
+
+            return redirect()->back()->with('error', $xabar);
+        }
+    }
+
+    public function importHemis(Request $request, $subject_id)
+    {
+        $request->validate([
+            'hemis_pdf' => 'required|mimes:pdf'
+        ]);
+
+        try {
+            $parser = new \App\Services\HemisPdfParser();
+            $rows = $parser->parse($request->file('hemis_pdf')->getRealPath());
+
+            $import = new \App\Imports\HemisImport($subject_id);
+            $import->processRows($rows);
+
+            $xabar = "Hemis orqali yangi qo'shildi: {$import->yangiQoshildi} ta, "
+                . "Yangilandi (takroriy): {$import->yangilandi} ta";
+
+            if ($import->talabaTopilmadi > 0) {
+                $xabar .= ", Talaba topilmadi: {$import->talabaTopilmadi} ta";
+            }
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $xabar,
+                ]);
+            }
+
+            return redirect()->back()->with('success', $xabar);
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Xatolik yuz berdi: ' . $e->getMessage(),
+                ], 500);
+            }
             return redirect()->back()->with('error', 'Xatolik yuz berdi: ' . $e->getMessage());
         }
     }
@@ -46,7 +134,7 @@ class GradeController extends Controller
                 });
             })
             ->latest()
-            ->paginate(75)
+            ->paginate(200)
             ->withQueryString();
 
         return view('grades.index', compact('grades', 'subject_id'));
@@ -61,7 +149,8 @@ class GradeController extends Controller
         return redirect()->route('subject.index')->with('success', 'Fanning barcha baholari muvaffaqiyatli tozalandi.');
     }
 
-    public function destroy(grade $grade){
+    public function destroy(grade $grade)
+    {
         $grade->delete();
         return redirect()->back()->with('success', 'Natija muvaffaqiyatli o\'chirildi.');
     }

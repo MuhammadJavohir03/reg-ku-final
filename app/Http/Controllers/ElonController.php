@@ -123,7 +123,29 @@ class ElonController extends Controller
      */
     public function show(Elon $elon)
     {
-        return view('elons.show', compact('elon'));
+        $students = collect();
+
+        // Faqat admin uchun: shu e'lonni ko'ra oladigan talabalar ro'yxati.
+        // "Hammaga" mo'ljallangan e'lonlarda (category_id va kurs ikkalasi ham bo'sh) ro'yxat kerak emas.
+        if (auth()->check() && auth()->user()->role === 'admin' && ($elon->category_id || $elon->kurs)) {
+            $studentsQuery = \App\Models\User::where('role', '!=', 'admin');
+
+            if ($elon->category_id && $elon->kurs) {
+                // Ikkalasi ham tanlangan -> aniq mos kelishi kerak
+                $studentsQuery->where('category_id', $elon->category_id)
+                    ->where('Kurs', $elon->kurs);
+            } elseif ($elon->category_id) {
+                // Faqat category tanlangan -> shu categoriyadagi HAR QANDAY kursdagi talabalar
+                $studentsQuery->where('category_id', $elon->category_id);
+            } elseif ($elon->kurs) {
+                // Faqat kurs tanlangan -> shu kursdagi HAR QANDAY yo'nalishdagi talabalar
+                $studentsQuery->where('Kurs', $elon->kurs);
+            }
+
+            $students = $studentsQuery->get();
+        }
+
+        return view('elons.show', compact('elon', 'students'));
     }
 
     /**

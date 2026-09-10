@@ -26,6 +26,18 @@
                 <a href="{{ route('mudir.index') }}" class="ar-btn">
                     <i class="bx bx-id-card"></i> Mudirlar
                 </a>
+
+                <form id="bepulSyncForm" action="{{ route('grades.bepul.import') }}" method="POST"
+                    enctype="multipart/form-data" style="display:inline;">
+                    @csrf
+                    <label class="ar-btn ar-btn-ok color-white" title="GPA Excel dan bepul ustunini sinxronlash"
+                        style="cursor:pointer; margin:0;">
+                        <i class="bx bx-sync color-white" id="bepulSyncIcon"></i>
+                        <span id="bepulSyncLabel">Bepul sinxronlash</span>
+                        <input type="file" name="bepul_excel" id="bepulExcelInput" accept=".xlsx,.xls"
+                            style="display:none;">
+                    </label>
+                </form>
             </div>
 
         </div>
@@ -35,11 +47,12 @@
             <div style="position:relative; width:36px; height:36px; flex-shrink:0;">
                 <svg width="36" height="36" style="transform:rotate(-90deg);">
                     <circle cx="18" cy="18" r="15" fill="none" stroke="#e5e7eb" stroke-width="3" />
-                    <circle id="exportAllProgressCircle" cx="18" cy="18" r="15" fill="none" stroke="#217346"
-                        stroke-width="3" stroke-dasharray="94.2" stroke-dashoffset="94.2"
+                    <circle id="exportAllProgressCircle" cx="18" cy="18" r="15" fill="none"
+                        stroke="#217346" stroke-width="3" stroke-dasharray="94.2" stroke-dashoffset="94.2"
                         style="transition:stroke-dashoffset 0.2s;" />
                 </svg>
-                <span id="exportAllProgressPct" style="position:absolute;top:50%;left:50%;
+                <span id="exportAllProgressPct"
+                    style="position:absolute;top:50%;left:50%;
                     transform:translate(-50%,-50%); font-size:9px;font-weight:700;color:#217346;">0%</span>
             </div>
             <span id="exportAllProgressText" style="font-size:13px; color:#555;">Tayyorlanmoqda...</span>
@@ -89,7 +102,8 @@
             <select name="kurs" class="arizalar-search" style="width:120px;" onchange="this.form.submit()">
                 <option value="">Barcha kurslar</option>
                 @for ($k = 1; $k <= 4; $k++)
-                    <option value="{{ $k }}" {{ request('kurs') == $k ? 'selected' : '' }}>{{ $k }}-kurs</option>
+                    <option value="{{ $k }}" {{ request('kurs') == $k ? 'selected' : '' }}>
+                        {{ $k }}-kurs</option>
                 @endfor
             </select>
 
@@ -97,12 +111,13 @@
             <select name="semster" class="arizalar-search" style="width:130px;" onchange="this.form.submit()">
                 <option value="">Barcha semestrlar</option>
                 @for ($s = 1; $s <= 8; $s++)
-                    <option value="{{ $s }}" {{ request('semster') == $s ? 'selected' : '' }}>{{ $s }}-semestr</option>
+                    <option value="{{ $s }}" {{ request('semster') == $s ? 'selected' : '' }}>
+                        {{ $s }}-semestr</option>
                 @endfor
             </select>
 
             <select name="page_size" class="arizalar-search" style="width:130px;" onchange="this.form.submit()">
-                <option value="100" {{ request('page_size') == 100 ? 'selected' : '' }}>100 ta</option>
+                <option value="10" {{ request('page_size') == 10 ? 'selected' : '' }}>10 ta</option>
                 <option value="200" {{ request('page_size') == 200 ? 'selected' : '' }}>200 ta</option>
                 <option value="500" {{ request('page_size') == 500 ? 'selected' : '' }}>500 ta</option>
                 <option value="600" {{ request('page_size') == 600 ? 'selected' : '' }}>600 ta</option>
@@ -153,8 +168,8 @@
                                         <span class="ar-badge ar-badge-ok">
                                             <i class="fas fa-circle-check"></i> Natija bor
                                         </span>
-                                        @endif
-                                    </div>
+                                    @endif
+                                </div>
                             </td>
                             {{-- O'qituvchi --}}
                             <td>
@@ -170,7 +185,7 @@
                             <td style="font-size:13px; color:#555;">
                                 {{ $subject->oquv_yili->nomi ?? 'Ko\'rsatilmagan' }}
                             </td>
-                            
+
                             {{-- Yo'nalish / Kategoriya --}}
                             <td style="text-align:center;">
                                 <span class="ar-badge ar-badge-accent">
@@ -225,7 +240,8 @@
                                             <i class="bx bx-import import-icon" style="color:#217346;"></i>
                                             <div class="row-progress"
                                                 style="display:none; align-items:center; gap:4px;">
-                                                <div style="position:relative; width:28px; height:28px; flex-shrink:0;">
+                                                <div
+                                                    style="position:relative; width:28px; height:28px; flex-shrink:0;">
                                                     <svg width="28" height="28"
                                                         style="transform:rotate(-90deg);">
                                                         <circle cx="14" cy="14" r="11" fill="none"
@@ -246,32 +262,64 @@
                                         </label>
                                     </form>
 
-                                    
+                                    {{-- HEMIS IMPORT (PDF) --}}
+                                    <form action="{{ route('grades.hemis.import', $subject->id) }}" method="POST"
+                                        enctype="multipart/form-data" style="display:inline-flex; align-items:center;"
+                                        class="grade-import-form">
+                                        @csrf
+                                        <label class="ar-btn" title="Hemis qaydnomasidan import (PDF)"
+                                            style="cursor:pointer; margin:0; padding:5px 8px;">
+                                            <i class="bx bx-cloud-upload import-icon" style="color:#0f766e;"></i>
+                                            <div class="row-progress"
+                                                style="display:none; align-items:center; gap:4px;">
+                                                <div
+                                                    style="position:relative; width:28px; height:28px; flex-shrink:0;">
+                                                    <svg width="28" height="28"
+                                                        style="transform:rotate(-90deg);">
+                                                        <circle cx="14" cy="14" r="11" fill="none"
+                                                            stroke="#e5e7eb" stroke-width="2.5" />
+                                                        <circle class="circle-bar" cx="14" cy="14"
+                                                            r="11" fill="none" stroke="#0f766e" stroke-width="2.5"
+                                                            stroke-dasharray="69.1" stroke-dashoffset="69.1"
+                                                            style="transition:stroke-dashoffset 0.3s;" />
+                                                    </svg>
+                                                    <span class="circle-pct"
+                                                        style="position:absolute;top:50%;left:50%;
+                                                        transform:translate(-50%,-50%);
+                                                        font-size:7px;font-weight:700;color:#0f766e;">0%</span>
+                                                </div>
+                                            </div>
+                                            <input type="file" name="hemis_pdf" accept=".pdf"
+                                                style="display:none;">
+                                        </label>
+                                    </form>
+
+
                                     {{-- NUSXALASH --}}
                                     <button type="button" class="ar-btn" style="padding:5px 8px;"
-                                    title="Fanni nusxalash (yangi o'qituvchi bilan)"
-                                    onclick="openDuplicateModal({{ $subject->id }}, {{ \Illuminate\Support\Js::from($subject->nomi) }})">
-                                    <i class="bx bx-copy-alt" style="color:#f59e0b;"></i>
-                                </button>
-                                
-                                {{-- TAHRIRLASH --}}
-                                <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
-                                    style="padding:5px 8px;" title="Tahrirlash">
-                                    <i class="bx bx-edit"></i>
-                                </a>
-                                
-                                {{-- TOZALASH --}}
-                                @if ($subject->grades_exists)
-                                    <form action="{{ route('grades.clear', $subject->id) }}" method="POST"
-                                        style="display:inline;">
-                                        @csrf @method('DELETE')
-                                        <button class="ar-btn ar-btn-rej" style="padding:5px 8px;"
-                                            title="Baholarni tozalash"
-                                            onclick="return confirm('Barcha baholar ochirisinmi?')">
-                                            <i class="bx bx-eraser"></i>
-                                        </button>
-                                    </form>
-                                @endif
+                                        title="Fanni nusxalash (yangi o'qituvchi bilan)"
+                                        onclick="openDuplicateModal({{ $subject->id }}, {{ \Illuminate\Support\Js::from($subject->nomi) }})">
+                                        <i class="bx bx-copy-alt" style="color:#f59e0b;"></i>
+                                    </button>
+
+                                    {{-- TAHRIRLASH --}}
+                                    <a href="{{ route('subject.edit', $subject->id) }}" class="ar-btn"
+                                        style="padding:5px 8px;" title="Tahrirlash">
+                                        <i class="bx bx-edit"></i>
+                                    </a>
+
+                                    {{-- TOZALASH --}}
+                                    @if ($subject->grades_exists)
+                                        <form action="{{ route('grades.clear', $subject->id) }}" method="POST"
+                                            style="display:inline;">
+                                            @csrf @method('DELETE')
+                                            <button class="ar-btn ar-btn-rej" style="padding:5px 8px;"
+                                                title="Baholarni tozalash"
+                                                onclick="return confirm('Barcha baholar ochirisinmi?')">
+                                                <i class="bx bx-eraser"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                     {{-- O'CHIRISH --}}
                                     <form action="{{ route('subject.destroy', $subject->id) }}" method="POST"
                                         style="display:inline;">
@@ -280,6 +328,7 @@
                                             onclick="return confirm('Ochirilsinmi?')">
                                             <i class="bx bx-trash"></i>
                                         </button>
+                                        - {{ $subject->students_count ?? 0 }}
                                     </form>
 
                                 </div>
@@ -443,16 +492,37 @@
                         method: 'POST',
                         body: new FormData(form),
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
                         }
                     })
-                    .then(function() {
+                    .then(function(response) {
+                        return response.json().then(function(data) {
+                            return {
+                                ok: response.ok,
+                                data: data
+                            };
+                        }).catch(function() {
+                            return {
+                                ok: response.ok,
+                                data: null
+                            };
+                        });
+                    })
+                    .then(function(result) {
                         clearInterval(fakeInterval);
                         circleBar.setAttribute('stroke-dashoffset', 0);
                         circlePct.textContent = '100%';
+
+                        if (result.data && result.data.message) {
+                            alert(result.data.message);
+                        } else if (!result.ok) {
+                            alert('Xatolik yuz berdi!');
+                        }
+
                         setTimeout(function() {
                             location.reload();
-                        }, 800);
+                        }, 600);
                     })
                     .catch(function() {
                         clearInterval(fakeInterval);
@@ -462,6 +532,65 @@
                     });
             });
         });
+    </script>
+
+    {{-- BEPUL SINXRONLASH --}}
+    <script>
+        (function() {
+            var input = document.getElementById('bepulExcelInput');
+            var form = document.getElementById('bepulSyncForm');
+            var icon = document.getElementById('bepulSyncIcon');
+            var label = document.getElementById('bepulSyncLabel');
+            if (!input || !form) return;
+
+            input.addEventListener('change', function() {
+                if (!this.files[0]) return;
+
+                // AVVAL FormData — keyin disabled
+                var formData = new FormData(form);
+
+                icon.className = 'bx bx-loader-alt bx-spin';
+                label.textContent = 'Yuklanmoqda...';
+                input.disabled = true;
+
+                fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(function(response) {
+                        return response.json().then(function(data) {
+                            return {
+                                ok: response.ok,
+                                data: data
+                            };
+                        }).catch(function() {
+                            return {
+                                ok: response.ok,
+                                data: null
+                            };
+                        });
+                    })
+                    .then(function(result) {
+                        if (result.data && result.data.message) {
+                            alert(result.data.message);
+                        } else if (!result.ok) {
+                            alert((result.data && result.data.message) ? result.data.message :
+                                'Xatolik yuz berdi!');
+                        }
+                        location.reload();
+                    })
+                    .catch(function() {
+                        alert('Xatolik yuz berdi!');
+                        icon.className = 'bx bx-sync';
+                        label.textContent = 'Bepul sinxronlash';
+                        input.disabled = false;
+                    });
+            });
+        })();
     </script>
 
     <script>
@@ -637,7 +766,7 @@
                         // Select qiymatini almashtirish
                         select.value = opt.value;
                         select.dispatchEvent(new Event(
-                        'change')); // Eventni ham ishga tushirish
+                            'change')); // Eventni ham ishga tushirish
 
                         // UI ni yangilash
                         trigger.querySelector('span').textContent = opt.text;
@@ -692,10 +821,11 @@
             }
 
             exportAllBtn.addEventListener('click', async function() {
-                const filtered = {{ (request('search') || request('category_id') || request('kurs') || request('semster')) ? 'true' : 'false' }};
-                const confirmMsg = filtered
-                    ? "Joriy filterga mos fanlar bo'yicha vedomostlar bitta ZIP qilib eksport qilinadi. Davom etasizmi?"
-                    : "Baholari mavjud BARCHA fanlar bo'yicha vedomostlar bitta ZIP qilib eksport qilinadi. Bu bir necha daqiqa vaqt olishi mumkin. Davom etasizmi?";
+                const filtered =
+                    {{ request('search') || request('category_id') || request('kurs') || request('semster') ? 'true' : 'false' }};
+                const confirmMsg = filtered ?
+                    "Joriy filterga mos fanlar bo'yicha vedomostlar bitta ZIP qilib eksport qilinadi. Davom etasizmi?" :
+                    "Baholari mavjud BARCHA fanlar bo'yicha vedomostlar bitta ZIP qilib eksport qilinadi. Bu bir necha daqiqa vaqt olishi mumkin. Davom etasizmi?";
 
                 if (!confirm(confirmMsg)) return;
 
@@ -706,13 +836,14 @@
                 try {
                     // 1-BOSQICH: filterga mos fanlar ro'yxatini va batch_id ni olamiz
                     const startParams = new URLSearchParams(window.location.search);
-                    const startResp = await fetch("{{ route('vedomost.exportAll.start') }}?" + startParams.toString(), {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
+                    const startResp = await fetch("{{ route('vedomost.exportAll.start') }}?" + startParams
+                        .toString(), {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
 
                     if (!startResp.ok) {
                         const err = await startResp.json().catch(() => ({}));
@@ -744,7 +875,8 @@
 
                         if (!stepResp.ok) {
                             const err = await stepResp.json().catch(() => ({}));
-                            throw new Error(err.message || (`"${subj.nomi}" fanida xatolik (kod: ${stepResp.status})`));
+                            throw new Error(err.message || (
+                                `"${subj.nomi}" fanida xatolik (kod: ${stepResp.status})`));
                         }
 
                         const stepData = await stepResp.json();
@@ -757,12 +889,13 @@
                     // 3-BOSQICH: barcha fan-ziplarni bitta umumiy ZIP qilib yuklab olamiz
                     progressText.textContent = `${done} / ${total} fan tayyor. Umumiy ZIP yig'ilmoqda...`;
 
-                    const finishResp = await fetch("{{ url('/vedomost/export-all') }}/" + batch + "/finish", {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
+                    const finishResp = await fetch("{{ url('/vedomost/export-all') }}/" + batch +
+                        "/finish", {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
 
                     if (!finishResp.ok) {
                         const err = await finishResp.json().catch(() => ({}));
@@ -772,7 +905,8 @@
                     const blob = await finishResp.blob();
                     progressCircle.setAttribute('stroke-dashoffset', 0);
                     progressPct.textContent = '100%';
-                    progressText.textContent = `Tayyor: ${exportedCount} ta fan eksport qilindi. Yuklab olinmoqda...`;
+                    progressText.textContent =
+                        `Tayyor: ${exportedCount} ta fan eksport qilindi. Yuklab olinmoqda...`;
 
                     const blobUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
