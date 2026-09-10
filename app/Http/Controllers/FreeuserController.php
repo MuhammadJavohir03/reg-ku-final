@@ -37,23 +37,9 @@ class FreeuserController extends Controller
         return view('free_semestr_user.index', compact('categories', 'submittedSubjectIds', 'free_semestrs', 'activeBolim', 'subjects', 'userCategory'));
     }
 
-    /**
-     * free_semestr uchun ariza topshirish mumkin bo'lgan fanlar ro'yxati.
-     *
-     * Qoida:
-     * 1) Agar grades / free_semestr / mini_semestr — qaysi birida bo'lsa ham
-     *    joriy_oraliq < 20 VA umumiy > 60 bo'lsa — fan "o'tilgan" hisoblanadi
-     *    va HECH QACHON ko'rsatilmaydi.
-     * 2) Fan ko'rsatilishi uchun gradesda bazaviy shart bajarilishi kerak:
-     *    davomat <= 33, joriy_oraliq >= 20, umumiy <= 60.
-     * 3) Agar shu fan bo'yicha free_semestr yoki mini_semestr da ham yozuv
-     *    mavjud bo'lsa, o'shalarda ham joriy_oraliq >= 20 va umumiy <= 60
-     *    bajarilishi kerak (AND). Yozuv umuman bo'lmasa — bloklanmaydi.
-     */
     private function availableSubjectsForFree(int $userId)
     {
         return Subject::query()
-            // 1) o'tgan fan — hamisha chetlab o'tiladi
             ->whereDoesntHave('grades', function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->where('joriy_oraliq', '<', 20)
@@ -69,14 +55,16 @@ class FreeuserController extends Controller
                     ->where('joriy_oraliq', '<', 20)
                     ->where('umumiy', '>', 60);
             })
-            // 2) gradesdagi bazaviy shart
             ->whereHas('grades', function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->where('davomat', '<=', 33)
                     ->where('joriy_oraliq', '>=', 20)
-                    ->where('umumiy', '<=', 60);
+                    ->where('umumiy', '<=', 60)
+                    ->where(function ($qq) {
+                        $qq->whereNull('bepul')
+                            ->orWhere('bepul', '!=', 0);
+                    });
             })
-            // 3) free_semestrda yozuv bo'lsa — u yerda ham shart bajarilishi kerak
             ->where(function ($q) use ($userId) {
                 $q->whereDoesntHave('freeSemestrs', function ($qq) use ($userId) {
                     $qq->where('user_id', $userId);
@@ -86,7 +74,6 @@ class FreeuserController extends Controller
                         ->where('umumiy', '<=', 60);
                 });
             })
-            // 3) mini_semestrda yozuv bo'lsa — u yerda ham shart bajarilishi kerak
             ->where(function ($q) use ($userId) {
                 $q->whereDoesntHave('miniSemestrs', function ($qq) use ($userId) {
                     $qq->where('user_id', $userId);
@@ -135,26 +122,38 @@ class FreeuserController extends Controller
             ->pluck('subject_id')
             ->toArray();
 
+        $blockedSubjectNames = [];
+
         foreach ($request->subject_ids as $subjectId) {
 
-            // agar allaqachon topshirilgan bo'lsa — o'tkazib yuborish
             if (in_array($subjectId, $alreadySubmitted)) {
                 continue;
             }
 
-            // Filterdagi shartga mos keluvchi grade yozuvini topamiz
-            // (aynan shu yozuv tufayli fan ko'rsatilgan edi), shuni ko'chiramiz
             $grade = grade::where('user_id', $userId)
                 ->where('subject_id', $subjectId)
                 ->where('davomat', '<=', 33)
                 ->where('joriy_oraliq', '>=', 20)
                 ->where('umumiy', '<=', 60)
+                ->where(function ($qq) {
+                    $qq->whereNull('bepul')
+                        ->orWhere('bepul', '!=', 0);
+                })
                 ->latest()
                 ->first();
 
-            // agar mos keluvchi yozuv topilmasa (masalan filterlanmagan
-            // subject_id yuborilgan bo'lsa), eng so'nggi yozuvga tushamiz
             if (!$grade) {
+                $blockedGrade = grade::where('user_id', $userId)
+                    ->where('subject_id', $subjectId)
+                    ->where('bepul', 0)
+                    ->latest()
+                    ->first();
+
+                if ($blockedGrade) {
+                    $blockedSubjectNames[] = subject::find($subjectId)?->nomi ?? "ID:{$subjectId}";
+                    continue;
+                }
+
                 $grade = grade::where('user_id', $userId)
                     ->where('subject_id', $subjectId)
                     ->latest()
@@ -172,6 +171,12 @@ class FreeuserController extends Controller
                 'umumiy'       => $grade?->umumiy,
                 'davomat'      => $grade?->davomat,
             ]);
+        }
+
+        if (!empty($blockedSubjectNames)) {
+            $xabar = 'Ariza yuborildi! Diqqat: quyidagi fan(lar) uchun ariza qabul qilinmadi (bepul emas): '
+                . implode(', ', $blockedSubjectNames);
+            return redirect()->back()->with('warning', $xabar);
         }
 
         return redirect()->back()->with('success', 'Ariza yuborildi!');
