@@ -15,9 +15,7 @@ use Illuminate\Support\Facades\Auth;
 
 class MiniSemestrController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index()
     {
         $userId = auth()->id();
@@ -50,22 +48,11 @@ class MiniSemestrController extends Controller
         );
     }
 
-    /**
-     * mini_semestr uchun ariza topshirish mumkin bo'lgan fanlar ro'yxati.
-     *
-     * Qoida (free_semestr bilan bir xil, faqat shart faqat umumiy < 60):
-     * 1) Agar grades / free_semestr / mini_semestr — qaysi birida bo'lsa ham
-     *    joriy_oraliq < 20 VA umumiy > 60 bo'lsa — fan "o'tilgan" hisoblanadi
-     *    va HECH QACHON ko'rsatilmaydi.
-     * 2) gradesda bazaviy shart: umumiy < 60.
-     * 3) Agar shu fan bo'yicha free_semestr yoki mini_semestr da ham yozuv
-     *    mavjud bo'lsa, o'shalarda ham umumiy < 60 bo'lishi kerak (AND).
-     *    Yozuv umuman bo'lmasa — bloklanmaydi.
-     */
+    
     private function availableSubjectsForMini(int $userId)
     {
         return Subject::query()
-            // 1) o'tgan fan — hamisha chetlab o'tiladi
+
             ->whereDoesntHave('grades', function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->where('joriy_oraliq', '<', 20)
@@ -81,12 +68,12 @@ class MiniSemestrController extends Controller
                     ->where('joriy_oraliq', '<', 20)
                     ->where('umumiy', '>', 60);
             })
-            // 2) gradesdagi bazaviy shart
+
             ->whereHas('grades', function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->where('umumiy', '<', 60);
             })
-            // 3) free_semestrda yozuv bo'lsa — u yerda ham umumiy < 60 bo'lishi kerak
+
             ->where(function ($q) use ($userId) {
                 $q->whereDoesntHave('freeSemestrs', function ($qq) use ($userId) {
                     $qq->where('user_id', $userId);
@@ -95,7 +82,7 @@ class MiniSemestrController extends Controller
                         ->where('umumiy', '<', 60);
                 });
             })
-            // 3) mini_semestrda yozuv bo'lsa — u yerda ham umumiy < 60 bo'lishi kerak
+
             ->where(function ($q) use ($userId) {
                 $q->whereDoesntHave('miniSemestrs', function ($qq) use ($userId) {
                     $qq->where('user_id', $userId);
@@ -107,17 +94,13 @@ class MiniSemestrController extends Controller
             ->get();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
-        //
+
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $request->validate([
@@ -143,10 +126,9 @@ class MiniSemestrController extends Controller
             ->pluck('subject_id')
             ->toArray();
 
-        // Talaba bitta bo'lim uchun ko'pi bilan 3 ta fanga ariza topshira oladi.
-        // Eslatma: bu chekni faqat frontendga (checkbox disable) ishonib qoldirmaslik kerak,
-        // chunki foydalanuvchi so'rovni to'g'ridan-to'g'ri (masalan Postman orqali) ham
-        // yuborishi mumkin — shuning uchun bu yerda, serverda ham tekshiriladi.
+
+
+
         $totalAfterSubmit = count(array_unique(array_merge($alreadySubmitted, $request->subject_ids)));
 
         if ($totalAfterSubmit > 3) {
@@ -155,12 +137,10 @@ class MiniSemestrController extends Controller
 
         foreach ($request->subject_ids as $subjectId) {
 
-            // agar allaqachon topshirilgan bo'lsa — o'tkazib yuborish
             if (in_array($subjectId, $alreadySubmitted)) {
                 continue;
             }
 
-            // gradesdagi eng so'nggi baholarni mini_semestrga ko'chiramiz
             $grade = grade::where('user_id', $userId)
                 ->where('subject_id', $subjectId)
                 ->latest()
@@ -182,35 +162,27 @@ class MiniSemestrController extends Controller
         return redirect()->back()->with('success', 'Ariza yuborildi!');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
-        //
+
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
-        //
+
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(string $id)
     {
-        //
+
     }
 }

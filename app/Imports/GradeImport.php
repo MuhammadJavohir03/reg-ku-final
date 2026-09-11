@@ -11,10 +11,9 @@ class GradeImport implements ToModel
 {
     private $subject_id;
 
-    // Statistika uchun sanoqchilar
-    public $yangiQoshildi = 0;   // Yangi baho qo'shildi
-    public $yangilandi = 0;      // Mavjud baho yangilandi (takrorlanish)
-    public $talabaTopilmadi = 0; // Baza bo'yicha talaba topilmagan qatorlar
+    public $yangiQoshildi = 0;
+    public $yangilandi = 0;
+    public $talabaTopilmadi = 0;
 
     public function __construct($subject_id)
     {
@@ -23,7 +22,7 @@ class GradeImport implements ToModel
 
     public function model(array $row)
     {
-        // Sarlavha qatorini tashlab ketish
+
         if ($row[0] === 'Talaba' || $row[0] === 'talaba') {
             return null;
         }
@@ -45,24 +44,21 @@ class GradeImport implements ToModel
             return null; 
         }
 
-        // --- MATNLI BAXOLARNI TOZALASH ---
-        $joriy   = is_numeric($row[2]) ? $row[2] : 0; // Joriy nazorat
-        $oraliq  = is_numeric($row[3]) ? $row[3] : 0; // Oraliq nazorat
-        $reyting = is_numeric($row[4]) ? $row[4] : 0; // Reyting
-        $yakuniy = is_numeric($row[5]) ? $row[5] : 0; // Yakuniy nazorat
-        $umumiy  = is_numeric($row[7]) ? $row[7] : 0; // Umumiy
-        $davomat = is_numeric($row[8]) ? $row[8] : 0; // Davomat %
+        $joriy   = is_numeric($row[2]) ? $row[2] : 0;
+        $oraliq  = is_numeric($row[3]) ? $row[3] : 0;
+        $reyting = is_numeric($row[4]) ? $row[4] : 0;
+        $yakuniy = is_numeric($row[5]) ? $row[5] : 0;
+        $umumiy  = is_numeric($row[7]) ? $row[7] : 0;
+        $davomat = is_numeric($row[8]) ? $row[8] : 0;
 
-        // --- QO'SHIMCHA: agar umumiy 0 bo'lib qolgan bo'lsa ---
-        // (tizim 50/60 dan past bahoni 0 qilib yuborgani uchun),
-        // joriy + oraliq + yakuniy yig'indisini umumiy sifatida olamiz
+
+
         if ((float) $umumiy == 0) {
             $umumiy = $joriy + $oraliq + $yakuniy;
         }
 
-        // --- TAKRORLANISHNI OLDINI OLISH ---
-        // Bitta talaba (user_id) + bitta fan (subject_id) uchun faqat bitta yozuv bo'lishi kerak.
-        // Agar avval yuklangan bo'lsa - yangilaymiz, yo'q bo'lsa - yangi qo'shamiz.
+
+
         $mavjudBaho = grade::where('user_id', $user->id)
                             ->where('subject_id', $this->subject_id)
                             ->first();
@@ -88,8 +84,7 @@ class GradeImport implements ToModel
             ]
         );
 
-        // Saqlashni o'zimiz updateOrCreate orqali qilganimiz uchun
-        // ToModel'ga qayta insert qildirmaslik uchun null qaytaramiz.
+
         return null;
     }
 }

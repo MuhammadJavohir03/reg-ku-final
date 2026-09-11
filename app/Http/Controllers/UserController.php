@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index(Request $request)
     {
         $search   = $request->input('search');
@@ -61,17 +59,14 @@ class UserController extends Controller
         return view('users.users', compact('users'));
     }
 
-    /**
-     * Talaba nomidan kirish (impersonation)
-     */
+    
     public function loginAs($id)
     {
-        // O'zini o'zi impersonation qilishni oldini olish
+
         if (Auth::id() == $id) {
             return redirect()->back()->with('error', 'O\'zingiz sifatida kira olmaysiz!');
         }
 
-        // Allaqachon impersonation rejimida bo'lsa, asl admin id ni saqlab qolish
         if (!session()->has('impersonator_id')) {
             session(['impersonator_id' => Auth::id()]);
         }
@@ -91,9 +86,7 @@ class UserController extends Controller
             ->with('success', 'Siz ' . ($user->{"To‘liq_ismi"} ?? $user->email) . ' nomidan kirdingiz');
     }
 
-    /**
-     * Admin hisobiga qaytish
-     */
+    
     public function backToAdmin()
     {
         $adminId = session('impersonator_id');
@@ -107,9 +100,7 @@ class UserController extends Controller
         return redirect()->route('index');
     }
 
-    /**
-     * AJAX: Search teachers by name (role = teacher)
-     */
+    
     public function searchTeachers(Request $request)
     {
         $q = $request->input('q');
@@ -134,17 +125,13 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
-        //
+
     }
 
-    /**
-     * Store a newly created resource in storage (Excel import).
-     */
+    
     public function store(Request $request)
     {
         set_time_limit(0);
@@ -172,11 +159,7 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Yuklangan fayl bilan bazadagi talabalarni solishtirish.
-     * Talaba_ID bo'yicha moslashtiradi, To‘liq_ismi boshqacha bo'lsa
-     * ro'yxatni Excel qilib qaytaradi. Bazadagi ma'lumot o'zgartirilmaydi.
-     */
+    
     public function checkImport(Request $request)
     {
         $request->validate([
@@ -201,7 +184,7 @@ class UserController extends Controller
         $gur = null;
 
         foreach ($header as $i => $h) {
-            // Yangi format: "ID raqam" → idraqam | eski: talabaid
+
             if ($idCol === null && (
                 str_contains($h, 'idraqam') ||
                 str_contains($h, 'talabaid') ||
@@ -209,7 +192,7 @@ class UserController extends Controller
             )) {
                 $idCol = $i;
             }
-            // "To‘liq ismi" → toliqismi
+
             if ($nameCol === null && (
                 str_contains($h, 'toliqismi') ||
                 str_contains($h, 'toliqism') ||
@@ -266,10 +249,7 @@ class UserController extends Controller
         return Excel::download(new MismatchNamesExport($mismatches), 'ism_farqlari_' . date('Y-m-d_His') . '.xlsx');
     }
 
-    /**
-     * Ism solishtirish uchun matnni normallashtirish
-     * (apostrof variantlari va ortiqcha bo'shliqlarni bir xillashtiradi).
-     */
+    
     private function normalizeName(string $name): string
     {
         $name = mb_strtoupper($name);
@@ -279,17 +259,13 @@ class UserController extends Controller
         return trim($name);
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit($id)
     {
         $user = User::findOrFail($id);
@@ -309,7 +285,6 @@ class UserController extends Controller
 {
     $grades = $this->resolveStudentGrades($user->id);
 
-    // Baholardagi fanlardan o'quv yili obyektlarini ajratib olish (takrorlanmas va bo'sh bo'lmagan)
     $oquvYillari = $grades->pluck('subject.oquv_yili')
         ->filter()
         ->unique('id')
@@ -328,7 +303,7 @@ class UserController extends Controller
 
     private function resolveStudentGrades(int $userId)
     {
-        // 1. mini_semestrs
+
         $mini = mini_semestr::with(['subject.teacher'])
             ->where('user_id', $userId)
             ->get()
@@ -388,7 +363,6 @@ class UserController extends Controller
                 ];
             });
 
-        // Prioritet: mini > free > grade
         $map = collect();
 
         foreach ([$gradeRows, $free, $mini] as $collection) {
@@ -400,9 +374,7 @@ class UserController extends Controller
 
         return $map->values();
     }
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(UpdateUserRequest $request, User $user)
     {
         $data = [
@@ -444,8 +416,7 @@ class UserController extends Controller
             'Shartnoma_turi'                => $request->input('Shartnoma_turi'),
         ];
 
-        // Parol maydoni bo'sh qoldirilgan bo'lsa, eski parolni saqlab qolamiz.
-        // 'password' => 'hashed' cast (User modelida) qiymatni avtomatik hash qiladi.
+
         if ($request->filled('password')) {
             $data['password'] = $request->input('password');
         }
@@ -461,9 +432,7 @@ class UserController extends Controller
 
 
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(User $user)
     {
         $user->delete();

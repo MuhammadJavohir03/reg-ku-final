@@ -24,7 +24,6 @@ class MsMavzu extends Model
         'faol' => 'boolean',
     ];
 
-    // Tur yorliqlari
     public function turNomi(): string
     {
         return match($this->tur) {
@@ -35,7 +34,6 @@ class MsMavzu extends Model
         };
     }
 
-    // Tur badge rangi
     public function turRangi(): string
     {
         return match($this->tur) {

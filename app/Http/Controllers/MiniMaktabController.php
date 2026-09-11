@@ -20,18 +20,17 @@ use Illuminate\Support\Facades\Storage;
 
 class MiniMaktabController extends Controller
 {
-    // ═══════════════════════════════════════════════
-    //  1. BOLIMLAR RO'YXATI
-    // ═══════════════════════════════════════════════
+
+
+
     public function index()
     {
         $bolimlar = Bolim::paginate(50);
         return view('mini_maktab.index', compact('bolimlar'));
     }
 
-    // ═══════════════════════════════════════════════
-    //  2. FANLAR (subjects_to_subject bo'yicha GURUHLANGAN)
-    // ═══════════════════════════════════════════════
+
+
     public function fanlar($bolim_id)
     {
         $bolim = Bolim::findOrFail($bolim_id);
@@ -45,9 +44,8 @@ class MiniMaktabController extends Controller
 
         $arizalar = $query->get();
 
-        // Bir xil nomdagi fanlar (masalan 10 ta "Falsafa" subject_id) subjects_to_subject_id
-        // bo'yicha bitta qatorga birlashtiriladi. Guruhga tegishli bo'lmagan subject_id'lar
-        // (hali biriktirilmagan) o'z holicha alohida ko'rsatiladi.
+
+
         $fanlar = $arizalar
             ->groupBy(function ($ariza) {
                 return $ariza->subject->subjects_to_subject_id
@@ -59,7 +57,7 @@ class MiniMaktabController extends Controller
                 $guruh        = $vakilSubject->subjectsToSubject;
 
                 return (object) [
-                    'subject'           => $vakilSubject, // link uchun vakil subject_id
+                    'subject'           => $vakilSubject,
                     'nomi'              => $guruh->nomi ?? $vakilSubject->nomi,
                     'arizalar_soni'     => $guruhArizalari->count(),
                     'oqituvchilar_soni' => $guruhArizalari->pluck('teacher_id')->filter()->unique()->count(),
@@ -71,18 +69,16 @@ class MiniMaktabController extends Controller
         return view('mini_maktab.fanlar', compact('bolim', 'fanlar'));
     }
 
-    // ═══════════════════════════════════════════════
-    //  3. FAN ICHIDAGI MAVZULAR (ASOSIY SAHIFA)
-    // ═══════════════════════════════════════════════
+
+
     public function mavzular(Request $request, $bolim_id, $subject_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
         $subject = Subject::with('subjectsToSubject')->findOrFail($subject_id);
         $foydalanuvchi = auth()->user();
 
-        // ── "Katta fan" (subjects_to_subject) guruhi va unga tegishli BARCHA subject_id'lar ──
-        // Bir xil nomdagi fan (masalan "Falsafa") bir nechta subject_id sifatida saqlangan
-        // bo'lishi mumkin — o'qituvchilar va talabalar shu guruh darajasida umumlashtiriladi.
+
+
         $guruh = $subject->subjectsToSubject;
 
         $subjectIds = $guruh
@@ -93,19 +89,17 @@ class MiniMaktabController extends Controller
             $guruh->load('teachers.teacher');
         }
 
-        // ── Qaysi o'qituvchining mavzulari ko'rsatilmoqda ──
-        // O'qituvchi har doim faqat O'ZINI ko'radi (tanlash so'ralmaydi).
-        // Admin esa pastdagi kartochkalardan birini bosib tanlaydi (?teacher_id=...).
+
+
         if ($foydalanuvchi->role === 'teacher') {
             $tanlanganTeacherId = $foydalanuvchi->id;
         } else {
             $tanlanganTeacherId = $request->filled('teacher_id') ? (int) $request->teacher_id : null;
         }
 
-        // ── Mavzular: FAQAT tanlangan o'qituvchiga tegishli bo'limlar ──
-        // Har bir o'qituvchi o'z mavzu/materiallarini alohida yuritadi.
-        // Har doim 'mavzu' | 'oraliq' | 'yakuniy' kalitlari mavjud bo'lsin — hali hech
-        // narsa yaratilmagan bo'limda ham view'dagi tab bo'sh ro'yxat sifatida ishlasin.
+
+
+
         $mavzular = collect(['mavzu' => collect(), 'oraliq' => collect(), 'yakuniy' => collect()]);
         if ($tanlanganTeacherId) {
             $topilganlar = MsMavzu::where('bolim_id', $bolim_id)
@@ -115,18 +109,17 @@ class MiniMaktabController extends Controller
                 ->orderBy('tartib')
                 ->orderBy('id')
                 ->get()
-                ->groupBy('tur'); // ['mavzu' => [...], 'oraliq' => [...], 'yakuniy' => [...]]
+                ->groupBy('tur');
 
             $mavzular = $mavzular->merge($topilganlar);
         }
 
-        // ── Talabalar: guruhdagi barcha subject_id'lar bo'yicha, filtrlar bilan ──
         $talabalarQuery = mini_semestr::where('bolim_id', $bolim_id)
             ->whereIn('subject_id', $subjectIds)
             ->with(['user', 'teacher']);
 
         if ($foydalanuvchi->role === 'teacher') {
-            // O'qituvchi faqat O'ZIGA biriktirilgan talabalarni ko'radi
+
             $talabalarQuery->where('teacher_id', $foydalanuvchi->id);
         } elseif ($request->filled('teacher_id')) {
             $talabalarQuery->where('teacher_id', $request->teacher_id);
@@ -144,7 +137,6 @@ class MiniMaktabController extends Controller
 
         $talabalar = $talabalarQuery->paginate(20)->withQueryString();
 
-        // ── Har bir o'qituvchining band o'rinlari (kartochkalarda son ko'rsatish uchun) ──
         $bandSoni = mini_semestr::where('bolim_id', $bolim_id)
             ->whereIn('subject_id', $subjectIds)
             ->whereNotNull('teacher_id')
@@ -168,9 +160,8 @@ class MiniMaktabController extends Controller
         ));
     }
 
-    // ═══════════════════════════════════════════════
-    //  4. MAVZU YARATISH (har doim biror o'qituvchiga tegishli)
-    // ═══════════════════════════════════════════════
+
+
     public function mavzuYarat(Request $request, $bolim_id, $subject_id)
     {
         $foydalanuvchi = auth()->user();
@@ -180,23 +171,20 @@ class MiniMaktabController extends Controller
             'tur'  => 'required|in:mavzu,oraliq,yakuniy',
         ]);
 
-        // O'qituvchi bo'lsa — teacher_id har doim O'ZI, formadan kutilmaydi.
-        // Admin bo'lsa — forma/URL orqali (masalan ?teacher_id=..) yuborilgan bo'lishi kerak.
+
         if ($foydalanuvchi->role === 'teacher') {
             $teacherId = $foydalanuvchi->id;
         } else {
             $teacherId = $request->filled('teacher_id') ? (int) $request->teacher_id : null;
         }
 
-        // Avvalgi kodda 'teacher_id' => 'required|exists:users,id' shart edi.
-        // Agar forma teacher_id yubormasa (masalan o'qituvchi uchun yashirin maydon
-        // qo'yilmagan bo'lsa), so'rov 422 bilan validatsiyadan o'tmay, hech narsa
-        // yaratilmasdan orqaga qaytardi — foydalanuvchiga esa xato ko'rinmasdi.
+
+
+
         if (! $teacherId || ! User::where('id', $teacherId)->where('role', 'teacher')->exists()) {
             return redirect()->back()->with('error', "Avval o'qituvchini tanlang, keyin mavzu/oraliq/yakuniy yarating!");
         }
 
-        // O'qituvchi faqat O'ZIGA tegishli bo'lim yarata oladi
         if ($foydalanuvchi->role === 'teacher' && $teacherId !== $foydalanuvchi->id) {
             abort(403);
         }
@@ -220,14 +208,12 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', ($turNomlari[$request->tur] ?? 'Mavzu') . ' yaratildi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  5. MAVZU O'CHIRISH
-    // ═══════════════════════════════════════════════
+
+
     public function mavzuOchir($id)
     {
         $mavzu = MsMavzu::with('materiallar')->findOrFail($id);
 
-        // Barcha materiallarni (fayllarini ham) o'chirish
         foreach ($mavzu->materiallar as $material) {
             $this->materialFaylOchir($material);
         }
@@ -240,9 +226,8 @@ class MiniMaktabController extends Controller
             ->with('success', 'Mavzu o\'chirildi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  6. MAVZU ICHIDAGI MATERIALLAR
-    // ═══════════════════════════════════════════════
+
+
     public function mavzuShow($bolim_id, $subject_id, $mavzu_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
@@ -270,7 +255,6 @@ class MiniMaktabController extends Controller
                 ->keyBy('user_id');
         }
 
-        // ── Biriktirilgan oqituvchi va (admin uchun) oqituvchilar royxati ──
         $biriktirilganTeacherId = mini_semestr::where('bolim_id', $bolim_id)
             ->where('subject_id', $subject_id)
             ->value('teacher_id');
@@ -293,9 +277,8 @@ class MiniMaktabController extends Controller
         ));
     }
 
-    // ═══════════════════════════════════════════════
-    //  7. MATERIAL QO'SHISH (test | video | pdf | topshiriq)
-    // ═══════════════════════════════════════════════
+
+
     public function materialQosh(Request $request, $mavzu_id)
     {
         $mavzu = MsMavzu::findOrFail($mavzu_id);
@@ -313,7 +296,6 @@ class MiniMaktabController extends Controller
             'faol'     => 1,
         ];
 
-        // ── TEST ──
         if ($request->tur === 'test') {
             $request->validate([
                 'bank_id'       => 'required|exists:question_banks,id',
@@ -338,10 +320,9 @@ class MiniMaktabController extends Controller
             ];
         }
 
-        // ── VIDEO ──
         if ($request->tur === 'video') {
             $request->validate([
-                'video' => 'required|file|mimes:mp4,mov,avi,webm|max:512000', // max 500MB
+                'video' => 'required|file|mimes:mp4,mov,avi,webm|max:512000',
             ]);
 
             $file = $request->file('video');
@@ -354,10 +335,9 @@ class MiniMaktabController extends Controller
             ];
         }
 
-        // ── PDF (maruza) ──
         if ($request->tur === 'pdf') {
             $request->validate([
-                'pdf' => 'required|file|mimes:pdf|max:51200', // max 50MB
+                'pdf' => 'required|file|mimes:pdf|max:51200',
             ]);
 
             $file = $request->file('pdf');
@@ -370,10 +350,9 @@ class MiniMaktabController extends Controller
             ];
         }
 
-        // ── TOPSHIRIQ (PDF) ──
         if ($request->tur === 'topshiriq') {
             $request->validate([
-                'pdf' => 'required|file|mimes:pdf|max:51200', // max 50MB
+                'pdf' => 'required|file|mimes:pdf|max:51200',
             ]);
 
             $file = $request->file('pdf');
@@ -391,9 +370,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', ucfirst($request->tur) . ' material qo\'shildi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  8. MATERIAL O'CHIRISH
-    // ═══════════════════════════════════════════════
+
+
     public function materialOchir($id)
     {
         $material = MsMaterial::findOrFail($id);
@@ -410,9 +388,8 @@ class MiniMaktabController extends Controller
         ])->with('success', 'Material o\'chirildi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  9. TEST SOZLAMALARINI YANGILASH
-    // ═══════════════════════════════════════════════
+
+
     public function testSozlama(Request $request, $id)
     {
         $material = MsMaterial::where('tur', 'test')->findOrFail($id);
@@ -440,9 +417,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', 'Test sozlamalari yangilandi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  9b. MATERIALNI FAOLLASHTIRISH / BLOKLASH (AJAX)
-    // ═══════════════════════════════════════════════
+
+
     public function materialStatusToggle($id)
     {
         $material = MsMaterial::findOrFail($id);
@@ -451,9 +427,8 @@ class MiniMaktabController extends Controller
         return response()->json(['status' => (bool) $material->faol]);
     }
 
-    // ═══════════════════════════════════════════════
-    //  10. TALABA STATUS TOGGLE
-    // ═══════════════════════════════════════════════
+
+
     public function statusToggle($id)
     {
         $ariza = mini_semestr::findOrFail($id);
@@ -477,9 +452,8 @@ class MiniMaktabController extends Controller
         );
     }
 
-    // ═══════════════════════════════════════════════
-    //  11. TALABA TEST HARAKATI (urinishlar ro'yxati)
-    // ═══════════════════════════════════════════════
+
+
     public function talabaSessions($bolim_id, $subject_id, $user_id, $material_id)
     {
         $bolim    = Bolim::findOrFail($bolim_id);
@@ -500,9 +474,8 @@ class MiniMaktabController extends Controller
         return view('mini_maktab.urinishlar', compact('bolim', 'subject', 'user', 'material', 'sessions'));
     }
 
-    // ═══════════════════════════════════════════════
-    //  12. BITTA URINISHNING JAVOBLAR TAHLILI
-    // ═══════════════════════════════════════════════
+
+
     public function harakat($bolim_id, $subject_id, $user_id, $session_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
@@ -529,9 +502,8 @@ class MiniMaktabController extends Controller
         ));
     }
 
-    // ═══════════════════════════════════════════════
-    //  13. URINISHNI O'CHIRISH
-    // ═══════════════════════════════════════════════
+
+
     public function sessionDelete($id)
     {
         $session = TestSession::findOrFail($id);
@@ -555,9 +527,8 @@ class MiniMaktabController extends Controller
         return redirect()->route('mini_maktab.index')->with('success', 'Urinish o\'chirildi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  14. TOPSHIRIQ BAHOLARINI SAQLASH (o'qituvchi)
-    // ═══════════════════════════════════════════════
+
+
     public function topshiriqBaholar(Request $request, $material_id)
     {
         $material = MsMaterial::where('tur', 'topshiriq')
@@ -592,9 +563,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', 'Baholar saqlandi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  15. TALABA: TOPSHIRIQ PDF YUKLASH
-    // ═══════════════════════════════════════════════
+
+
     public function topshiriqYukla(Request $request, $material_id)
     {
         $material = MsMaterial::where('tur', 'topshiriq')
@@ -645,9 +615,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', 'Topshiriq yuklandi!');
     }
 
-    // ═══════════════════════════════════════════════
-    //  PRIVATE HELPERS
-    // ═══════════════════════════════════════════════
+
+
     private function materialFaylOchir(MsMaterial $material): void
     {
         if ($material->video_path && Storage::disk('public')->exists($material->video_path)) {
@@ -658,15 +627,7 @@ class MiniMaktabController extends Controller
         }
     }
 
-    /**
-     * Barcha topshiriq ballarini mavzu.tur bo'yicha yig'adi:
-     *   mavzu   → joriy_baho
-     *   oraliq  → oraliq_baho
-     *   yakuniy → yakuniy_baho
-     * Keyin:
-     *   joriy_oraliq = joriy + oraliq
-     *   umumiy       = joriy + oraliq + yakuniy
-     */
+    
     private function recalcMiniSemestrScores(int $userId, int $bolimId, int $subjectId): void
     {
         $ariza = mini_semestr::where('bolim_id', $bolimId)
@@ -707,9 +668,8 @@ class MiniMaktabController extends Controller
         ]);
     }
 
-    // ═══════════════════════════════════════════════
-    //  O'QITUVCHI KARTOCHKA QO'SHISH (admin)
-    // ═══════════════════════════════════════════════
+
+
     public function guruhTeacherQosh(Request $request, $subjectsToSubjectId)
     {
         if (auth()->user()?->role !== 'admin') abort(403);
@@ -730,9 +690,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', "O'qituvchi kartochkasi qo'shildi!");
     }
 
-    // ═══════════════════════════════════════════════
-    //  O'QITUVCHI KARTOCHKASINI OLIB TASHLASH
-    // ═══════════════════════════════════════════════
+
+
     public function guruhTeacherOchir($id)
     {
         if (auth()->user()?->role !== 'admin') abort(403);
@@ -741,7 +700,6 @@ class MiniMaktabController extends Controller
 
         $subjectIds = Subject::where('subjects_to_subject_id', $card->subjects_to_subject_id)->pluck('id');
 
-        // subject_id yoki subjects_to_subject_id orqali topib teacher_id ni null qilamiz
         mini_semestr::where('teacher_id', $card->teacher_id)
             ->where(function ($q) use ($subjectIds, $card) {
                 if ($subjectIds->isNotEmpty()) {
@@ -758,9 +716,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', "O'qituvchi olib tashlandi, talabalari bo'shab qoldi.");
     }
 
-    // ═══════════════════════════════════════════════
-    //  AVTOMATIK TAQSIMLASH (faqat teacher_id bo'sh bo'lganlarga)
-    // ═══════════════════════════════════════════════
+
+
     public function guruhAvtoTaqsimla(Request $request, $subjectsToSubjectId)
     {
         if (auth()->user()?->role !== 'admin') abort(403);
@@ -771,17 +728,14 @@ class MiniMaktabController extends Controller
             return redirect()->back()->with('error', "Avval kamida bitta o'qituvchi kartochkasini qo'shing.");
         }
 
-        // Guruhdagi barcha subject_id'lar — mavzular sahifasi bilan bir xil mantiq
         $subjectIds = Subject::where('subjects_to_subject_id', $subjectsToSubjectId)->pluck('id');
 
         if ($subjectIds->isEmpty()) {
             return redirect()->back()->with('error', "Bu guruhga hali hech qanday fan biriktirilmagan.");
         }
 
-        // Formadan kelgan bolim_id (joriy bo'lim)
         $bolimId = $request->filled('bolim_id') ? (int) $request->bolim_id : null;
 
-        // Har bir teacher uchun band o'rinlar
         $bandSoni = [];
         foreach ($teachers as $t) {
             $q = mini_semestr::whereIn('subject_id', $subjectIds)
@@ -792,7 +746,6 @@ class MiniMaktabController extends Controller
             $bandSoni[$t->teacher_id] = $q->count();
         }
 
-        // Bo'sh talabalar
         $boshQuery = mini_semestr::whereIn('subject_id', $subjectIds)
             ->whereNull('teacher_id');
         if ($bolimId) {
@@ -806,7 +759,7 @@ class MiniMaktabController extends Controller
 
         $taqsimlandi = 0;
         foreach ($boshTalabalar as $arizaId) {
-            // Eng ko'p bo'sh joyi qolgan o'qituvchini tanlaymiz
+
             $tanlangan = $teachers->sortByDesc(function ($t) use ($bandSoni) {
                 return $t->max_talaba - ($bandSoni[$t->teacher_id] ?? 0);
             })->first();
@@ -824,9 +777,8 @@ class MiniMaktabController extends Controller
         return redirect()->back()->with('success', "Bo'sh talabalar taqsimlandi ({$taqsimlandi} ta)!");
     }
 
-    // ═══════════════════════════════════════════════
-    //  QO'LDA BIRIKTIRISH (AJAX, cheklovsiz — "erkin biriktirish")
-    // ═══════════════════════════════════════════════
+
+
     public function talabaTeacherOzgartir(Request $request, $arizaId)
     {
         if (auth()->user()?->role !== 'admin') abort(403);
@@ -836,7 +788,6 @@ class MiniMaktabController extends Controller
         $ariza = mini_semestr::findOrFail($arizaId);
         $ariza->update(['teacher_id' => $request->teacher_id]);
 
-        // Band sonini hisoblash: arizaning subject_id orqali guruhni topamiz
         $subject = Subject::find($ariza->subject_id);
         $guruhId = $subject?->subjects_to_subject_id;
 

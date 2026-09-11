@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
-            $table->string('name');                 // Masalan: "Hero bo'limi", "Hemis bo'limi", "Kontrakt"
+            $table->string('name');
             $table->string('slug')->unique()->nullable();
-            $table->string('icon')->nullable();      // frontendda ikonka uchun (ixtiyoriy)
+            $table->string('icon')->nullable();
             $table->timestamps();
         });
     }

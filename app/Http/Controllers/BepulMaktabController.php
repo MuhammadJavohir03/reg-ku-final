@@ -14,14 +14,13 @@ use App\Models\QuestionUser;
 
 class BepulMaktabController extends Controller
 {
-    // Bolimlar ro'yxati
+
     public function index()
     {
         $bolimlar = Bolim::paginate(50);
         return view('bepul_maktab.index', compact('bolimlar'));
     }
 
-    // Bolim ichidagi fanlar
     public function fanlar($bolim_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
@@ -34,7 +33,6 @@ class BepulMaktabController extends Controller
         return view('bepul_maktab.fanlar', compact('bolim', 'fanlar'));
     }
 
-    // Fan sozlamalari
     public function sozlamalar($bolim_id, $subject_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
@@ -56,7 +54,7 @@ class BepulMaktabController extends Controller
 
         return view('bepul_maktab.sozlamalar', compact('bolim', 'subject', 'bank', 'banklar', 'talabalar'));
     }
-    // Sozlamalarni saqlash
+
     public function saqlash(Request $request, $bolim_id, $subject_id)
     {
         $request->validate([
@@ -69,7 +67,6 @@ class BepulMaktabController extends Controller
 
         $bank = QuestionBank::findOrFail($request->bank_id);
 
-        // Bank sozlamalarini yangilash
         $bank->update([
             'subject_id'      => $subject_id,
             'savollar_soni'      => $request->savollar_soni,
@@ -79,7 +76,6 @@ class BepulMaktabController extends Controller
             'tugash_vaqti'    => $request->tugash_vaqti ?: null,
         ]);
 
-        // Shu bankdagi barcha savollar balini yangilash
         Question::where('bank_id', $bank->id)
             ->update(['ball' => $request->ball]);
 
@@ -99,7 +95,7 @@ class BepulMaktabController extends Controller
 
     public function allStatusToggle(Request $request, $bolim_id, $subject_id)
     {
-        $status = $request->status; // 1 yoki 0
+        $status = $request->status;
 
         free_semestr::where('bolim_id', $bolim_id)
             ->where('subject_id', $subject_id)
@@ -121,7 +117,7 @@ class BepulMaktabController extends Controller
         $user = User::findOrFail($user_id);
 
         $harakatlar = QuestionUser::where('session_id', $session_id)
-            ->whereNotNull('tanlov') // Faqat javob tanlanganlari
+            ->whereNotNull('tanlov')
             ->with('question')
             ->get();
 
@@ -136,10 +132,8 @@ class BepulMaktabController extends Controller
     {
         $session = TestSession::findOrFail($id);
 
-        // 1. question_user larni o‘chiramiz
         QuestionUser::where('session_id', $session->id)->delete();
 
-        // 2. sessionni o‘chiramiz
         $session->delete();
 
         $bank = $session->bank;
@@ -150,9 +144,7 @@ class BepulMaktabController extends Controller
         ]);
     }
 
-    // BepulMaktabController.php ichiga qo'shiladi
 
-    // Talabaning barcha urinishlari (sessiyalari)
     public function talabaSessions($bolim_id, $subject_id, $user_id)
     {
         $bolim   = Bolim::findOrFail($bolim_id);
@@ -172,7 +164,6 @@ class BepulMaktabController extends Controller
             ->orderBy('id')
             ->get();
 
-        // Faqat bitta urinish bo'lsa — to'g'ridan-to'g'ri harakat sahifasiga otkazamiz
         if ($sessions->count() === 1) {
             return redirect()->route('bepul_maktab.harakat', [
                 $bolim_id,
@@ -182,7 +173,6 @@ class BepulMaktabController extends Controller
             ]);
         }
 
-        // Hech qanday urinish bo'lmasa
         if ($sessions->isEmpty()) {
             return redirect()->back()->with('error', 'Bu talaba hali test yechmagan!');
         }

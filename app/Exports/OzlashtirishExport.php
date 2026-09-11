@@ -28,7 +28,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
     {
         $rows = [];
 
-        // 1-qator: fan nomlari
         $header1 = ['№', 'Talaba F.I.O', 'Guruh'];
         foreach ($this->fanlar as $fan) {
             $header1[] = $fan->nomi;
@@ -37,7 +36,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
         }
         $rows[] = $header1;
 
-        // 2-qator: J/O, U, D
         $header2 = ['', '', ''];
         foreach ($this->fanlar as $fan) {
             $header2[] = 'J/O';
@@ -46,7 +44,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
         }
         $rows[] = $header2;
 
-        // Ma'lumotlar
         foreach ($this->talabalar as $i => $talaba) {
             $row = [
                 $i + 1,
@@ -72,7 +69,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
         $lastCol = Coordinate::stringFromColumnIndex($lastColIndex);
         $totalRows = count($this->talabalar) + 2;
 
-        // 1-qator: fan header uslubi
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
             'fill' => [
                 'fillType'   => Fill::FILL_SOLID,
@@ -90,7 +86,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
             ],
         ]);
 
-        // 2-qator: J/O, U, D header uslubi
         $sheet->getStyle("A2:{$lastCol}2")->applyFromArray([
             'fill' => [
                 'fillType'   => Fill::FILL_SOLID,
@@ -105,7 +100,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
             ],
         ]);
 
-        // Ma'lumot qatorlari
         $sheet->getStyle("A3:{$lastCol}{$totalRows}")->applyFromArray([
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -119,12 +113,10 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
             ],
         ]);
 
-        // Talaba ismi chap hizalanish
         $sheet->getStyle("B3:B{$totalRows}")
             ->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-        // Qizil kataklar
         foreach ($this->talabalar as $i => $talaba) {
             $rowNum = $i + 3;
             foreach ($this->fanlar as $j => $fan) {
@@ -155,7 +147,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
                     ]);
                 }
 
-                // Yashil qator — hech qanday qizil yo'q
                 $qarzdor = ($grade && (
                     ($grade->joriy_oraliq !== null && $grade->joriy_oraliq < 20) ||
                     ($grade->umumiy !== null && $grade->umumiy < 60) ||
@@ -170,7 +161,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
             }
         }
 
-        // Qator balandliklari
         $sheet->getRowDimension(1)->setRowHeight(50);
         $sheet->getRowDimension(2)->setRowHeight(20);
 
@@ -206,12 +196,10 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
                 $lastColIndex = 3 + ($fanCount * 3);
                 $lastCol = Coordinate::stringFromColumnIndex($lastColIndex);
 
-                // A1:C1 merge (№, Ism, Guruh)
                 $sheet->mergeCells('A1:A2');
                 $sheet->mergeCells('B1:B2');
                 $sheet->mergeCells('C1:C2');
 
-                // Fan nomlari merge
                 foreach ($this->fanlar as $i => $fan) {
                     $start = 4 + ($i * 3);
                     $end   = $start + 2;
@@ -220,7 +208,6 @@ class OzlashtirishExport implements FromArray, WithStyles, WithColumnWidths, Wit
                     $sheet->mergeCells("{$startLetter}1:{$endLetter}1");
                 }
 
-                // Hamma border
                 $totalRows = count($this->talabalar) + 2;
                 $sheet->getStyle("A1:{$lastCol}{$totalRows}")->applyFromArray([
                     'borders' => [

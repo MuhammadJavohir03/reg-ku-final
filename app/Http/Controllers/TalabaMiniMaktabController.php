@@ -15,11 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 class TalabaMiniMaktabController extends Controller
 {
-    /**
-     * 0-qadam: talaba biriktirilgan BO'LIMLAR ro'yxati.
-     * Faqat bolim->status == 1 (faol) bo'limgagina kirib, ichidagi fanlarni ko'rish mumkin —
-     * status = 0 bo'lgan bo'lim kartochkada ko'rinadi, lekin bosib bo'lmaydi (bloklangan holatda).
-     */
+    
     public function index()
     {
         $bolimIds = mini_semestr::where('user_id', Auth::id())
@@ -31,10 +27,7 @@ class TalabaMiniMaktabController extends Controller
         return view('talaba.mini_maktab.bolimlar', compact('bolimlar'));
     }
 
-    /**
-     * 1-qadam: bo'lim tanlangandan keyin — shu bo'limdagi fanlar.
-     * Bo'lim hali faol (status = 1) bo'lmasa, ichkariga kiritilmaydi.
-     */
+    
     public function fanlar($bolim_id)
     {
         $bolim = Bolim::findOrFail($bolim_id);
@@ -51,10 +44,7 @@ class TalabaMiniMaktabController extends Controller
         return view('talaba.mini_maktab.fanlar', compact('bolim', 'fanlar'));
     }
 
-    /**
-     * 2-qadam: fan mavzulari (mavzu/oraliq/yakuniy).
-     * status = 0 bo'lsa yakuniy ko'rsatilmaydi.
-     */
+    
     public function mavzular($miniSemestrId)
     {
         $miniSemestr = mini_semestr::with(['subject', 'bolim'])
@@ -80,9 +70,7 @@ class TalabaMiniMaktabController extends Controller
         return view('talaba.mini_maktab.mavzular', compact('miniSemestr', 'mavzular', 'joriyBaholar'));
     }
 
-    /**
-     * 3-qadam: mavzu materiallari (test/video/pdf/topshiriq).
-     */
+    
     public function mavzuShow($miniSemestrId, $mavzuId)
     {
         $miniSemestr = mini_semestr::where('user_id', Auth::id())
@@ -98,7 +86,6 @@ class TalabaMiniMaktabController extends Controller
 
         $materiallar = $mavzu->materiallar()->where('faol', 1)->get();
 
-        // Test materiallari uchun urinish/holat
         $testHolatlari = [];
         foreach ($materiallar->where('tur', 'test') as $m) {
             $ishlangan = TestSession::where('user_id', Auth::id())
@@ -133,7 +120,6 @@ class TalabaMiniMaktabController extends Controller
             ];
         }
 
-        // Topshiriq materiallari uchun talabaning javoblari
         $topshiriqlarMap = [];
         foreach ($materiallar->where('tur', 'topshiriq') as $m) {
             $topshiriqlarMap[$m->id] = MsTopshiriq::where('ms_material_id', $m->id)
@@ -150,9 +136,7 @@ class TalabaMiniMaktabController extends Controller
         ));
     }
 
-    /**
-     * Test materialini boshlash.
-     */
+    
     public function boshlash($miniSemestrId, $materialId)
     {
         $miniSemestr = mini_semestr::where('user_id', Auth::id())->findOrFail($miniSemestrId);
@@ -206,9 +190,7 @@ class TalabaMiniMaktabController extends Controller
         return redirect()->route('talaba.mini_maktab.test', $attempt->id);
     }
 
-    /**
-     * Test sahifasi.
-     */
+    
     public function test($attemptId)
     {
         $attempt = TestSession::where('user_id', Auth::id())->findOrFail($attemptId);
@@ -225,9 +207,7 @@ class TalabaMiniMaktabController extends Controller
         return view('talaba.mini_maktab.test', compact('attempt', 'savollar', 'qolganVaqt', 'subject', 'bolim'));
     }
 
-    /**
-     * Test yuborish va baholash.
-     */
+    
     public function yuborish(Request $request, $attemptId)
     {
         $attempt = TestSession::where('user_id', Auth::id())->findOrFail($attemptId);
@@ -319,9 +299,7 @@ class TalabaMiniMaktabController extends Controller
         return redirect()->route('talaba.mini_maktab.index');
     }
 
-    /**
-     * Natija va javoblar tahlili.
-     */
+    
     public function natija($attemptId)
     {
         $attempt = TestSession::where('user_id', Auth::id())
@@ -338,11 +316,7 @@ class TalabaMiniMaktabController extends Controller
         return view('talaba.mini_maktab.natija', compact('attempt', 'togriSoni', 'notogriSoni', 'foiz', 'maxBall'));
     }
 
-    /**
-     * ═══════════════════════════════════════════════
-     *  TOPSHIRIQ PDF YUKLASH (talaba)
-     * ═══════════════════════════════════════════════
-     */
+    
     public function topshiriqYukla(Request $request, $miniSemestrId, $materialId)
     {
         $miniSemestr = mini_semestr::where('user_id', Auth::id())
@@ -353,7 +327,6 @@ class TalabaMiniMaktabController extends Controller
             ->with('mavzu')
             ->findOrFail($materialId);
 
-        // Shu fan / bolimga tegishlimi?
         if (
             !$material->mavzu ||
             $material->mavzu->bolim_id != $miniSemestr->bolim_id ||
@@ -362,18 +335,16 @@ class TalabaMiniMaktabController extends Controller
             abort(403, 'Bu topshiriq sizga tegishli emas.');
         }
 
-        // Yakuniy va status yopiq bo'lsa
         if ($material->mavzu->tur === 'yakuniy' && !$miniSemestr->status) {
             return back()->with('error', 'Yakuniy nazorat hali sizga ochilmagan.');
         }
 
-        // Bloklangan talaba
         if (!$miniSemestr->status && $material->mavzu->tur !== 'mavzu' && $material->mavzu->tur !== 'oraliq') {
-            // status faqat yakuniy uchun tekshiriladi (yuqorida)
+
         }
 
         $request->validate([
-            'pdf' => 'required|file|mimes:pdf|max:51200', // 50MB
+            'pdf' => 'required|file|mimes:pdf|max:51200',
         ]);
 
         $user = Auth::user();
@@ -394,13 +365,12 @@ class TalabaMiniMaktabController extends Controller
             'user_id'        => $user->id,
         ]);
 
-        // Eski faylni o'chirish
         if ($topshiriq->pdf_path && Storage::disk('public')->exists($topshiriq->pdf_path)) {
             Storage::disk('public')->delete($topshiriq->pdf_path);
         }
 
         $topshiriq->pdf_path = $path;
-        // Ball o'qituvchi qo'yadi — yuklashda o'zgarmaydi
+
         $topshiriq->save();
 
         return back()->with('success', 'Topshiriq muvaffaqiyatli yuklandi!');

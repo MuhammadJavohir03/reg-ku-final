@@ -11,10 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ChatController extends Controller
 {
-    /**
-     * Bosh sahifa: bo'limlar ro'yxati + oldin yozishgan talabalar ro'yxati.
-     * (Telefonda faqat shu ro'yxat ko'rinadi, PC'da chapda shu, o'ngda bo'sh holat)
-     */
+    
     public function index()
     {
         ['sections' => $sections, 'directChats' => $directChats] = $this->buildSidebar();
@@ -22,11 +19,7 @@ class ChatController extends Controller
         return view('student.chat.index', compact('sections', 'directChats'));
     }
 
-    /**
-     * Sidebar (bo'limlar + shaxsiy suhbatlar) ma'lumotini yig'ib beradi.
-     * index(), section() va userChat() metodlari birgalikda ishlatadi,
-     * shunda PC'da har doim chapda ro'yxat, o'ngda chat ko'rinib turadi.
-     */
+    
     private function buildSidebar(): array
     {
         $me = Auth::user();
@@ -72,7 +65,7 @@ class ChatController extends Controller
         return compact('sections', 'directChats');
     }
 
-    /** Talaba qidirish (yozishish uchun) */
+    
     public function searchUsers(Request $request)
     {
         $q = trim($request->get('q', ''));
@@ -92,7 +85,7 @@ class ChatController extends Controller
         return response()->json($users);
     }
 
-    /** Bo'lim bilan chat oynasi */
+    
     public function section(Section $section)
     {
         $me = Auth::user();
@@ -128,7 +121,7 @@ class ChatController extends Controller
         return response()->json(['message' => $message->load('sender')]);
     }
 
-    /** Bo'lim chatidagi yangi xabarlarni polling qilish */
+    
     public function pollSection(Request $request, Section $section)
     {
         $afterId = (int) $request->get('after', 0);
@@ -140,7 +133,6 @@ class ChatController extends Controller
             ->oldest()
             ->get();
 
-        // Menga kelgan yangi xabarlarni o'qilgan deb belgilaymiz
         Message::forSectionConversation($section->id, $me->id)
             ->where('receiver_id', $me->id)
             ->where('status', Message::STATUS_UNREAD)
@@ -149,7 +141,7 @@ class ChatController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
-    /** Boshqa talaba bilan chat oynasi */
+    
     public function userChat(User $user)
     {
         abort_if($user->id === Auth::id() || $user->role !== 'talaba', 404);
@@ -159,7 +151,6 @@ class ChatController extends Controller
         $messages = Message::betweenUsers($me->id, $user->id)->with('sender')->oldest()->get();
         $pendingSender = Message::pendingRequestSender($me->id, $user->id);
 
-        // Menga tegishli xabarni "o'qilgan" deb belgilaymiz
         Message::betweenUsers($me->id, $user->id)
             ->where('receiver_id', $me->id)
             ->where('status', Message::STATUS_UNREAD)
@@ -170,7 +161,7 @@ class ChatController extends Controller
         return view('student.chat.user', array_merge([
             'otherUser' => $user,
             'messages' => $messages,
-            // Agar so'rov bor va yuboruvchi men bo'lmasam - menga "qabul qilish" tugmasi chiqadi
+
             'needsMyApproval' => $pendingSender !== null && $pendingSender !== $me->id,
         ], $sidebar));
     }
@@ -184,11 +175,10 @@ class ChatController extends Controller
 
         $pendingSender = Message::pendingRequestSender($me->id, $user->id);
 
-        // Suhbat hali boshlanmagan bo'lsa -> bu birinchi so'rov xabari
         $isFirstMessage = !Message::betweenUsers($me->id, $user->id)->exists();
 
         if (!$isFirstMessage && $pendingSender !== null && $pendingSender !== $me->id) {
-            // Boshqa talaba so'rov yuborgan, u hali qabul qilmagan - men yoza olmayman
+
             return response()->json([
                 'error' => 'Suhbatni boshlash uchun avval qarshi tomon rozilik berishi kerak.',
             ], 403);
@@ -206,7 +196,7 @@ class ChatController extends Controller
         return response()->json(['message' => $message->load('sender')]);
     }
 
-    /** Kelgan so'rovni qabul qilish */
+    
     public function acceptUser(User $user)
     {
         $me = Auth::user();
@@ -243,10 +233,7 @@ class ChatController extends Controller
         ]);
     }
 
-    /**
-     * Sidebar uchun umumiy polling - yangi xabar kelgan-kelmaganini
-     * (ovoz chiqarish va badge yangilash uchun) tekshiradi.
-     */
+    
     public function pollOverview()
     {
         $me = Auth::user();

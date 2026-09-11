@@ -13,10 +13,7 @@ use ZipArchive;
 
 class VedomostController extends Controller
 {
-    /**
-     * Fanga tegishli barcha talabalarni guruh bo'yicha guruhlab qaytaradi.
-     * Natija: ['GURUH-NOMI' => [ [...student...], ... ], ... ]
-     */
+    
     private function getStudentsByGroup(subject $subject): array
     {
         $grades = grade::with('user')
@@ -46,9 +43,7 @@ class VedomostController extends Controller
         return $grouped;
     }
 
-    /**
-     * Umumiy baho (foiz) asosida "Raqamli ekvivalent"ni hisoblaydi.
-     */
+    
     private function calcScale($umumiy)
     {
         $u = (float) $umumiy;
@@ -61,9 +56,7 @@ class VedomostController extends Controller
         return 0;
     }
 
-    /**
-     * Umumiy baho (foiz) asosida "Harfiy ekvivalent"ni hisoblaydi.
-     */
+    
     private function calcLetter($umumiy)
     {
         $u = (float) $umumiy;
@@ -76,9 +69,7 @@ class VedomostController extends Controller
         return 'F';
     }
 
-    /**
-     * PREVIEW / TAHRIRLASH SAHIFASI.
-     */
+    
     public function form(subject $subject)
     {
         $grouped = $this->getStudentsByGroup($subject);
@@ -107,9 +98,7 @@ class VedomostController extends Controller
         ]);
     }
 
-    /**
-     * Bitta guruh uchun Spreadsheet obyektini quradi (shablonsiz, kod orqali).
-     */
+    
     private function buildSheetForGroup(subject $subject, string $guruh, array $students, array $data): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
@@ -119,10 +108,9 @@ class VedomostController extends Controller
         $safeTitle = mb_substr(preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh), 0, 31);
         $sheet->setTitle($safeTitle ?: 'Guruh');
 
-        // "Talaba" ustuni (B) qat'iy 45 birlik kenglikda, matn sig'masa pastga
-        // o'tadi (wrap text). "Talaba ID" (C) esa matn uzunligiga qarab dinamik
-        // kengayadi. Qolgan (raqamli/qisqa) ustunlar kichik va qat'iy kenglikda
-        // qoladi - shunda jadval umumiy A4 sahifasiga yaxshi sig'adi.
+
+
+
         $sheet->getColumnDimension('A')->setWidth(6);
         $sheet->getColumnDimension('B')->setAutoSize(false)->setWidth(45);
         $sheet->getColumnDimension('C')->setAutoSize(true);
@@ -135,7 +123,6 @@ class VedomostController extends Controller
         $sheet->getColumnDimension('J')->setWidth(9);
         $sheet->getColumnDimension('K')->setWidth(11);
 
-        // --- CHOP ETISH (PRINT) UCHUN SOZLAMALAR ---
         $sheet->getPageSetup()
             ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE)
             ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4)
@@ -145,7 +132,6 @@ class VedomostController extends Controller
         $sheet->setPrintGridlines(false);
         $sheet->setShowGridlines(false);
 
-        // --- SARLAVHA ---
         $sheet->mergeCells('A1:K1');
         $sheet->setCellValue('A1', "QO'QON UNIVERSITETI");
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(20);
@@ -156,7 +142,6 @@ class VedomostController extends Controller
         $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(20);
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // 1-qator: Fakultet, Kafedra, Guruh
         $fakultetNomi = optional($subject->fakultet)->nomi ?? ($data['fakultet'] ?? '');
         $kafedraNomi  = optional($subject->kafedra)->nomi ?? ($data['kafedra'] ?? '');
         $fanKrediti   = $subject->kredit ?? ($data['fan_krediti'] ?? '');
@@ -167,23 +152,18 @@ class VedomostController extends Controller
         $sheet->mergeCells('A4:K4');
         $sheet->setCellValue('A4', "Fakultet: {$fakultetNomi}, Kafedra: {$kafedraNomi}, Guruh: {$guruh}");
 
-        // 2-qator: Fan, Fan krediti
         $sheet->mergeCells('A5:K5');
         $sheet->setCellValue('A5', "Fan: {$subject->nomi}, Fan krediti: {$fanKrediti}");
 
-        // 3-qator: Fan o'qituvchisi
         $sheet->mergeCells('A6:K6');
         $sheet->setCellValue('A6', "Fan o'qituvchisi: {$fanOqituvchi}");
 
-        // 4-qator: Ta'lim tili
         $sheet->mergeCells('A7:K7');
         $sheet->setCellValue('A7', "Ta'lim tili: {$talimTili}");
 
-        // 5-qator: Semestr
         $sheet->mergeCells('A8:K8');
         $sheet->setCellValue('A8', "O'quv yili: {$oquv_yili}");
 
-        // --- JADVAL SARLAVHASI (asl shablondagi kabi 2 qatorli, faqat Guruh o'rniga Talaba ID) ---
         $headerRow  = 10;
         $headerRow2 = 11;
 
@@ -221,18 +201,16 @@ class VedomostController extends Controller
         $sheet->getRowDimension($headerRow)->setRowHeight(60);
         $sheet->getRowDimension($headerRow2)->setRowHeight(60);
 
-        // --- MA'LUMOTLAR QATORLARI ---
         $row = $headerRow2 + 1;
 
-        // Kalitlar calcLetter() qaytaradigan qiymatlar bilan bir xil bo'lishi SHART:
-        // 'A+', 'A', 'B+', 'B', 'C+', 'C', 'F'
+
         $counts = ['A+' => 0, 'A' => 0, 'B+' => 0, 'B' => 0, 'C+' => 0, 'C' => 0, 'F' => 0];
 
         foreach ($students as $i => $s) {
             $sheet->setCellValue("A{$row}", $i + 1);
             $sheet->setCellValue("B{$row}", $s['ismi']);
-            // Talaba ID matn (text) sifatida yoziladi - aks holda Excel uzun raqamni
-            // ilmiy formatda (masalan 4.11221E+11) ko'rsatib qo'yadi
+
+
             $sheet->setCellValueExplicit(
                 "C{$row}",
                 (string) $s['talaba_id'],
@@ -248,7 +226,7 @@ class VedomostController extends Controller
             $sheet->setCellValue("H{$row}", $s['umumiy']);
             $sheet->setCellValue("I{$row}", number_format($this->calcScale($s['umumiy']), 1));
             $sheet->setCellValue("J{$row}", $this->calcLetter($s['umumiy']));
-            $sheet->setCellValue("K{$row}", ''); // Imzo uchun bo'sh joy
+            $sheet->setCellValue("K{$row}", '');
 
             $key = $this->calcLetter($s['umumiy']);
             $counts[$key] = ($counts[$key] ?? 0) + 1;
@@ -267,7 +245,6 @@ class VedomostController extends Controller
             $row++;
         }
 
-        // --- FOOTER: Jami talabalar ---
         $row += 1;
         $sheet->mergeCells("A{$row}:K{$row}");
         $total = count($students);
@@ -278,30 +255,25 @@ class VedomostController extends Controller
                 "\"C 60-64\": {$counts['C']}, \"F 0-59\": {$counts['F']}"
         );
 
-        // --- IMZO: Registrator ofisi boshlig'i uchun, chiziq bilan ---
         $row += 3;
         $sheet->mergeCells("A{$row}:C{$row}");
         $sheet->setCellValue("A{$row}", "Registrator ofisi boshlig'i:");
         $sheet->getStyle("A{$row}")->getFont()->setBold(true);
 
-        // Imzo chizig'i (bo'sh, faqat pastki chegara chiziq bo'lib ko'rinadi)
         $sheet->mergeCells("D{$row}:H{$row}");
         $sheet->getStyle("D{$row}:H{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
 
-        // F.I.Sh.
         $sheet->mergeCells("I{$row}:K{$row}");
         $sheet->setCellValue("I{$row}", "M.Ikramov");
         $sheet->getStyle("I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // Chiziq ostiga kichik "(imzo)" izohi
         $row += 1;
         $sheet->mergeCells("D{$row}:H{$row}");
         $sheet->setCellValue("D{$row}", "(imzo)");
         $sheet->getStyle("D{$row}")->getFont()->setSize(9)->setItalic(true);
         $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // --- IMZO: Kafedra mudiri (registrator ofisi boshlig'i tagida) ---
-        // Fanning kafedrasi va o'quv yiliga mos mudir "mudirlar" jadvalidan avtomatik olinadi.
+
         $row += 2;
         $sheet->mergeCells("A{$row}:C{$row}");
         $sheet->setCellValue("A{$row}", "Kafedra mudiri:");
@@ -326,10 +298,7 @@ class VedomostController extends Controller
         return $spreadsheet;
     }
 
-    /**
-     * Fanning kafedrasi va o'quv yiliga mos "mudirlar" jadvalidagi mudir F.I.Sh.ni qaytaradi.
-     * Mos yozuv topilmasa - bo'sh satr (imzo joyi bo'sh qoladi, xato bermaydi).
-     */
+    
     private function mudirFor(subject $subject): string
     {
         if (!$subject->kafedra_id || !$subject->oquv_yili_id) {
@@ -343,12 +312,7 @@ class VedomostController extends Controller
         return \App\Models\Mudir::formatSignature($fullName);
     }
 
-    /**
-     * Fan uchun har bir guruhga alohida xlsx fayl yozadi va yozilgan fayl
-     * yo'llarini qaytaradi. Fan/guruh uchun ma'lumot topilmasa bo'sh massiv qaytadi.
-     * ($subject, $data, $dir) - VedomostController ichida bir marta yozilgan,
-     * bitta fan uchun ham, bulk (hammasi) eksport uchun ham ishlatiladi.
-     */
+    
     private function writeGroupExcelFiles(subject $subject, array $grouped, array $data, string $dir): array
     {
         $files = [];
@@ -371,9 +335,7 @@ class VedomostController extends Controller
         return $files;
     }
 
-    /**
-     * Berilgan fayllarni ko'rsatilgan yo'ldagi ZIP arxiviga yig'adi.
-     */
+    
     private function zipFiles(array $files, string $zipPath): void
     {
         $zip = new ZipArchive();
@@ -387,13 +349,7 @@ class VedomostController extends Controller
         $zip->close();
     }
 
-    /**
-     * Bitta fan uchun standart (subject'ning o'zidan olingan) ma'lumotlar
-     * to'plamini quradi - form() dagi $defaults bilan bir xil mantiq.
-     * Bulk (hammasini) eksport qilishda foydalanuvchi har bir fan uchun
-     * qo'lda maydon to'ldirmaydi, shuning uchun subject'ning o'z
-     * bog'lanishlaridan (teacher/talim_tili/oquv_yili) foydalaniladi.
-     */
+    
     private function defaultDataForSubject(subject $subject): array
     {
         return [
@@ -405,9 +361,7 @@ class VedomostController extends Controller
         ];
     }
 
-    /**
-     * Barcha guruhlar uchun alohida-alohida xlsx yaratib, ZIP qilib yuklab beradi.
-     */
+    
     public function exportAll(Request $request, subject $subject)
     {
         $data = $request->validate([
@@ -416,8 +370,7 @@ class VedomostController extends Controller
             'oquv_yili'     => 'nullable|string|max:255',
         ]);
 
-        // Validate() faqat requestda kelgan kalitlarni qaytaradi -
-        // shuning uchun bo'sh qoldirilgan maydonlar uchun standart qiymatlar beramiz.
+
         $data['fan_oqituvchi'] = $data['fan_oqituvchi'] ?? '';
         $data['talim_tili']    = $data['talim_tili'] ?? '';
         $data['oquv_yili']     = $data['oquv_yili'] ?? '';
@@ -441,7 +394,7 @@ class VedomostController extends Controller
 
             $this->zipFiles($files, $zipPath);
         } catch (\Throwable $e) {
-            // Xatolik bo'lsa vaqtinchalik fayllarni tozalab, xatoni loglaymiz va foydalanuvchiga aniq xabar qaytaramiz
+
             foreach ($files as $file) {
                 @unlink($file);
             }
@@ -457,12 +410,10 @@ class VedomostController extends Controller
             ], 500);
         }
 
-        // Ichidagi vaqtinchalik xlsx fayllarni tozalaymiz (ZIP ichida saqlanib qoldi)
         foreach ($files as $file) {
             @unlink($file);
         }
 
-        // Javob yuborilgandan keyin vaqtinchalik papkani ham tozalaymiz
         app()->terminating(function () use ($tmpDir) {
             @rmdir($tmpDir);
         });
@@ -470,12 +421,7 @@ class VedomostController extends Controller
         return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
     }
 
-    /**
-     * index() dagi bilan bir xil filterlarni qo'llab, baholari mavjud fanlar
-     * ro'yxatini qaytaradi. Bulk (hammasini) eksportning barcha bosqichlarida
-     * (start/step) shu bitta joydan foydalaniladi - filterlar ikki joyda
-     * turlicha yozilib, chalkashib ketmasligi uchun.
-     */
+    
     private function filteredSubjectsForBulkExport(Request $request)
     {
         $search     = $request->get('search');
@@ -508,22 +454,13 @@ class VedomostController extends Controller
             ->get();
     }
 
-    /**
-     * Bulk-eksport uchun batch papka yo'lini quradi. $batch faqat harf/raqamdan
-     * iborat bo'lishi shart (route'da regex bilan ham cheklangan) - shu orqali
-     * path traversal xavfsizligi ta'minlanadi.
-     */
+    
     private function batchDir(string $batch): string
     {
         return storage_path('app' . DIRECTORY_SEPARATOR . 'tmp_qaydnoma_batch_' . $batch);
     }
 
-    /**
-     * 1-BOSQICH: BARCHA FANLAR uchun bulk eksportni boshlaydi.
-     * Filterlarga mos, baholari mavjud fanlar ro'yxatini va yangi batch_id'ni qaytaradi.
-     * Frontend keyin har bir fan uchun alohida "step" so'rovi yuboradi -
-     * shu orqali haqiqiy progress (X / N) ko'rsatish mumkin bo'ladi.
-     */
+    
     public function exportAllStart(Request $request)
     {
         $subjects = $this->filteredSubjectsForBulkExport($request);
@@ -537,8 +474,7 @@ class VedomostController extends Controller
         mkdir($dir, 0777, true);
         mkdir($dir . DIRECTORY_SEPARATOR . 'ziplar', 0777, true);
 
-        // Ruxsat etilgan fan id'lari shu faylga yoziladi - "step" bosqichida
-        // faqat shu ro'yxatdagi id'lar bilan ishlash mumkin (xavfsizlik uchun).
+
         file_put_contents(
             $dir . DIRECTORY_SEPARATOR . 'manifest.json',
             json_encode(['subject_ids' => $subjects->pluck('id')->values()->all()])
@@ -551,11 +487,7 @@ class VedomostController extends Controller
         ]);
     }
 
-    /**
-     * 2-BOSQICH: bitta fan uchun guruhlar bo'yicha xlsx fayllarni tayyorlab,
-     * shu fan-zip'ini batch papkasiga yozadi. Frontend har bir fan uchun
-     * shu endpointni ketma-ket chaqiradi va javobga qarab progressni yangilaydi.
-     */
+    
     public function exportAllStep(Request $request, string $batch, subject $subject)
     {
         $dir = $this->batchDir($batch);
@@ -612,11 +544,7 @@ class VedomostController extends Controller
         }
     }
 
-    /**
-     * 3-BOSQICH: barcha "step"lar tugagach chaqiriladi. Batch papkasidagi
-     * fan-ziplarni bitta umumiy ZIP ichiga yig'ib, yuklab beradi
-     * (zip -> ziplar -> excellar tuzilishi) va vaqtinchalik papkani tozalaydi.
-     */
+    
     public function exportAllFinish(Request $request, string $batch)
     {
         $dir = $this->batchDir($batch);

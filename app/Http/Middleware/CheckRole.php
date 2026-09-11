@@ -10,14 +10,10 @@ use App\Models\User;
 
 class CheckRole
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
+    
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        // Foydalanuvchi tizimga kirmagan bo'lsa yoki roli mos kelmasa
+
         if (!Auth::check() || Auth::user()->role !== $role) {
             return redirect('/')->with('error', "Sizda bu sahifa uchun ruxsat yo'q.");
         }

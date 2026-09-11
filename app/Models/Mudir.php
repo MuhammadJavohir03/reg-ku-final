@@ -24,17 +24,7 @@ class Mudir extends Model
         return $this->belongsTo(kafedra::class, 'kafedra_id');
     }
 
-    /**
-     * To'liq ism-familiyani ("Baxtiyorjonov Muhammadjavohir Jamshidjon o'g'li")
-     * imzo uchun qisqa ko'rinishga ("M.Baxtiyorjonov") aylantiradi. Bazada har doim
-     * to'liq ism saqlanadi - bu format faqat ko'rinish/eksport uchun hisoblanadi.
-     *
-     * Kiritish tartibi: Familiya Ism [Otasining ismi] (standart rasmiy tartib).
-     * Qoida: birinchi so'z - familiya (to'liq, o'zgarishsiz), ikkinchi so'z - ism
-     * (faqat bosh harfi olinadi), qolgan so'z(lar) (otasining ismi) e'tiborga olinmaydi.
-     * Agar faqat bitta so'z kiritilgan bo'lsa (masalan, allaqachon
-     * "M.Baxtiyorjonov" ko'rinishida yozilgan bo'lsa), o'sha so'z o'zgarishsiz qaytariladi.
-     */
+    
     public static function formatSignature(?string $fullName): string
     {
         $fullName = trim((string) $fullName);

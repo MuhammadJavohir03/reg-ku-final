@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class FakultetController extends Controller
 {
-    /**
-     * Store a newly created fakultet in storage.
-     */
+    
     public function store(Request $request)
     {
         $request->validate([
@@ -23,9 +21,7 @@ class FakultetController extends Controller
         return redirect()->back()->with('success', 'Fakultet muvaffaqiyatli qo\'shildi.');
     }
 
-    /**
-     * Update the specified fakultet in storage.
-     */
+    
     public function update(Request $request, fakultet $fakultet)
     {
         $request->validate([
@@ -39,9 +35,7 @@ class FakultetController extends Controller
         return redirect()->back()->with('success', 'Fakultet muvaffaqiyatli yangilandi.');
     }
 
-    /**
-     * Remove the specified fakultet from storage.
-     */
+    
     public function destroy(fakultet $fakultet)
     {
         $fakultet->delete();

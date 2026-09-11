@@ -6,15 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
         Schema::create('elons', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('admin_id'); // O'qituvchi (User) ID
+            $table->unsignedBigInteger('admin_id');
             $table->foreign('admin_id')
                 ->references('id')
                 ->on('users')
@@ -27,7 +25,7 @@ return new class extends Migration
             
             $table->unsignedBigInteger('category_id')->nullable();
             $table->foreign('category_id')
-                ->references('id')         // 'categories' jadvalidagi 'id' ustuniga
+                ->references('id')
                 ->on('categories')   
                 ->onDelete('set null');  
 
@@ -36,9 +34,7 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         Schema::dropIfExists('elons');

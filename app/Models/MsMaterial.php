@@ -11,7 +11,7 @@ class MsMaterial extends Model
 
     protected $fillable = [
         'mavzu_id',
-        'tur', // test | video | pdf
+        'tur',
         'nomi',
         'bank_id',
         'savollar_soni',
@@ -56,7 +56,6 @@ class MsMaterial extends Model
             return null;
         }
 
-        // DB'da "storage/..." bilan boshlanib saqlangan bo'lsa, qayta qo'shmaymiz
         $path = ltrim($this->video_path, '/');
         $path = str_starts_with($path, 'storage/') ? substr($path, 8) : $path;
 

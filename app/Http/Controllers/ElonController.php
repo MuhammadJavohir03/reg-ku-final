@@ -9,11 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ElonController extends Controller
 {
-    /**
-     * Rasm yuklanmagan holatlarda ishlatiladigan standart rasm yo'li.
-     * Bu faylni HECH QACHON storage'dan o'chirmaslik kerak,
-     * chunki u bir nechta e'lon tomonidan umumiy ishlatiladi.
-     */
+    
     private const DEFAULT_PHOTO = 'elons/default.png';
 
     public function index()
@@ -21,30 +17,26 @@ class ElonController extends Controller
         $user = auth()->user();
         $query = Elon::with('admin', 'category');
 
-        // 1. Agar foydalanuvchi tizimga kirgan bo'lsa
         if ($user) {
-            // Faqat admin bo'lmaganlar uchun filtrni qo'llaymiz
+
             if ($user->role !== 'admin') {
                 $query->where(function ($q) use ($user) {
-                    // 1. Hammaga mo'ljallangan (category ham, kurs ham bo'sh)
+
                     $q->orWhere(function ($sub) {
                         $sub->whereNull('category_id')
                             ->whereNull('kurs');
                     });
 
-                    // 2. Faqat category tanlangan (kurs bo'sh) -> shu categoriyadagi HAR QANDAY kursga
                     $q->orWhere(function ($sub) use ($user) {
                         $sub->where('category_id', $user->category_id)
                             ->whereNull('kurs');
                     });
 
-                    // 3. Faqat kurs tanlangan (category bo'sh) -> shu kursdagi HAR QANDAY yo'nalishga
                     $q->orWhere(function ($sub) use ($user) {
                         $sub->whereNull('category_id')
                             ->where('kurs', $user->Kurs);
                     });
 
-                    // 4. Ikkalasi ham tanlangan -> aniq mos kelishi kerak
                     $q->orWhere(function ($sub) use ($user) {
                         $sub->where('category_id', $user->category_id)
                             ->where('kurs', $user->Kurs);
@@ -52,12 +44,11 @@ class ElonController extends Controller
                 });
             }
         } else {
-            // Mehmon (login qilmagan) -> faqat hammaga mo'ljallangan e'lonlar
+
             $query->whereNull('category_id')
                 ->whereNull('kurs');
         }
 
-        // 2. Qo'shimcha: qidiruv va filtr (foydalanuvchi index sahifasidan yuboradi)
         if ($search = request('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
@@ -75,16 +66,14 @@ class ElonController extends Controller
 
         $elons = $query->latest()
             ->paginate(9)
-            ->withQueryString(); // sahifalash havolalarida filtr/qidiruv saqlanib qoladi
+            ->withQueryString();
 
         $categories = Category::all();
 
         return view('elons.index', compact('elons', 'categories'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
         $categories = Category::all();
@@ -92,9 +81,7 @@ class ElonController extends Controller
         return view('elons.create', compact('categories'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(StoreElonRequest $request)
     {
         $path = self::DEFAULT_PHOTO;
@@ -118,27 +105,24 @@ class ElonController extends Controller
             ->with('success', 'E\'lon muvaffaqiyatli yaratildi.');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(Elon $elon)
     {
         $students = collect();
 
-        // Faqat admin uchun: shu e'lonni ko'ra oladigan talabalar ro'yxati.
-        // "Hammaga" mo'ljallangan e'lonlarda (category_id va kurs ikkalasi ham bo'sh) ro'yxat kerak emas.
+
         if (auth()->check() && auth()->user()->role === 'admin' && ($elon->category_id || $elon->kurs)) {
             $studentsQuery = \App\Models\User::where('role', '!=', 'admin');
 
             if ($elon->category_id && $elon->kurs) {
-                // Ikkalasi ham tanlangan -> aniq mos kelishi kerak
+
                 $studentsQuery->where('category_id', $elon->category_id)
                     ->where('Kurs', $elon->kurs);
             } elseif ($elon->category_id) {
-                // Faqat category tanlangan -> shu categoriyadagi HAR QANDAY kursdagi talabalar
+
                 $studentsQuery->where('category_id', $elon->category_id);
             } elseif ($elon->kurs) {
-                // Faqat kurs tanlangan -> shu kursdagi HAR QANDAY yo'nalishdagi talabalar
+
                 $studentsQuery->where('Kurs', $elon->kurs);
             }
 
@@ -148,9 +132,7 @@ class ElonController extends Controller
         return view('elons.show', compact('elon', 'students'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(Elon $elon)
     {
         $categories = Category::all();
@@ -158,22 +140,19 @@ class ElonController extends Controller
         return view('elons.edit', compact('elon', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(StoreElonRequest $request, Elon $elon)
     {
-        $path = $elon->photo; // Rasm o'zgarmasa, eski yo'l saqlanib qoladi
+        $path = $elon->photo;
 
         if ($request->hasFile('photo')) {
-            // Avval yangi faylni saqlaymiz
+
             $name = time() . '_' . $request->file('photo')->getClientOriginalName();
             $path = $request->file('photo')->storeAs('elons', $name, 'public');
 
-            // Endi eski faylni o'chiramiz — lekin faqat u default rasm bo'lmasa
             $this->deletePhotoIfNotDefault($elon->photo);
         } elseif ($request->boolean('remove_photo')) {
-            // Foydalanuvchi mavjud rasmni olib tashlashni so'ragan
+
             $this->deletePhotoIfNotDefault($elon->photo);
             $path = self::DEFAULT_PHOTO;
         }
@@ -191,9 +170,7 @@ class ElonController extends Controller
             ->with('success', 'E\'lon muvaffaqiyatli yangilandi.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(Elon $elon)
     {
         $this->deletePhotoIfNotDefault($elon->photo);
@@ -204,12 +181,7 @@ class ElonController extends Controller
             ->with('success', 'E\'lon muvaffaqiyatli o\'chirildi.');
     }
 
-    /**
-     * Rasmni storage'dan xavfsiz o'chirish.
-     * - $elon->photo bazada ALLAQACHON to'liq yo'l ('elons/xxx.png') sifatida
-     *   saqlangani uchun oldiga yana 'elons/' qo'shilmaydi.
-     * - Standart (umumiy) rasm hech qachon o'chirilmaydi.
-     */
+    
     private function deletePhotoIfNotDefault(?string $photo): void
     {
         if (!empty($photo) && $photo !== self::DEFAULT_PHOTO) {

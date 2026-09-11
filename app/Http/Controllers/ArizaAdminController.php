@@ -16,10 +16,6 @@ use Illuminate\Validation\Rule;
 
 class ArizaAdminController extends Controller
 {
-    /**
-     * Asosiy sahifa: ariza yaratish paneli (bo'lim -> talaba -> fan -> maktab turi) + arizalar jadvali
-     */
-
     public function index(Request $request)
     {
         $q = trim((string) $request->get('q'));
@@ -92,10 +88,6 @@ class ArizaAdminController extends Controller
 
         return view('arizaadmin.index', compact('arizalar', 'bolimlar', 'subjects', 'q'));
     }
-
-    /**
-     * AJAX: user_id (yoki ism/email) bo'yicha talabani qidirish
-     */
     public function searchUser(Request $request)
     {
         $request->validate(['q' => ['required', 'string']]);
@@ -127,12 +119,6 @@ class ArizaAdminController extends Controller
             }),
         ]);
     }
-
-    /**
-     * AJAX: tanlangan talabaga tegishli fanlar ro'yxati.
-     * Faqat shu talabaning "grade" jadvalida yozuvi bor fanlar qaytariladi
-     * (ya'ni import grade bookda bahosi mavjud fanlar).
-     */
     public function subjectsByUser(Request $request)
     {
         $validated = $request->validate([
@@ -150,11 +136,6 @@ class ArizaAdminController extends Controller
             'subjects' => $subjects,
         ]);
     }
-
-    /**
-     * AJAX: talaba + fan tanlanganda gradesda shu fan bo'yicha bahosi bormi yo'qmi tekshirish.
-     * Hech qanday filtr qo'llanilmaydi — shunchaki mavjud/mavjud emasligini bildiradi.
-     */
     public function checkGrade(Request $request)
     {
         $validated = $request->validate([
@@ -184,12 +165,6 @@ class ArizaAdminController extends Controller
             ],
         ]);
     }
-
-    /**
-     * Yangi ariza yaratish.
-     * Tartib: bolim -> talaba -> fan -> maktab turi (mini_semestr yoki free_semestr).
-     * Eligibility filtri yo'q. Gradesda bahosi bo'lsa o'sha baholar bilan, bo'lmasa 0 lar bilan yozuv yaratiladi.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -233,9 +208,6 @@ class ArizaAdminController extends Controller
         return response()->json(['message' => 'Ariza muvaffaqiyatli yaratildi.']);
     }
 
-    /**
-     * Arizani tahrirlash formasi
-     */
     public function edit(mini_semestr $ariza_admin)
     {
         $ariza    = $ariza_admin;
@@ -245,9 +217,7 @@ class ArizaAdminController extends Controller
         return view('arizaadmin.edit', compact('ariza', 'subjects', 'bolimlar'));
     }
 
-    /**
-     * Arizani yangilash (baholarni kiritish, statusni o'zgartirish)
-     */
+
     public function update(Request $request, mini_semestr $ariza_admin)
     {
         $validated = $request->validate([
@@ -255,7 +225,7 @@ class ArizaAdminController extends Controller
             'oraliq_baho'  => ['nullable', 'numeric', 'min:0', 'max:100'],
             'joriy_oraliq' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'yakuniy_baho' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'status'       => ['required', Rule::in([0, 1])], // 1 = active, 0 = block
+            'status'       => ['required', Rule::in([0, 1])],
         ]);
 
         $ariza_admin->update($validated);
@@ -265,9 +235,6 @@ class ArizaAdminController extends Controller
             ->with('success', 'Ariza muvaffaqiyatli yangilandi.');
     }
 
-    /**
-     * Arizani o'chirish
-     */
     public function destroy(string $type, int $ariza_admin)
     {
         $model = $type === 'free' ? free_semestr::class : mini_semestr::class;

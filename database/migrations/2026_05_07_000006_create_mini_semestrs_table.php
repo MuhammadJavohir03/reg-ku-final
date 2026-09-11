@@ -8,40 +8,36 @@ use function Laravel\Prompts\table;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
         Schema::create('mini_semestrs', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('user_id'); // Foydalanuvchi ID'si
+            $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
-            $table->unsignedBigInteger('subject_id'); // Fan ID'si
+            $table->unsignedBigInteger('subject_id');
             $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
 
             $table->unsignedBigInteger('bolim_id');
             $table->foreign('bolim_id')->references('id')->on('bolims')->onDelete('cascade');
 
-            $table->integer('joriy_baho')->nullable(); // Joriy baho
-            $table->integer('oraliq_baho')->nullable(); // Oraliq baho
-            $table->integer('joriy_oraliq')->nullable(); // J+O baho
+            $table->integer('joriy_baho')->nullable();
+            $table->integer('oraliq_baho')->nullable();
+            $table->integer('joriy_oraliq')->nullable();
 
-            $table->integer('yakuniy_baho')->nullable(); // Yakuniy baho
-            $table->integer('umumiy')->nullable(); // Umumiy baho
-            $table->integer('davomat')->nullable(); // Davomat foizi
+            $table->integer('yakuniy_baho')->nullable();
+            $table->integer('umumiy')->nullable();
+            $table->integer('davomat')->nullable();
 
-            $table->boolean('status')->default(false); // Status (fan amaldami yoki yoq)
+            $table->boolean('status')->default(false);
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         Schema::dropIfExists('mini_semestrs');

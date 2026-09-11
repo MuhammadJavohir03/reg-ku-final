@@ -7,25 +7,10 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-/**
- * "Baholash qaydnomasi" (rasmiy vedomost) formatidagi Excel sahifasini quradi.
- *
- * MUHIM: bu klass VedomostController'dagi buildSheetForGroup()/calcScale()/calcLetter()
- * metodlaridan CO'CHIRILGAN (mantiq bitta baytga o'zgartirilmagan holda). Maqsad -
- * bir nechta joyda (Vedomost sahifasi, Jurnal eksporti va h.k.) chaqirilganda ham
- * har doim AYNAN BIR XIL Excel natija chiqishini kafolatlash.
- *
- * $students massividagi har bir element quyidagi kalitlarga ega bo'lishi SHART:
- *   'ismi', 'talaba_id', 'joriy', 'oraliq', 'reyting', 'yakuniy', 'umumiy'
- *
- * $data massivi (fallback/qo'shimcha ma'lumotlar):
- *   'fakultet', 'kafedra', 'fan_krediti', 'fan_oqituvchi', 'talim_tili', 'oquv_yili'
- */
+
 class VedomostReportBuilder
 {
-    /**
-     * Umumiy baho (foiz) asosida "Raqamli ekvivalent"ni hisoblaydi.
-     */
+    
     public static function calcScale($umumiy)
     {
         $u = (float) $umumiy;
@@ -38,9 +23,7 @@ class VedomostReportBuilder
         return 0;
     }
 
-    /**
-     * Umumiy baho (foiz) asosida "Harfiy ekvivalent"ni hisoblaydi.
-     */
+    
     public static function calcLetter($umumiy)
     {
         $u = (float) $umumiy;
@@ -53,9 +36,7 @@ class VedomostReportBuilder
         return 'F';
     }
 
-    /**
-     * Bitta guruh uchun Spreadsheet obyektini quradi (shablonsiz, kod orqali).
-     */
+    
     public static function buildSheet(subject $subject, string $guruh, array $students, array $data = []): Spreadsheet
     {
         $spreadsheet = new Spreadsheet();
@@ -65,9 +46,8 @@ class VedomostReportBuilder
         $safeTitle = mb_substr(preg_replace('/[^A-Za-z0-9\-]/', '_', $guruh), 0, 31);
         $sheet->setTitle($safeTitle ?: 'Guruh');
 
-        // Faqat "Talaba" va "Talaba ID" ustunlari matn uzunligiga qarab dinamik kengayadi.
-        // Qolgan (raqamli/qisqa) ustunlar kichik va qat'iy kenglikda qoladi - shunda
-        // jadval umumiy A4 sahifasiga yaxshi sig'adi.
+
+
         $sheet->getColumnDimension('A')->setWidth(6);
         $sheet->getColumnDimension('B')->setAutoSize(true);
         $sheet->getColumnDimension('C')->setAutoSize(true);
@@ -80,7 +60,6 @@ class VedomostReportBuilder
         $sheet->getColumnDimension('J')->setWidth(9);
         $sheet->getColumnDimension('K')->setWidth(11);
 
-        // --- CHOP ETISH (PRINT) UCHUN SOZLAMALAR ---
         $sheet->getPageSetup()
             ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE)
             ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4)
@@ -90,7 +69,6 @@ class VedomostReportBuilder
         $sheet->setPrintGridlines(false);
         $sheet->setShowGridlines(false);
 
-        // --- SARLAVHA ---
         $sheet->mergeCells('A1:K1');
         $sheet->setCellValue('A1', "QO'QON UNIVERSITETI");
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(20);
@@ -101,7 +79,6 @@ class VedomostReportBuilder
         $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(17);
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // 1-qator: Fakultet, Kafedra, Guruh
         $fakultetNomi = optional($subject->fakultet)->nomi ?? ($data['fakultet'] ?? '');
         $kafedraNomi  = optional($subject->kafedra)->nomi ?? ($data['kafedra'] ?? '');
         $fanKrediti   = $subject->kredit ?? ($data['fan_krediti'] ?? '');
@@ -112,23 +89,18 @@ class VedomostReportBuilder
         $sheet->mergeCells('A4:K4');
         $sheet->setCellValue('A4', "Fakultet: {$fakultetNomi}, Kafedra: {$kafedraNomi}, Guruh: {$guruh}");
 
-        // 2-qator: Fan, Fan krediti
         $sheet->mergeCells('A5:K5');
         $sheet->setCellValue('A5', "Fan: {$subject->nomi}, Fan krediti: {$fanKrediti}");
 
-        // 3-qator: Fan o'qituvchisi
         $sheet->mergeCells('A6:K6');
         $sheet->setCellValue('A6', "Fan o'qituvchisi: {$fanOqituvchi}");
 
-        // 4-qator: Ta'lim tili
         $sheet->mergeCells('A7:K7');
         $sheet->setCellValue('A7', "Ta'lim tili: {$talimTili}");
 
-        // 5-qator: Semestr
         $sheet->mergeCells('A8:K8');
         $sheet->setCellValue('A8', "O'quv yili: {$oquv_yili}");
 
-        // --- JADVAL SARLAVHASI (2 qatorli) ---
         $headerRow  = 10;
         $headerRow2 = 11;
 
@@ -166,18 +138,16 @@ class VedomostReportBuilder
         $sheet->getRowDimension($headerRow)->setRowHeight(34);
         $sheet->getRowDimension($headerRow2)->setRowHeight(34);
 
-        // --- MA'LUMOTLAR QATORLARI ---
         $row = $headerRow2 + 1;
 
-        // Kalitlar calcLetter() qaytaradigan qiymatlar bilan bir xil bo'lishi SHART:
-        // 'A+', 'A', 'B+', 'B', 'C+', 'C', 'F'
+
         $counts = ['A+' => 0, 'A' => 0, 'B+' => 0, 'B' => 0, 'C+' => 0, 'C' => 0, 'F' => 0];
 
         foreach ($students as $i => $s) {
             $sheet->setCellValue("A{$row}", $i + 1);
             $sheet->setCellValue("B{$row}", $s['ismi']);
-            // Talaba ID matn (text) sifatida yoziladi - aks holda Excel uzun raqamni
-            // ilmiy formatda (masalan 4.11221E+11) ko'rsatib qo'yadi
+
+
             $sheet->setCellValueExplicit(
                 "C{$row}",
                 (string) $s['talaba_id'],
@@ -193,7 +163,7 @@ class VedomostReportBuilder
             $sheet->setCellValue("H{$row}", $s['umumiy']);
             $sheet->setCellValue("I{$row}", number_format(self::calcScale($s['umumiy']), 1));
             $sheet->setCellValue("J{$row}", self::calcLetter($s['umumiy']));
-            $sheet->setCellValue("K{$row}", ''); // Imzo uchun bo'sh joy
+            $sheet->setCellValue("K{$row}", '');
 
             $key = self::calcLetter($s['umumiy']);
             $counts[$key] = ($counts[$key] ?? 0) + 1;
@@ -209,7 +179,6 @@ class VedomostReportBuilder
             $row++;
         }
 
-        // --- FOOTER: Jami talabalar ---
         $row += 1;
         $sheet->mergeCells("A{$row}:K{$row}");
         $total = count($students);
@@ -220,22 +189,18 @@ class VedomostReportBuilder
                 "\"C 60-64\": {$counts['C']}, \"F 0-59\": {$counts['F']}"
         );
 
-        // --- IMZO: Registrator ofisi boshlig'i uchun, chiziq bilan ---
         $row += 3;
         $sheet->mergeCells("A{$row}:C{$row}");
         $sheet->setCellValue("A{$row}", "Registrator ofisi boshlig'i:");
         $sheet->getStyle("A{$row}")->getFont()->setBold(true);
 
-        // Imzo chizig'i (bo'sh, faqat pastki chegara chiziq bo'lib ko'rinadi)
         $sheet->mergeCells("D{$row}:H{$row}");
         $sheet->getStyle("D{$row}:H{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
 
-        // F.I.Sh.
         $sheet->mergeCells("I{$row}:K{$row}");
         $sheet->setCellValue("I{$row}", "M.Ikramov");
         $sheet->getStyle("I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        // Chiziq ostiga kichik "(imzo)" izohi
         $row += 1;
         $sheet->mergeCells("D{$row}:H{$row}");
         $sheet->setCellValue("D{$row}", "(imzo)");

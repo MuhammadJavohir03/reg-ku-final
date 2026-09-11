@@ -7,9 +7,7 @@ use App\Models\fakultet;
 
 class KafedraFakultetController extends Controller
 {
-    /**
-     * Kafedra va Fakultetlarni bitta sahifada ko'rsatadi.
-     */
+    
     public function index()
     {
         $kafedralar = kafedra::with('fakultet')->latest()->get();

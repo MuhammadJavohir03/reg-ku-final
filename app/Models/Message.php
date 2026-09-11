@@ -43,11 +43,11 @@ class Message extends Model
         return $this->belongsTo(Section::class);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  SCOPE'lar                                                          */
-    /* ------------------------------------------------------------------ */
+    
+    
+    
 
-    /** Ikki foydalanuvchi (talaba<->talaba) orasidagi barcha xabarlar */
+    
     public function scopeBetweenUsers(Builder $query, int $userA, int $userB): Builder
     {
         return $query->whereNull('section_id')->where(function ($q) use ($userA, $userB) {
@@ -56,7 +56,7 @@ class Message extends Model
         });
     }
 
-    /** Bitta talabaning bitta bo'lim (section) bilan yozishmasi */
+    
     public function scopeForSectionConversation(Builder $query, int $sectionId, int $studentId): Builder
     {
         return $query->where('section_id', $sectionId)
@@ -66,13 +66,11 @@ class Message extends Model
             });
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  ROZILIK (talaba<->talaba so'rov) mantig'i                         */
-    /* ------------------------------------------------------------------ */
+    
+    
+    
 
-    /**
-     * Ikki talaba orasida suhbatga rozilik berilganmi?
-     */
+    
     public static function isApproved(int $userA, int $userB): bool
     {
         return static::betweenUsers($userA, $userB)
@@ -80,9 +78,7 @@ class Message extends Model
             ->exists();
     }
 
-    /**
-     * Ikki talaba orasida hali javob kutilayotgan so'rov bormi (kim yuborgan bilan birga)
-     */
+    
     public static function pendingRequestSender(int $userA, int $userB): ?int
     {
         $first = static::betweenUsers($userA, $userB)->oldest()->first();
@@ -92,25 +88,22 @@ class Message extends Model
         }
 
         if ($first->rozilik === self::ROZILIK_ACCEPTED) {
-            return null; // allaqachon qabul qilingan
+            return null;
         }
 
-        return $first->sender_id; // kim birinchi yozgan bo'lsa - so'rov shundan
+        return $first->sender_id;
     }
 
-    /**
-     * $receiverId ushbu so'rovni qabul qilganda - shu juftlik orasidagi
-     * barcha xabarlarni "rozilik berilgan" holatiga o'tkazadi.
-     */
+    
     public static function acceptRequest(int $requesterId, int $receiverId): void
     {
         static::betweenUsers($requesterId, $receiverId)
             ->update(['rozilik' => self::ROZILIK_ACCEPTED]);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  O'QILGANLIK (status) yordamchilari                                 */
-    /* ------------------------------------------------------------------ */
+    
+    
+    
 
     public function markRead(): void
     {

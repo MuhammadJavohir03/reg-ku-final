@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class KafedraController extends Controller
 {
-    /**
-     * Store a newly created kafedra in storage.
-     */
+    
     public function store(Request $request)
     {
         $request->validate([
@@ -25,9 +23,7 @@ class KafedraController extends Controller
         return redirect()->back()->with('success', 'Kafedra muvaffaqiyatli qo\'shildi.');
     }
 
-    /**
-     * Update the specified kafedra in storage.
-     */
+    
     public function update(Request $request, kafedra $kafedra)
     {
         $request->validate([
@@ -43,9 +39,7 @@ class KafedraController extends Controller
         return redirect()->back()->with('success', 'Kafedra muvaffaqiyatli yangilandi.');
     }
 
-    /**
-     * Remove the specified kafedra from storage.
-     */
+    
     public function destroy(kafedra $kafedra)
     {
         $kafedra->delete();

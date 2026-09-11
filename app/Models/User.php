@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,14 +10,10 @@ use Override;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
+    
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    
     protected $fillable = [
         'Talaba_ID',
         'category_id',
@@ -61,21 +56,13 @@ class User extends Authenticatable
         'Shartnoma_turi'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    
     protected function casts(): array
     {
         return [
@@ -104,11 +91,11 @@ class User extends Authenticatable
         return $this->belongsTo(category::class, 'category_id');
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  CHAT bog'lanishlari                                                */
-    /* ------------------------------------------------------------------ */
+    
+    
+    
 
-    /** Agar bu foydalanuvchi admin bo'lsa - biriktirilgan bo'limlar */
+    
     public function sections()
     {
         return $this->belongsToMany(Section::class, 'section_user')->withTimestamps();
@@ -142,13 +129,11 @@ class User extends Authenticatable
 
         $result = new \stdClass();
 
-        // Grades qiymatlari
         $result->joriy_baho   = $grade->joriy_baho ?? 0;
         $result->oraliq_baho  = $grade->oraliq_baho ?? 0;
         $result->yakuniy_baho = $grade->yakuniy_baho ?? 0;
         $result->davomat      = $grade->davomat ?? 0;
 
-        // Mini semestrdan balandroq baholarni olish
         if ($mini) {
 
             $result->joriy_baho = max($result->joriy_baho, $mini->joriy_baho ?? 0);
@@ -156,15 +141,12 @@ class User extends Authenticatable
             $result->yakuniy_baho = max($result->yakuniy_baho, $mini->yakuniy_baho ?? 0);
         }
 
-        // Free semestr faqat yakuniy bahoni beradi
         if ($free) {
             $result->yakuniy_baho = max($result->yakuniy_baho, $free->yakuniy_baho ?? 0);
         }
 
-        // Joriy + Oraliq
         $result->joriy_oraliq = $result->joriy_baho + $result->oraliq_baho;
 
-        // Umumiy = Joriy + Oraliq + Yakuniy
         $result->umumiy = $result->joriy_oraliq + $result->yakuniy_baho;
 
         return $result;
@@ -183,7 +165,7 @@ class User extends Authenticatable
         $merged = clone $best;
         $merged->joriy_oraliq = max($best->joriy_oraliq ?? 0, $g->joriy_oraliq ?? 0);
         $merged->umumiy       = max($best->umumiy ?? 0, $g->umumiy ?? 0);
-        $merged->davomat      = min($best->davomat ?? 100, $g->davomat ?? 100); // kam davomat = yaxshi
+        $merged->davomat      = min($best->davomat ?? 100, $g->davomat ?? 100);
         return $merged;
     });
 }

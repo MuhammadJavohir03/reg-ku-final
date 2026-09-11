@@ -26,7 +26,6 @@ return new class extends Migration
                 ->on('users')
                 ->cascadeOnDelete();
 
-            // Bir talaba bir topshiriqqa faqat bitta javob
             $table->unique(['ms_material_id', 'user_id']);
         });
     }

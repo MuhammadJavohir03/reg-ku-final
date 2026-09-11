@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ChatController extends Controller
 {
-    /** Admin biriktirilgan bo'limlar ro'yxati */
+    
     public function index()
     {
         $admin = Auth::user();
@@ -21,7 +21,7 @@ class ChatController extends Controller
         return view('admin.chat.index', compact('sections'));
     }
 
-    /** Bitta bo'lim ichidagi barcha talaba-suhbatlar ro'yxati */
+    
     public function section(Section $section)
     {
         $this->authorizeSection($section);
@@ -30,7 +30,7 @@ class ChatController extends Controller
         return view('admin.chat.section', compact('section', 'conversations'));
     }
 
-    /** Bo'lim ichida qaysi talabalar yozishgani va oxirgi xabar / unread sonini yig'ib beradi */
+    
     private function buildConversations(Section $section)
     {
         $studentIds = Message::where('section_id', $section->id)
@@ -40,7 +40,7 @@ class ChatController extends Controller
             ->unique();
 
         return User::whereIn('id', $studentIds)
-            ->where('role', 'talaba')   // <-- faqat mana shu qatorni qo'shing
+            ->where('role', 'talaba')
             ->get()
             ->map(function (User $student) use ($section) {
 
@@ -63,7 +63,7 @@ class ChatController extends Controller
             ->values();
     }
 
-    /** Qidiruv - shu bo'limga hali yozmagan talabani ham topib, suhbat ochish uchun */
+    
     public function searchStudents(Request $request, Section $section)
     {
         $this->authorizeSection($section);
@@ -82,7 +82,7 @@ class ChatController extends Controller
         return response()->json($students);
     }
 
-    /** Bitta talaba bilan bo'lim doirasidagi suhbat oynasi (o'ngda talaba ma'lumoti bilan) */
+    
     public function conversation(Section $section, User $student)
     {
         $this->authorizeSection($section);
@@ -154,7 +154,7 @@ class ChatController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
-    /** Bo'lim doirasidagi barcha suhbatlar ro'yxatini yangilash uchun umumiy polling */
+    
     public function pollOverview(Section $section)
     {
         $this->authorizeSection($section);

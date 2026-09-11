@@ -20,13 +20,13 @@ class BepulImport
     public int $fanTopilmadi = 0;
     public int $qaytaIshlanganKatak = 0;
 
-    /** @var array<string, int|null> cacheKey (name|semestr) => subject_id */
+    
     private array $subjectCache = [];
 
-    /** @var array<int, int|null> subject_id => oquv_yili_id */
+    
     private array $subjectOquvYili = [];
 
-    /** @var array<int, int> col => semestr */
+    
     private array $colSemester = [];
     private const SPECIAL_FIFTY_OQUV_YILI = [6, 7];
 
@@ -146,10 +146,7 @@ class BepulImport
         }
     }
 
-    /**
-     * @param mixed $raw
-     * @param bool $applySpecialFifty
-     */
+    
     private function parseBall($raw, bool $applySpecialFifty): ?float
     {
         if (is_numeric($raw)) {

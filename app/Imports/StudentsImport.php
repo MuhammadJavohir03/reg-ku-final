@@ -15,23 +15,16 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
 
     public function __construct()
     {
-        // Bir marta hash qilib olamiz (minglab marta hash qilmaslik uchun)
+
         $this->password = Hash::make('reg1234567');
     }
 
-    /**
-     * Yangi Excel formatiga mos: "Talabalar-royxati-..."
-     * Ustunlar: ID raqam, To‘liq ismi, Pasport raqami, JSHSHIR-kod, ...
-     *
-     * @param array $row
-     * @return \Illuminate\Database\Eloquent\Model|null
-     */
+    
     public function model(array $row)
     {
-        // Heading kalitlarini oddiyroq shaklga keltirish (apostrof va tirelarni olib tashlash)
+
         $row = $this->normalizeKeys($row);
 
-        // --- Talaba ID (asosan "ID raqam") ---
         $talabaId = $this->val($row, [
             'id_raqam', 'id_raqami', 'talaba_id', 'id', 'talabaid'
         ]);
@@ -42,10 +35,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
 
         $talabaId = trim((string) $talabaId);
 
-        // --- Guruh ---
         $guruh = $this->val($row, ['guruh', 'group']) ?? '';
 
-        // --- Kurs hisoblash (guruh yilidan) yoki Exceldagi "3-kurs" dan ---
         $hisoblanganKurs = 1;
         $isBitiruvchi = 'Yo‘q';
 
@@ -69,7 +60,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
             }
         }
 
-        // Agar guruhdan hisoblanmasa — Exceldagi "Kurs" ustunidan olish ("3-kurs" → 3)
         if ($hisoblanganKurs === 1 || empty($guruh)) {
             $kursRaw = $this->val($row, ['kurs']);
             if ($kursRaw !== null && $kursRaw !== '') {
@@ -79,7 +69,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
             }
         }
 
-        // --- Bitiruvchi (Talaba harakati ustunidan) ---
         $harakat = mb_strtolower(trim((string) ($this->val($row, [
             'talaba_harakati', 'harakat', 'bitiruvchi', 'status'
         ]) ?? '')));
@@ -89,21 +78,19 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
         } elseif (in_array($harakat, ['o‘qimoqda', 'oqimoqda', "o'qimoqda", 'yo‘q', "yo'q"], true)) {
             $isBitiruvchi = 'Yo‘q';
         }
-        // "Chetlashgan", "Boshqa", "Akademik mobil" → asosan Yo‘q qoldiramiz
-        // (agar kerak bo‘lsa keyin alohida maydon qo‘shish mumkin)
 
-        // --- Semestr ("6-semestr" → 6 yoki to‘liq saqlash) ---
+
+
         $semestrRaw = $this->val($row, ['semestr']);
         $semestr = null;
         if ($semestrRaw !== null && $semestrRaw !== '') {
             if (preg_match('/(\d+)/', (string) $semestrRaw, $m)) {
-                $semestr = $m[1]; // faqat raqam
+                $semestr = $m[1];
             } else {
                 $semestr = $semestrRaw;
             }
         }
 
-        // --- Tug‘ilgan sana (10.01.1990 → Y-m-d yoki original) ---
         $tugilgan = $this->val($row, [
             'tugilgan_sana', 'tug_ilgan_sana', 'tug‘ilgan_sana', 'birth_date'
         ]);
@@ -111,7 +98,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
             $tugilgan = sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
         }
 
-        // Exceldan keladigan ma'lumotlar (uzun maydonlarni kesib olamiz)
         $data = [
             'To‘liq_ismi'    => $this->cut($this->val($row, [
                 'toliq_ismi', 'to_liq_ismi', 'to‘liq_ismi', 'fio', 'ism'
@@ -119,7 +105,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
             'Pasport_raqami' => $this->cut($this->val($row, ['pasport_raqami', 'passport']), 20),
             'JSHSHIR_kod'    => $this->cut($this->val($row, [
                 'jshshir_kod', 'jshshir-kod', 'jshshir', 'pinfl'
-            ]), 14), // bazada odatda varchar(14)
+            ]), 14),
             'Tug‘ilgan_sana' => $tugilgan,
             'Jins'           => $this->cut($this->val($row, ['jins', 'gender']), 20),
 
@@ -144,20 +130,18 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
             'Bitiruvchi'     => $isBitiruvchi,
         ];
 
-        // Talaba_ID bo‘yicha tekshirish: bor bo‘lsa yangilash, yo‘q bo‘lsa yaratish
         $existing = User::where('Talaba_ID', $talabaId)->first();
 
         if ($existing) {
-            // Mavjud — faqat bo‘sh bo‘lmagan qiymatlarni yangilaymiz
-            // (Excelda bo‘sh ustun bazadagi eski qiymatni o‘chirib yubormasin)
+
+
             $updateData = array_filter($data, fn($v) => $v !== null && $v !== '');
             if (!empty($updateData)) {
                 $existing->update($updateData);
             }
-            return null; // ToModel qayta insert qilmasin
+            return null;
         }
 
-        // Yangi talaba — BARCHA ustunlar bir xil bo‘lishi shart (batch insert uchun)
         return new User([
             'Talaba_ID'      => $talabaId,
             'email'          => $talabaId . '@reg.uz',
@@ -183,10 +167,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
         ]);
     }
 
-    /**
-     * Heading kalitlarini bir xil shaklga keltirish
-     * (To‘liq ismi → toliq_ismi, JSHSHIR-kod → jshshir_kod va h.k.)
-     */
+    
     private function normalizeKeys(array $row): array
     {
         $out = [];
@@ -200,15 +181,13 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
             $k = preg_replace('/[^a-z0-9_]+/u', '_', $k);
             $k = trim(preg_replace('/_+/', '_', $k), '_');
             $out[$k] = $value;
-            // Asl kalitni ham saqlab qo‘yamiz
+
             $out[$key] = $value;
         }
         return $out;
     }
 
-    /**
-     * Bir nechta mumkin bo‘lgan kalitlardan birinchisini qaytaradi.
-     */
+    
     private function val(array $row, array $keys)
     {
         foreach ($keys as $key) {
@@ -219,9 +198,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithBatchInserts, WithC
         return null;
     }
 
-    /**
-     * Matnni belgilangan uzunlikka kesadi (DB ustun limitidan oshmasligi uchun)
-     */
+    
     private function cut($value, int $max): ?string
     {
         if ($value === null || $value === '') {

@@ -41,7 +41,6 @@ class TestSession extends Model
         return $this->hasMany(QuestionUser::class, 'session_id');
     }
 
-    // Vaqt tugaganmi tekshirish
     public function isExpired(): bool
     {
         return now()->gt($this->tugash_vaqti);
@@ -52,14 +51,12 @@ class TestSession extends Model
         return $this->belongsTo(MsMaterial::class, 'ms_material_id');
     }
 
-    // harakat.blade.php da "$session->material" deb ishlatilgani uchun alias
-    // (msMaterial() bilan bir xil ustunga ishora qiladi)
+
     public function material()
     {
         return $this->belongsTo(MsMaterial::class, 'ms_material_id');
     }
 
-    // Ball hisoblash
     public function hisoblaBall(): int
     {
         return $this->questionUsers()->where('status', 1)->count();

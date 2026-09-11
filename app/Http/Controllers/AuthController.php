@@ -28,10 +28,8 @@ class AuthController extends Controller
             'password' => ['required']
         ]);
 
-        // Formadan 'remember' belgisi kelgan-kelmaganini tekshiramiz (true/false)
         $remember = $request->has('remember');
 
-        // attempt() metodiga 2-argument sifatida $remember ni uzatamiz
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             return redirect('/');

@@ -30,7 +30,7 @@ class MsTopshiriq extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /** Talaba PDF manzili */
+    
     public function pdfUrl(): ?string
     {
         if (! $this->pdf_path) {

@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class SectionController extends Controller
 {
-    /** Bo'limlar ro'yxati + har biriga biriktirilgan adminlar */
+    
     public function index()
     {
         $sections = Section::with('admins')->orderBy('name')->get();
@@ -48,10 +48,7 @@ class SectionController extends Controller
         return back()->with('success', 'Bo\'lim o\'chirildi.');
     }
 
-    /**
-     * Bitta bo'limga qaysi adminlar biriktirilganini yangilash (sync).
-     * Kelayotgan admin_ids massivi bilan to'liq almashtiradi.
-     */
+    
     public function assignAdmins(Request $request, Section $section)
     {
         $request->validate([

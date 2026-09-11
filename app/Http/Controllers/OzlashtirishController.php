@@ -11,17 +11,14 @@ use Illuminate\Http\Request;
 
 class OzlashtirishController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index(Request $request)
     {
-        // grades dagi user_id lar orqali faqat shu talabalarni olish
+
         $gradeUserIds = grade::distinct()->pluck('user_id');
 
-        // Filtr dropdownlari uchun ro'yxatlar
-        // Guruhlar - tanlangan yo'nalish VA tanlangan kursga mos guruhlar
-        // (guruh ro'yxati kurs tanlovi bilan ham moslashadi)
+
+
         $guruhlar = User::whereIn('id', $gradeUserIds)
             ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
             ->when($request->kurs, fn($q) => $q->where('Kurs', $request->kurs))
@@ -29,8 +26,7 @@ class OzlashtirishController extends Controller
             ->pluck('Guruh')
             ->filter();
 
-        // Kurslar - tanlangan yo'nalish VA tanlangan guruhga mos kurslar
-        // (kurs ro'yxati guruh tanlovi bilan ham moslashadi)
+
         $kurslar = User::whereIn('id', $gradeUserIds)
             ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
             ->when($request->guruh, fn($q) => $q->where('Guruh', $request->guruh))
@@ -38,8 +34,6 @@ class OzlashtirishController extends Controller
             ->pluck('Kurs')
             ->filter();
 
-
-        // Semestrlar - tanlangan yo'nalishga tegishli fanlarning semestrlari (agar yo'nalish tanlangan bo'lsa)
         $semestrlar = subject::when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
             ->distinct()
             ->pluck('semster')
@@ -51,9 +45,8 @@ class OzlashtirishController extends Controller
             User::whereIn('id', $gradeUserIds)->distinct()->pluck('category_id')
         )->get();
 
-        // --- 1) YO'NALISH TANLANMAGUNCHA HECH NARSA KO'RSATMAYMIZ ---
         if (!$request->category_id) {
-            $talabalar = User::whereIn('id', [])->paginate(100); // bo'sh paginator (view uchun)
+            $talabalar = User::whereIn('id', [])->paginate(100);
 
             return view('ozlashtirish.index', compact(
                 'talabalar',
@@ -73,11 +66,10 @@ class OzlashtirishController extends Controller
             ]);
         }
 
-        // --- 2) FANLAR ENDI FAQAT TANLANGAN YO'NALISHGA TEGISHLI BO'LADI ---
-        // Diqqat: bitta fan bir nechta o'qituvchi tomonidan o'qitilgani uchun
-        // `subjects` jadvalida bir xil nomli bir nechta qator bo'lishi mumkin.
-        // Shu sababli fanlarni nomi+semestr bo'yicha guruhlab, har bir guruhga
-        // tegishli barcha subject_id larni birlashtiramiz (self::groupDuplicateSubjects).
+
+
+
+
         $fanlar = self::groupDuplicateSubjects(
             subject::where('category_id', $request->category_id)
                 ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
@@ -98,7 +90,6 @@ class OzlashtirishController extends Controller
             ->with(['grades', 'free_semestrs', 'mini_semstrs'])
             ->get();
 
-        // statistika
         $jami = $hammasi->count();
 
         $qarzdorlar = 0;
@@ -168,24 +159,14 @@ class OzlashtirishController extends Controller
         ) + ['yonalishTanlanmagan' => false]);
     }
 
-    /**
-     * Bitta fan bir nechta o'qituvchi tomonidan o'qitilgani sababli
-     * `subjects` jadvalida bir xil nomli (masalan, "Xorijiy til") bir nechta
-     * qator hosil bo'lgan. Bu funksiya shunday nomdosh fanlarni nomi+semestr
-     * bo'yicha bitta "virtual" fanga birlashtiradi va unga tegishli barcha
-     * subject_id larni `subject_ids` maydonida saqlaydi. Natijada natijalar
-     * jadvalida bitta fan endi faqat bitta marta chiqadi.
-     *
-     * Eslatma: bu DB arxitekturasini o'zgartirmaydi — faqat query/qatlam
-     * darajasida guruhlaydi, xuddi so'ralganidek.
-     */
+    
     private static function groupDuplicateSubjects($subjects)
     {
         return $subjects
             ->groupBy(fn($fan) => $fan->nomi . '|' . $fan->semster)
             ->map(function ($guruh) {
                 $vakil = $guruh->first();
-                // Shu nomdagi fanga tegishli barcha subject_id lar (turli o'qituvchilar)
+
                 $vakil->subject_ids = $guruh->pluck('id')->all();
                 return $vakil;
             })
@@ -194,7 +175,7 @@ class OzlashtirishController extends Controller
 
     public function export(Request $request)
     {
-        // Export ham yo'nalish tanlanmasa ishlamasin
+
         if (!$request->category_id) {
             return back()->with('error', "Eksport qilish uchun avval yo'nalishni tanlang.");
         }
@@ -213,15 +194,13 @@ class OzlashtirishController extends Controller
             ])
             ->get();
 
-        // fanlar endi tanlangan yo'nalishga qarab filtrlanadi
-        // (index() dagi kabi bir xil nomli fanlar birlashtiriladi)
+
         $fanlar = self::groupDuplicateSubjects(
             subject::where('category_id', $request->category_id)
                 ->when($request->semster, fn($q) => $q->where('semster', $request->semster))
                 ->get()
         );
 
-        // Fayl nomi
         $parts = ['ozlashtirish'];
 
         if ($request->guruh) {
@@ -243,51 +222,39 @@ class OzlashtirishController extends Controller
         );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
-        //
+
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
-        //
+
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
-        //
+
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
-        //
+
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(string $id)
     {
-        //
+
     }
 }

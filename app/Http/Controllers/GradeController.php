@@ -14,17 +14,16 @@ class GradeController extends Controller
 {
     public function import(Request $request, $subject_id)
     {
-        // Faylni tekshirish
+
         $request->validate([
             'excel_file' => 'required|mimes:xlsx,xls,csv'
         ]);
 
         try {
-            // Import klasiga subject_id ni berib yuboramiz
+
             $import = new GradeImport($subject_id);
             Excel::import($import, $request->file('excel_file'));
 
-            // Import natijalari bo'yicha xabar tayyorlaymiz
             $xabar = "Yangi qo'shildi: {$import->yangiQoshildi} ta, "
                 . "Yangilandi (takroriy): {$import->yangilandi} ta";
 
@@ -45,7 +44,6 @@ class GradeController extends Controller
             'bepul_excel' => 'required|mimes:xlsx,xls',
         ]);
 
-        // Katta Excel fayllar uchun vaqt va xotira zaxirasi
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 
@@ -142,10 +140,9 @@ class GradeController extends Controller
 
     public function clearAll($subject_id)
     {
-        // 1. Shu fanga tegishli barcha baholarni o'chirib tashlaymiz
+
         \App\Models\grade::where('subject_id', $subject_id)->delete();
 
-        // 2. O'chirib bo'lingach, to'g'ridan-to'g'ri fanlar ro'yxatiga (subject.index) qaytaramiz
         return redirect()->route('subject.index')->with('success', 'Fanning barcha baholari muvaffaqiyatli tozalandi.');
     }
 
@@ -155,13 +152,7 @@ class GradeController extends Controller
         return redirect()->back()->with('success', 'Natija muvaffaqiyatli o\'chirildi.');
     }
 
-    /**
-     * Baholarni dinamik (AJAX orqali) tahrirlash.
-     * Faqat javohir8386@gmail.com ushbu amalni bajara oladi.
-     *
-     * Reyting  = joriy_baho + oraliq_baho
-     * Umumiy   = joriy_baho + oraliq_baho + yakuniy_baho
-     */
+    
     public function update(Request $request, grade $grade)
     {
         if (auth()->user()?->email !== 'javohir8386@gmail.com') {
@@ -184,8 +175,8 @@ class GradeController extends Controller
         $grade->joriy_baho   = $joriy;
         $grade->oraliq_baho  = $oraliq;
         $grade->yakuniy_baho = $yakuniy;
-        $grade->joriy_oraliq = $joriy + $oraliq;            // Reyting — doim yig'indi
-        $grade->umumiy       = $joriy + $oraliq + $yakuniy; // Umumiy ball — doim yig'indi
+        $grade->joriy_oraliq = $joriy + $oraliq;
+        $grade->umumiy       = $joriy + $oraliq + $yakuniy;
         $grade->save();
 
         return response()->json([

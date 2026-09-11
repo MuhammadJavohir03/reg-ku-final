@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->rememberToken(); // Ushbu qator 'remember_token' ustunini qo'shadi
+            $table->rememberToken();
         });
     }
 

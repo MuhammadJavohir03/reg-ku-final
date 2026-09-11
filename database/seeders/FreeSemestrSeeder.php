@@ -9,6 +9,6 @@ class FreeSemestrSeeder extends Seeder
 {
     public function run(): void
     {
-        //
+
     }
 }

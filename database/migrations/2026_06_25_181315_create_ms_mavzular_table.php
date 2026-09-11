@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('bolim_id')->constrained('bolims')->onDelete('cascade');
             $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
-            $table->string('nomi');                          // mavzu/oraliq/yakuniy nomi
+            $table->string('nomi');
             $table->enum('tur', ['mavzu', 'oraliq', 'yakuniy'])->default('mavzu');
-            $table->integer('tartib')->default(0);           // tartib raqami
+            $table->integer('tartib')->default(0);
             $table->boolean('faol')->default(true);
             $table->timestamps();
         });

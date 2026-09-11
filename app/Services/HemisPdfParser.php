@@ -4,12 +4,7 @@ namespace App\Services;
 
 use Symfony\Component\Process\Process;
 
-/**
- * HEMIS PDF parser — ikkala formatni qo'llab-quvvatlaydi:
- *
- *  A) "Baholash qaydnomasi" (1-shakl) — reyting raqami bor, ism 2-3 qator
- *  B) "Guruh reyting qaydnomasi" — ism + ballar bitta qatorda, davomat bor
- */
+
 class HemisPdfParser
 {
     private const IGNORE_PATTERN = '/^(№|Talabaning|Reyting|daftarchasining|Semestrda|ballar|ΣJN|ΣON|ΣJN\+ΣON|Baho|imzosi|o[‘\'`ʼ]?qituvchi|ko[‘\'`ʼ]?rsatkichi|O[‘\'`ʼ]?zlashtirish|YN|raqami|Jami talabalar|Fakultet|Kafedra|QO[‘\'`ʼ]?QON|BAHOLASH|Fan |Fan:|Fan o|Yakuniy|1-shakl|TURG|dekani|mudiri|JN\s|ON\s|As\.|Guruh reyting|https:\/\/|Chop etish|Ro.yxat|Fanlar|Nazorat|Baholash tizimi|Kredit|Dastur)/ui';
@@ -27,10 +22,7 @@ class HemisPdfParser
         return $this->parseBaholashQaydnomasi($text);
     }
 
-    /**
-     * Guruh reyting qaydnomasi (hemis.kokanduni.uz dan chop).
-     * O'ng tomondagi meta-ustunlar (Fanlar, Nazorat turi...) tozalanadi.
-     */
+    
     private function parseGuruhReyting(string $text): array
     {
         $lines = preg_split('/\r\n|\r|\n/', $text);
@@ -39,7 +31,6 @@ class HemisPdfParser
         foreach ($lines as $line) {
             $line = rtrim($line);
 
-            // O'ng sidebar junk ni olib tashlash
             $line = preg_replace('/\s+(Nazorat\s+turi|YN\s+turi|Guruh\s|Baholash\s+tizimi|Fanlar\s|Dastur\s|Nazorat\s+sanasi).*$/ui', '', $line);
 
             if (trim($line) === '' || preg_match(self::IGNORE_PATTERN, trim($line))) {
@@ -53,7 +44,6 @@ class HemisPdfParser
             $rowNum = $m[1];
             $rest   = trim($m[2]);
 
-            // Ism + sonlar
             if (!preg_match('/^((?:[^\d\s]|[^\d]\S)*[^\d\s])\s+((?:\d+\.?\d*\s*)+)$/u', $rest, $nm)) {
                 if (!preg_match('/^(.+?)\s+((?:\d+\.?\d*\s*)+)$/u', $rest, $nm)) {
                     continue;

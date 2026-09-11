@@ -16,23 +16,18 @@ use ZipArchive;
 
 class JurnalController extends Controller
 {
-    /**
-     * Jurnal sahifasi - chap panelda bo'limlar ro'yxati bilan ochiladi.
-     */
+    
     public function index()
     {
-        // MUHIM: agar bazada ustun 'nomi' emas, 'name' bo'lsa,
-        // shu yerdagi orderBy('nomi') ni orderBy('name') ga o'zgartiring
-        // va blade faylda {{ $bolim->nomi }} o'rniga {{ $bolim->name }} yozing.
+
+
+
         $bolimlar = bolim::orderBy('nomi')->get();
 
         return view('jurnal.index', compact('bolimlar'));
     }
 
-    /**
-     * Bo'lim + maktab turi tanlangach, o'sha ikkalasiga tegishli fanlar ro'yxatini qaytaradi.
-     * (AJAX: GET /jurnal/subjects?bolim_id=..&type=free|mini)
-     */
+    
     public function subjectsByType(Request $request)
     {
         $request->validate([
@@ -44,8 +39,7 @@ class JurnalController extends Controller
 
         $subjectIdsQuery = $model::where('bolim_id', $request->bolim_id);
 
-        // MINI uchun: oqituvchi faqat mini_semestrs.teacher_id orqali
-        // ozi biriktirilgan fanlarning subject_id larini koradi
+
         if ($request->type === 'mini' && auth()->user()?->role === 'teacher') {
             $subjectIdsQuery->where('teacher_id', auth()->id());
         }
@@ -54,14 +48,12 @@ class JurnalController extends Controller
 
         $subjectsQuery = subject::whereIn('id', $subjectIds);
 
-        // FREE uchun eski mantiq saqlanadi: subject.teacher_id orqali cheklov
         if ($request->type === 'free' && auth()->user()?->role === 'teacher') {
             $subjectsQuery->where('teacher_id', auth()->id());
         }
 
         $subjects = $subjectsQuery->orderBy('nomi')->get(['id', 'nomi', 'teacher_id']);
 
-        // ---------- MINI: o'qituvchi nomini mini_semestrs.teacher_id orqali olamiz ----------
         if ($request->type === 'mini') {
             $miniTeacherMap = mini_semestr::where('bolim_id', $request->bolim_id)
                 ->whereIn('subject_id', $subjects->pluck('id'))
@@ -88,7 +80,6 @@ class JurnalController extends Controller
             return response()->json($result);
         }
 
-        // ---------- FREE: eski mantiq (subject.teacher_id) ----------
         $subjects->load('teacher');
 
         $result = $subjects->map(function ($s) {
@@ -103,15 +94,7 @@ class JurnalController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * Faqat MINI uchun: bo'lim + fan bo'yicha faol mavzular ro'yxatini qaytaradi.
-     * Tartib: avval "mavzu" turlari, keyin "oraliq", keyin "yakuniy" (chapdan o'ngga),
-     * har bir tur ichida esa 'tartib' ustuni bo'yicha.
-     * (AJAX: GET /jurnal/topics?bolim_id=..&subject_id=..)
-     *
-     * ESLATMA: FIELD() funksiyasi MySQL/MariaDB uchun. Agar PostgreSQL ishlatilsa,
-     * orderByRaw ni CASE WHEN tur='mavzu' THEN 1 WHEN tur='oraliq' THEN 2 ELSE 3 END ga almashtiring.
-     */
+    
     public function topicsList(Request $request)
     {
         $request->validate([
@@ -131,14 +114,7 @@ class JurnalController extends Controller
         return response()->json($mavzular);
     }
 
-    /**
-     * Bo'lim + maktab turi + fan tanlangach, talabalar ro'yxatini (baholari bilan) qaytaradi.
-     * mini uchun: har bir mavzu bo'yicha baho + har bir ustun uchun "qo'lda o'zgartirilganmi" (edited) belgisi.
-     * joriy_oraliq va umumiy - agar bazada qiymat NULL bo'lsa, avtomatik hisoblanadi
-     * (joriy_oraliq = joriy_baho + oraliq_baho; umumiy = joriy_oraliq + yakuniy_baho).
-     * Agar bu ustunlarga qo'lda qiymat kiritilgan bo'lsa (bazada NULL emas), o'sha qiymat ko'rsatiladi.
-     * (AJAX: GET /jurnal/students?bolim_id=..&type=free|mini&subject_id=..)
-     */
+    
     public function students(Request $request)
     {
         $request->validate([
@@ -177,14 +153,12 @@ class JurnalController extends Controller
             return response()->json($data);
         }
 
-        // ---------- MINI ----------
 
         $records = mini_semestr::with('user')
             ->where('bolim_id', $request->bolim_id)
             ->where('subject_id', $request->subject_id)
             ->get();
 
-        // Shu fan mavzulari (faqat faol - jadval sarlavhasi bilan bir xil bo'lishi uchun)
         $mavzuIds = MsMavzu::where('bolim_id', $request->bolim_id)
             ->where('subject_id', $request->subject_id)
             ->where('faol', 1)
@@ -198,14 +172,12 @@ class JurnalController extends Controller
             ->get()
             ->groupBy('user_id');
 
-        // "joriy_baho / oraliq_baho / yakuniy_baho" ustunlari bo'yicha qo'lda o'zgartirilgan yozuvlar
         $summaryEdits = GradeEditLog::where('editable_type', 'mini_summary')
             ->whereIn('record_id', $records->pluck('id'))
             ->get(['record_id', 'field'])
             ->map(fn($l) => $l->record_id . '|' . $l->field)
             ->unique();
 
-        // Mavzu (topic) baholari bo'yicha qo'lda o'zgartirilgan yozuvlar
         $topicEdits = GradeEditLog::where('editable_type', 'mini_topic')
             ->whereIn('student_id', $userIds)
             ->whereIn('mavzu_id', $mavzuIds)
@@ -233,13 +205,11 @@ class JurnalController extends Controller
                 $oraliqBaho  = $r->oraliq_baho;
                 $yakuniyBaho = $r->yakuniy_baho;
 
-                // joriy_oraliq: bazada qiymat bo'lsa (qo'lda kiritilgan) o'shani ko'rsatamiz,
-                // aks holda avtomatik hisoblaymiz.
+
                 $joriyOraliq = $r->joriy_oraliq !== null
                     ? $r->joriy_oraliq
                     : (($joriyBaho !== null && $oraliqBaho !== null) ? $joriyBaho + $oraliqBaho : null);
 
-                // umumiy: xuddi shunday mantiq
                 $umumiy = $r->umumiy !== null
                     ? $r->umumiy
                     : (($joriyOraliq !== null && $yakuniyBaho !== null) ? $joriyOraliq + $yakuniyBaho : null);
@@ -260,7 +230,7 @@ class JurnalController extends Controller
                     'oraliq_baho_edited' => $summaryEdits->contains($r->id . '|oraliq_baho'),
 
                     'joriy_oraliq'        => $joriyOraliq,
-                    'joriy_oraliq_manual' => $r->joriy_oraliq !== null, // true = qo'lda kiritilgan (avtomatik emas)
+                    'joriy_oraliq_manual' => $r->joriy_oraliq !== null,
 
                     'yakuniy_baho'        => $yakuniyBaho,
                     'yakuniy_baho_edited' => $summaryEdits->contains($r->id . '|yakuniy_baho'),
@@ -274,22 +244,7 @@ class JurnalController extends Controller
         return response()->json($data);
     }
 
-    /**
-     * Bo'lim + maktab turi + fan bo'yicha talabalar baholarini Excel (.xlsx) formatida eksport qiladi.
-     *
-     * YANGI: endi VedomostController bilan AYNAN BIR XIL "Baholash qaydnomasi" formatida
-     * chiqadi (universitet sarlavhasi, baho shkalasi, harfiy baho, imzo qatori va h.k.) -
-     * ikkalasi ham umumiy App\Services\VedomostReportBuilder orqali quriladi.
-     *
-     * 'guruh' parametri orqali ikkita rejim:
-     *   - 'guruh' berilmasa (yoki 'hammasi'): fandagi BARCHA guruhlar uchun alohida-alohida
-     *     xlsx yaratiladi va bitta ZIP arxivda yuklab beriladi.
-     *   - 'guruh' aniq bitta guruh nomi bo'lsa: faqat o'sha guruh uchun bitta xlsx
-     *     to'g'ridan-to'g'ri yuklab beriladi (frontenddagi tanlangan "Guruh filtri" qiymati
-     *     shu yerga uzatiladi - jadvalda qanday filtrlangan bo'lsa, eksport ham shunga mos bo'ladi).
-     *
-     * (GET/POST /jurnal/export?bolim_id=..&type=free|mini&subject_id=..&guruh=..)
-     */
+    
     public function export(Request $request)
     {
         $request->validate([
@@ -319,7 +274,6 @@ class JurnalController extends Controller
 
         $tanlanganGuruh = trim((string) $request->input('guruh', ''));
 
-        // Aniq bitta guruh tanlangan bo'lsa - faqat o'sha guruh uchun bitta xlsx
         if ($tanlanganGuruh !== '' && $tanlanganGuruh !== 'hammasi') {
             if (!$grouped->has($tanlanganGuruh)) {
                 return response()->json([
@@ -330,14 +284,10 @@ class JurnalController extends Controller
             return $this->exportSingleGroup($subjectModel, $tanlanganGuruh, $grouped[$tanlanganGuruh]->values()->all());
         }
 
-        // Guruh tanlanmagan - fandagi barcha guruhlar uchun alohida xlsx yaratib ZIP qilamiz
         return $this->exportGroupedZip($subjectModel, $grouped, $baseName);
     }
 
-    /**
-     * collectExportRows() dan kelgan bitta qatorni VedomostReportBuilder kutgan
-     * ('ismi', 'talaba_id', 'joriy', 'oraliq', 'reyting', 'yakuniy', 'umumiy') formatga o'giradi.
-     */
+    
     private function toVedomostStudentRow(array $row): array
     {
         return [
@@ -351,10 +301,7 @@ class JurnalController extends Controller
         ];
     }
 
-    /**
-     * subject modelidan VedomostReportBuilder uchun kerakli qo'shimcha ma'lumotlarni yig'adi
-     * (VedomostController::form() dagi $defaults bilan bir xil mantiq).
-     */
+    
     private function vedomostDefaultsFor(subject $subject): array
     {
         return [
@@ -367,9 +314,7 @@ class JurnalController extends Controller
         ];
     }
 
-    /**
-     * Bitta guruh uchun "Baholash qaydnomasi" xlsx faylini to'g'ridan-to'g'ri yuklab beradi.
-     */
+    
     private function exportSingleGroup(subject $subjectModel, string $guruh, array $rows)
     {
         $students = array_map([$this, 'toVedomostStudentRow'], $rows);
@@ -381,16 +326,13 @@ class JurnalController extends Controller
         $fileName = "Baholash_qaydnomasi_{$this->sanitizeFileName($guruh)}.xlsx";
 
         return response()->streamDownload(function () use ($writer) {
-            $writer->save('php://output');
+            $writer->save('php:
         }, $fileName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 
-    /**
-     * Fandagi barcha guruhlar uchun alohida "Baholash qaydnomasi" xlsx yaratib,
-     * barchasini bitta ZIP arxivda yuklab beradi (VedomostController'dagi mantiq bilan bir xil).
-     */
+    
     private function exportGroupedZip(subject $subjectModel, $grouped, string $baseName)
     {
         if ($grouped->isEmpty()) {
@@ -431,21 +373,20 @@ class JurnalController extends Controller
                 unset($spreadsheet, $writer);
             }
 
-            // MUHIM: ba'zi serverlarda (Docker, tarmoq/mounted fayl tizimlari va h.k.)
-            // ZipArchive yopilayotganda ichki vaqtinchalik faylni o'chira olmasligi mumkin
-            // va PHP shunga zararsiz E_WARNING chiqaradi:
-            // "Cannot destroy the zip context: Can't remove file: Unknown error".
-            // ZIP faylning o'zi bunga qaramasdan TO'G'RI yoziladi - lekin Laravel bu kabi
-            // warning'larni ham ErrorException'ga aylantirib, butun eksportni "xato" deb
-            // bekor qilib qo'yadi. Shuning uchun aynan shu tor bosqichda (yopish + obyektni
-            // yo'q qilish) ogohlantirishlarni xavfsiz o'chirib, keyin darhol qaytaramiz.
+
+
+
+
+
+
+
             $prevErrorReporting = error_reporting();
             error_reporting(0);
             try {
                 $zip->close();
             } finally {
-                // Destruktor ham shu "susayltirilgan" muhitda ishga tushishi uchun
-                // aynan shu yerda unset qilamiz (funksiya oxirigacha kutmaymiz).
+
+
                 unset($zip);
                 error_reporting($prevErrorReporting);
             }
@@ -464,12 +405,10 @@ class JurnalController extends Controller
             ], 500);
         }
 
-        // Alohida .xlsx fayllar endi ZIP ichida, disk ustidagi nusxalarga endi ehtiyoj yo'q
         foreach ($generatedFiles as $filePath) {
             @unlink($filePath);
         }
 
-        // Javob yuborilgach vaqtinchalik papkani ham tozalaymiz
         app()->terminating(function () use ($tmpDir) {
             @rmdir($tmpDir);
         });
@@ -479,15 +418,7 @@ class JurnalController extends Controller
         ])->deleteFileAfterSend(true);
     }
 
-    /**
-     * Eksport uchun bo'lim+fan+maktab turiga tegishli har bir talabaning
-     * FIO, guruhi va 5 ta baho ustuni (joriy, oraliq, joriy_oraliq, yakuniy, umumiy) ni tayyorlaydi.
-     * Mantiq students() metodidagi bilan bir xil: bazadagi qiymat bo'lsa o'shani,
-     * bo'lmasa avtomatik hisoblangan qiymatni oladi.
-     *
-     * YANGI: endi har bir qatorda 'group' kaliti ham bor - "guruhlab" eksport rejimi
-     * shu qiymat bo'yicha talabalarni ajratadi.
-     */
+    
     private function collectExportRows(int $bolimId, string $type, int $subjectId): array
     {
         if ($type === 'free') {
@@ -524,7 +455,6 @@ class JurnalController extends Controller
                 ->all();
         }
 
-        // ---------- MINI ----------
         return mini_semestr::with('user')
             ->where('bolim_id', $bolimId)
             ->where('subject_id', $subjectId)
@@ -558,15 +488,7 @@ class JurnalController extends Controller
             ->all();
     }
 
-    /**
-     * Teacher rolidagi foydalanuvchi:
-     *  - MINI uchun: faqat mini_semestrs.teacher_id orqali ozi biriktirilgan
-     *    (bolim_id + subject_id) kombinatsiyasiga kira oladi.
-     *  - FREE uchun: eski mantiq (subject.teacher_id) saqlanadi.
-     * Admin va boshqa rollar uchun cheklov yo'q.
-     * Ruxsat bo'lmasa 403 bilan to'xtatadi (frontend dropdown'dan tashqari,
-     * to'g'ridan-to'g'ri AJAX so'rov yuborilgan holatlar uchun ham himoya).
-     */
+    
     private function ensureSubjectAccessOrAbort(int $subjectId, ?int $bolimId = null, string $type = 'mini'): void
     {
         $user = auth()->user();
@@ -591,9 +513,7 @@ class JurnalController extends Controller
         }
     }
 
-    /**
-     * Fayl nomi uchun xavfsiz matn: bo'sh joy -> "_", ruxsat etilmagan belgilar olib tashlanadi.
-     */
+    
     private function sanitizeFileName(?string $value): string
     {
         $value = $value ?? 'nomsiz';
@@ -603,12 +523,7 @@ class JurnalController extends Controller
         return $value === '' ? 'nomsiz' : $value;
     }
 
-    /**
-     * free_semestr / mini_semestr jadvalidagi umumiy ustunlarni yangilash.
-     * value = null yuborilsa - qiymat tozalanadi (joriy_oraliq/umumiy uchun bu avtomatik
-     * hisoblashga qaytishni anglatadi).
-     * (AJAX: POST /jurnal/grade  { type, record_id, field, value })
-     */
+    
     public function updateGrade(Request $request)
     {
         $request->validate([
@@ -626,7 +541,6 @@ class JurnalController extends Controller
             return response()->json(['message' => 'Bu ustunni bu turda yangilab bo\'lmaydi.'], 422);
         }
 
-        // Har bir ustun uchun maksimal ball: Joriy=40, Oraliq=20, Yakuniy=40
         $maxByField = [
             'joriy_baho'   => 40,
             'oraliq_baho'  => 20,
@@ -646,8 +560,8 @@ class JurnalController extends Controller
         $record->save();
 
         if ($request->type === 'free') {
-            // free_semestrda joriy_oraliq o'zgarmas (arizadan tayyor), faqat
-            // yakuniy_baho o'zgaradi — umumiy shu yangi qiymatga qarab qayta hisoblanadi
+
+
             $record->umumiy = ($record->joriy_oraliq ?? 0) + ($record->yakuniy_baho ?? 0);
             $record->save();
         }
@@ -673,11 +587,7 @@ class JurnalController extends Controller
         return response()->json(['success' => true, 'value' => $record->{$request->field}]);
     }
 
-    /**
-     * Faqat MINI: bitta talabaning bitta mavzu (ms_mavzular) bo'yicha bahosini saqlaydi/yangilaydi.
-     * baho = null yuborilsa - yozuv butunlay o'chiriladi.
-     * (AJAX: POST /jurnal/topic-grade  { user_id, mavzu_id, baho })
-     */
+    
     public function updateTopicGrade(Request $request)
     {
         $request->validate([
@@ -689,10 +599,9 @@ class JurnalController extends Controller
         $mavzu = MsMavzu::findOrFail($request->mavzu_id);
         $subjectId = $mavzu->subject_id;
 
-        // YANGI: Joriy baho = shu fandagi barcha "mavzu" turidagi baholarning yig'indisi,
-        // va bu yig'indi 40 balldan OSHMASLIGI kerak. Shuning uchun yangi qiymat saqlanishidan
-        // oldin, "shu mavzudan tashqari qolgan barcha mavzular yig'indisi + yangi qiymat"ni
-        // tekshiramiz. Agar 40 dan oshsa - saqlamay, aniq xato xabari bilan qaytaramiz.
+
+
+
         if ($request->baho !== null) {
             $mavzuIds = MsMavzu::where('bolim_id', $mavzu->bolim_id)
                 ->where('subject_id', $subjectId)
@@ -754,16 +663,12 @@ class JurnalController extends Controller
         return response()->json(['success' => true, 'id' => $newId, 'baho' => $request->baho]);
     }
 
-    /**
-     * Bitta katakcha bo'yicha o'zgartirishlar tarixini qaytaradi:
-     * kim (admin), qachon, eski/yangi qiymat, qaysi IP.
-     * (AJAX: GET /jurnal/grade-history?kind=free|summary|topic&record_id=..&field=..&user_id=..&mavzu_id=..)
-     */
+    
     public function gradeHistory(Request $request)
     {
         $request->validate([
             'kind'   => 'required|in:free,summary,topic',
-            'record' => 'nullable|integer',   // <-- record_id emas, record
+            'record' => 'nullable|integer',
             'field'  => 'nullable|string',
             'user'   => 'nullable|integer',
             'mavzu'  => 'nullable|integer',
@@ -777,10 +682,10 @@ class JurnalController extends Controller
                 ->where('mavzu_id', $request->mavzu);
         } elseif ($request->kind === 'free') {
             $query->where('editable_type', 'free_yakuniy')
-                ->where('record_id', $request->record);   // <-- shu yerda ham
-        } else { // summary
+                ->where('record_id', $request->record);
+        } else {
             $query->where('editable_type', 'mini_summary')
-                ->where('record_id', $request->record)     // <-- va shu yerda
+                ->where('record_id', $request->record)
                 ->where('field', $request->field);
         }
 
@@ -797,10 +702,7 @@ class JurnalController extends Controller
         return response()->json($logs);
     }
 
-    /**
-     * Baho o'zgarishini grade_edit_logs jadvaliga yozadi.
-     * Agar eski va yangi qiymat farq qilmasa - yozilmaydi.
-     */
+    
     private function logGradeEdit(
         string $editableType,
         ?int $recordId,
@@ -838,31 +740,25 @@ class JurnalController extends Controller
             return;
         }
 
-        // Faqat shu bo'lim va shu fandagi "mavzu" turlari
         $mavzuIds = MsMavzu::where('bolim_id', $mini->bolim_id)
             ->where('subject_id', $subjectId)
             ->where('tur', 'mavzu')
             ->pluck('id');
 
-        // Joriy baho = barcha mavzular yig'indisi
         $joriy = MsJoriyBaho::where('user_id', $userId)
             ->whereIn('mavzu_id', $mavzuIds)
             ->sum('baho');
 
-        // XAVFSIZLIK UCHUN QO'SHIMCHA CHEKLOV (clamp): updateTopicGrade() da yig'indi
-        // 40 dan oshmasligi allaqachon tekshiriladi, lekin shu yerda ham 40 dan
-        // oshib ketmasligini kafolatlaymiz (masalan eski ma'lumotlar uchun).
+
+
         $joriy = min($joriy, 40);
 
-        // Joriy
         $mini->joriy_baho = $joriy;
 
-        // Joriy + Oraliq (Oraliq ham updateGrade() da 0-20 oralig'ida tekshiriladi)
         $oraliq = min($mini->oraliq_baho ?? 0, 20);
         $mini->joriy_oraliq = $joriy + $oraliq;
 
-        // Umumiy (Yakuniy ham updateGrade() da 0-40 oralig'ida tekshiriladi,
-        // shuning uchun umumiy hech qachon 100 dan oshmaydi: 40 + 20 + 40 = 100)
+
         $yakuniy = min($mini->yakuniy_baho ?? 0, 40);
         $mini->umumiy = $mini->joriy_oraliq + $yakuniy;
 

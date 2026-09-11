@@ -29,7 +29,7 @@ class SavolBankController extends Controller
         QuestionBank::create([
             'nomi'     => $request->nomi,
             'bolim_id' => $bolim?->id,
-            // tur yo'q — null bo'lib yaratiladi
+
         ]);
         return redirect()->back()->with('success', 'Savol bank yaratildi!');
     }
@@ -38,28 +38,23 @@ class SavolBankController extends Controller
     {
         $bank = QuestionBank::findOrFail($bank_id);
 
-        // Faqat tur saqlash
         if ($request->action === 'save_tur') {
             $bank->update(['tur' => $request->tur]);
             return redirect()->back()->with('success', 'Tur saqlandi!');
         }
 
-        // Import validatsiya
         $request->validate([
             'docx_file' => 'required|file|mimes:docx',
         ]);
 
-        // Tur saqlash
         if ($request->tur) {
             $bank->update(['tur' => $request->tur]);
         }
 
-        // Tozalash
         if ($request->tozalash) {
             $bank->questions()->delete();
         }
 
-        // Docx o'qish
         $path    = $request->file('docx_file')->getPathname();
         $phpWord = IOFactory::load($path);
         $fullText = '';
@@ -78,14 +73,12 @@ class SavolBankController extends Controller
             }
         }
 
-        // Parse qilish
         $savollar = $this->parseQuestions($fullText);
 
         if (empty($savollar)) {
             return redirect()->back()->withErrors(['docx_file' => 'Faylda hech qanday savol topilmadi! Format to\'g\'riligini tekshiring.']);
         }
 
-        // Saqlash
         foreach ($savollar as $savol) {
             Question::create([
                 'bank_id'     => $bank->id,

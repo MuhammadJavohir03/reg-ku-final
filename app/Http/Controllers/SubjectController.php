@@ -17,22 +17,19 @@ use Illuminate\Support\Facades\DB;
 
 class SubjectController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index()
     {
         $search = request('search');
         $pageSize = request('page_size', 10);
 
-        // Alohida filterlar: Yo'nalish (category), Kursi, Semestr
         $categoryId = request('category_id');
         $kurs = request('kurs');
         $semester = request('semster');
 
         $subjects = subject::with(['category', 'teacher', 'kafedra', 'lesson_type'])
             ->withExists('grades')
-            // Faniga birikkan (baho yozilgan) distinct talabalar soni
+
             ->withCount(['grades as students_count' => function ($q) {
                 $q->select(DB::raw('count(distinct user_id)'));
             }])
@@ -73,9 +70,7 @@ class SubjectController extends Controller
         return view('subject.index', compact('subjects', 'subjectCounts', 'teachers', 'categories'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
         $teachers = User::where('role', 'teacher')->get();
@@ -95,9 +90,7 @@ class SubjectController extends Controller
         ));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(StoreSubjectRequest $request)
     {
         $nomi = $request->input('nomi');
@@ -123,22 +116,17 @@ class SubjectController extends Controller
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli yaratildi.');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(subject $subject)
     {
         $subject->load(['category', 'teacher', 'kafedra', 'lesson_type', 'oquv_yili']);
 
-        // Faniga birikkan talabalar soni
         $countStudent = $subject->grades()->distinct('user_id')->count('user_id');
 
         return view('subject.show', compact('subject', 'countStudent'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(subject $subject)
     {
         $teachers = User::where('role', 'teacher')->get();
@@ -159,9 +147,7 @@ class SubjectController extends Controller
         ));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(StoreSubjectRequest $request, subject $subject)
     {
         $request->validate([
@@ -193,9 +179,7 @@ class SubjectController extends Controller
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli yangilandi.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(subject $subject)
     {
         $subject->delete();
@@ -203,10 +187,7 @@ class SubjectController extends Controller
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli o\'chirildi.');
     }
 
-    /**
-     * Mavjud fanni nusxalaydi: barcha parametrlar saqlanadi,
-     * faqat tanlangan yangi o'qituvchi biriktiriladi.
-     */
+    
     public function duplicate(Request $request, subject $subject)
     {
         $request->validate([
@@ -230,9 +211,7 @@ class SubjectController extends Controller
         return redirect()->route('subject.index')->with('success', 'Fan muvaffaqiyatli nusxalandi.');
     }
 
-    /**
-     * Biriktirish sahifasini ko'rsatadi.
-     */
+    
     public function biriktirish()
     {
         $subjects = subject::with(['teacher', 'category', 'oquv_yili'])
@@ -246,9 +225,7 @@ class SubjectController extends Controller
         return view('subject.biriktirish', compact('subjects', 'kattacount', 'groups'));
     }
 
-    /**
-     * AJAX qidiruv: fan nomi bo'yicha subjects qaytaradi.
-     */
+    
     public function biriktirishSearch(Request $request)
     {
         $q = $this->normalizeNomi($request->get('q', ''));
@@ -285,9 +262,7 @@ class SubjectController extends Controller
         return response()->json($subjects);
     }
 
-    /**
-     * Tanlangan fanlarni yangi (yoki mavjud) subjects_to_subject ga biriktiradi.
-     */
+    
     public function biriktirishStore(Request $request)
     {
         $request->validate([
@@ -313,9 +288,7 @@ class SubjectController extends Controller
             ->with('success', "{$count} ta fan \"{$group->nomi}\" guruhiga muvaffaqiyatli biriktirildi.");
     }
 
-    /**
-     * Barcha bir xil nomdagi fanlarni avtomatik guruhlaydi (sinxron).
-     */
+    
     public function biriktirishSync()
     {
         $subjects = subject::select('id', 'nomi')
@@ -367,9 +340,7 @@ class SubjectController extends Controller
             ->with('success', "Sinxron yakunlandi: {$groupsCreated} ta yangi guruh, {$linked} ta fan biriktirildi.");
     }
 
-    /**
-     * Fan nomidagi apostrof/qo'shtirnoq belgilarni bir xillashtirish.
-     */
+    
     private function normalizeNomi(?string $nomi): string
     {
         if (is_null($nomi)) {

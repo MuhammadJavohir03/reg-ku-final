@@ -11,9 +11,7 @@ use Illuminate\Http\Request;
 
 class FreeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index(Request $request)
     {
         $talabalar = free_semestr::with(['user', 'subject'])
@@ -29,7 +27,6 @@ class FreeController extends Controller
             })
             ->paginate(100);
 
-        // each() o'rniga map ishlatamiz — Paginator saqlanib qoladi
         $talabalar->getCollection()->transform(function ($talaba) {
             $talaba->grade = grade::where('user_id', $talaba->user_id)
                 ->where('subject_id', $talaba->subject_id)
@@ -40,49 +37,37 @@ class FreeController extends Controller
         return view('free_semestr.index', compact('talabalar'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
         
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
-        //
+
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
     public function show(string $id)
     {
-        //
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
-        //
+
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
     public function update(Request $request, string $id)
     {
-        //
+
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy($id)
     {
         free_semestr::findOrFail($id)->delete();

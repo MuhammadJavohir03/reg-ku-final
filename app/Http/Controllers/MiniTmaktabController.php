@@ -105,7 +105,6 @@ class MiniTmaktabController extends Controller
     {
         $user = Auth::user();
 
-        // Materialni topish
         $material = MsMaterial::with([
             'mavzu',
             'bank'
@@ -121,14 +120,12 @@ class MiniTmaktabController extends Controller
             return back()->with('error', 'Test banki topilmadi!');
         }
 
-        // Talabaning mini semestri
         $mini = mini_semestr::where('user_id', $user->id)
             ->where('subject_id', $material->mavzu->subject_id)
             ->where('bolim_id', $material->mavzu->bolim_id)
             ->where('status', 1)
             ->firstOrFail();
 
-        // Test boshlanish va tugash vaqtini tekshirish
         if ($bank->boshlanish_vaqti && now()->lt($bank->boshlanish_vaqti)) {
             return back()->with(
                 'error',
@@ -145,7 +142,6 @@ class MiniTmaktabController extends Controller
             );
         }
 
-        // Savollar soni
         $savollarSoni = Question::where('bank_id', $bank->id)->count();
 
         if ($savollarSoni < $bank->savollar_soni) {
@@ -156,7 +152,6 @@ class MiniTmaktabController extends Controller
             );
         }
 
-        // Urinishlar soni
         $ishlangan = TestSession::where('user_id', $user->id)
             ->where('bank_id', $bank->id)
             ->whereIn('status', ['finished', 'expired'])
@@ -166,7 +161,6 @@ class MiniTmaktabController extends Controller
             return back()->with('error', 'Urinishlar soni tugagan!');
         }
 
-        // Eski active session
         $activeSession = TestSession::where('user_id', $user->id)
             ->where('bank_id', $bank->id)
             ->where('status', 'active')
@@ -180,7 +174,6 @@ class MiniTmaktabController extends Controller
             ]);
         }
 
-        // Session yaratish
         $session = TestSession::create([
             'bank_id' => $bank->id,
             'user_id' => $user->id,
@@ -191,7 +184,6 @@ class MiniTmaktabController extends Controller
             'status' => 'active',
         ]);
 
-        // Random savollar
         $savollar = Question::where('bank_id', $bank->id)
             ->inRandomOrder()
             ->limit($bank->savollar_soni)
@@ -223,7 +215,6 @@ class MiniTmaktabController extends Controller
             ->with('bank')
             ->firstOrFail();
 
-        // Vaqt tugagan bo'lsa avtomatik yakunlash
         if (now()->gt($attempt->tugash_vaqti)) {
 
             $attempt->update([
@@ -238,7 +229,6 @@ class MiniTmaktabController extends Controller
 
         $bank = $attempt->bank;
 
-        // Materialni topamiz
         $material = MsMaterial::where('bank_id', $bank->id)
             ->with('mavzu')
             ->firstOrFail();
@@ -290,7 +280,6 @@ class MiniTmaktabController extends Controller
             return redirect()->route('talaba.mini_maktab.index');
         }
 
-        // Javoblarni tekshirish
         foreach ($attempt->questionUsers as $qu) {
 
             $javob = $request->input('javob_' . $qu->question_id);
@@ -306,7 +295,6 @@ class MiniTmaktabController extends Controller
             }
         }
 
-        // Ball
         $ball = QuestionUser::where('session_id', $attempt->id)
             ->where('status', 1)
             ->with('question')
@@ -318,14 +306,12 @@ class MiniTmaktabController extends Controller
             'status' => 'finished',
         ]);
 
-        // Material
         $material = MsMaterial::where('bank_id', $attempt->bank_id)
             ->with('mavzu')
             ->firstOrFail();
 
         $mavzu = $material->mavzu;
 
-        // Mini semestr
         $mini = mini_semestr::where('user_id', $user->id)
             ->where('subject_id', $mavzu->subject_id)
             ->where('bolim_id', $mavzu->bolim_id)
@@ -333,11 +319,7 @@ class MiniTmaktabController extends Controller
 
         if ($mini) {
 
-            /*
-        |---------------------------------------
-        | MAVZU
-        |---------------------------------------
-        */
+            
 
             if ($mavzu->tur == 'mavzu') {
 
@@ -367,11 +349,7 @@ class MiniTmaktabController extends Controller
                 ]);
             }
 
-            /*
-        |---------------------------------------
-        | ORALIQ
-        |---------------------------------------
-        */
+            
 
             if ($mavzu->tur == 'oraliq') {
 
@@ -383,11 +361,7 @@ class MiniTmaktabController extends Controller
                 }
             }
 
-            /*
-        |---------------------------------------
-        | YAKUNIY
-        |---------------------------------------
-        */
+            
 
             if ($mavzu->tur == 'yakuniy') {
 
@@ -438,7 +412,6 @@ class MiniTmaktabController extends Controller
             return;
         }
 
-        // Oddiy mavzu
         if ($mavzu->tur == 'mavzu') {
 
             MsJoriyBaho::updateOrCreate(
@@ -463,7 +436,6 @@ class MiniTmaktabController extends Controller
             ]);
         }
 
-        // Oraliq
         elseif ($mavzu->tur == 'oraliq') {
 
             if ($ball > ($mini->oraliq_baho ?? 0)) {
@@ -474,7 +446,6 @@ class MiniTmaktabController extends Controller
             }
         }
 
-        // Yakuniy
         elseif ($mavzu->tur == 'yakuniy') {
 
             if ($ball > ($mini->yakuniy_baho ?? 0)) {
