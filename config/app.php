@@ -2,35 +2,21 @@
 
 return [
 
-    
-
     'name' => env('APP_NAME', 'Laravel'),
-
-    
 
     'env' => env('APP_ENV', 'production'),
 
-    
-
     'debug' => (bool) env('APP_DEBUG', false),
 
-    
-
-    'url' => env('APP_URL', 'http:
-
-    
+    'url' => env('APP_URL', 'http://localhost'),
 
     'timezone' => 'Asia/Tashkent',
-
-    
 
     'locale' => env('APP_LOCALE', 'en'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
-
-    
 
     'cipher' => 'AES-256-CBC',
 
@@ -41,8 +27,6 @@ return [
             explode(',', (string) env('APP_PREVIOUS_KEYS', ''))
         ),
     ],
-
-    
 
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
